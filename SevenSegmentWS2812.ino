@@ -1,8 +1,9 @@
 #include <Adafruit_NeoPixel.h>
 
 // Configuration
-#define PIN        15 // Change this to the data pin you are using on your ESP32-S2 Zero
-#define NUMPIXELS  28 // 7 segments * 4 LEDs per segment = 28 LEDs
+// On ESP32-C3 Super Mini, use GPIO 2 (or GPIO 3, 4, 5, 10). On ESP32-S2/S3 you can use GPIO 15.
+#define PIN        2 
+#define NUMPIXELS  56 // 2 digits * 7 segments * 4 LEDs per segment = 56 LEDs
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
@@ -53,34 +54,49 @@ void setup() {
 }
 
 void loop() {
-  // Loop from 0 to 9 infinitely
-  for (int num = 0; num <= 9; num++) {
-    displayNumber(num);
-    delay(1000); // Wait 1 second between numbers
+  // Demo the score counting up to 99
+  for (int score = 0; score <= 99; score++) {
+    displayTeam1Score(score);
+    delay(500); // Wait half a second between scores
   }
 }
 
-void displayNumber(int num) {
-  pixels.clear(); // Turn off all pixels first
-
-  // Set the color for the digit (Red in this case)
-  // Format: pixels.Color(Red, Green, Blue)
-  uint32_t color = pixels.Color(255, 0, 0); 
-  
-  // Loop through each of the 7 segments
+// Helper function to draw a single digit at a specific LED offset
+void drawDigit(int num, int ledOffset, uint32_t color) {
   for (int segment = 0; segment < 7; segment++) {
-    // If the segment should be ON for the current number
     if (numbers[num][segment] == 1) {
-      
-      // Get where this segment starts in the LED strip
-      int startPixel = segmentStartIndices[segment];
-      
-      // Turn on the 4 LEDs for this segment
+      int startPixel = segmentStartIndices[segment] + ledOffset;
       for (int i = 0; i < 4; i++) {
         pixels.setPixelColor(startPixel + i, color);
       }
     }
   }
+}
+
+void displayTeam1Score(int score) {
+  pixels.clear(); // Turn off all pixels first
+
+  // Set the color for Team 1 (Red in this case)
+  uint32_t color = pixels.Color(255, 0, 0); 
+  
+  // Constrain score between 0 and 99
+  if (score < 0) score = 0;
+  if (score > 99) score = 99;
+
+  int tens = score / 10;
+  int ones = score % 10;
+
+  // Assuming the first 7-segment display (LEDs 0-27) is the Tens digit
+  // and the second display (LEDs 28-55) is the Ones digit.
+  // If your displays are wired backwards (Ones first), swap the 0 and 28 below!
+  
+  // Draw tens digit (only if score is 10 or higher, to prevent leading zero)
+  if (score >= 10) {
+    drawDigit(tens, 0, color); 
+  }
+  
+  // Draw ones digit
+  drawDigit(ones, 28, color);
   
   pixels.show(); // Update the display with the new data
 }

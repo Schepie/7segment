@@ -20,12 +20,12 @@ Dit project is een compleet end-to-end systeem voor een elektronisch padel-score
 ## Hardware Installatie & Bedrading
 
 ### Benodigdheden
-* Een **ESP32** microcontroller (bijv. Wemos Lolin S3 Mini).
+* Een **ESP32** microcontroller (bijv. ESP32-C3 Super Mini of Wemos Lolin S3 Mini).
 * Een lange rol **WS2812B / NeoPixel LED-strip**. In onze configuratie gebruiken we 4 cijfers, met 7 segmenten per cijfer, en 4 LED's per segment = **112 LED's in totaal**.
 * Een krachtige **5V Voeding** (let op: LED-strips verbruiken veel stroom, reken op minimaal 2A tot 5A, afhankelijk van de helderheid).
 
 ### Aansluiten
-* **ESP32 PIN 15** -> Gaat naar de Data-In (DI) van de eerste LED-strip.
+* **ESP32-C3 Super Mini GPIO 2** (of GPIO 15 op ESP32-S2/S3) -> Gaat naar de Data-In (DI) van de eerste LED-strip.
 * **5V Voeding** -> Sluit de 5V en GND van de voeding aan op zowel de ESP32 als de LED-strip.
 * *Let op: Voorzie stroominjectie aan het einde van de LED-strip als de kleuren naar het einde toe geel/rood uitslaan door spanningsverlies.*
 
