@@ -7,31 +7,35 @@
 spacer_width = 36;      // Width of the colon spacer in mm
 show_pogo_hardware = true; // Set to true to preview 3D pogo connectors sitting in mounting pockets
 
-pitch = 94;             // Matches 7segment_pogo digit pitch (94 mm)
-strip_width = 12;       
+pitch_x = 92.0;           // Matches 7segment_pogo digit pitch (92 mm)
+pitch_y_top = 92.0;
+pitch_y_bot = 92.0;
+strip_width = 12.0;       
 white_wall = 1.2;       
-margin_x = 15;          
-margin_y = 15;          
+margin_x = 15.0;          
+margin_y = 15.0;          
 
-tunnel_depth = 12;      
-diffuser_thick = 1.0;   
+tunnel_depth = 12.4;      
+diffuser_thick = 0.6;   
 backplate_floor = 1.5;  
 connector_thick = 4.0;  
 backplate_thick = connector_thick + backplate_floor; // 5.5 mm
 strip_recess_depth = 2.0; // Depth of LED recess in backplate
 
 colon_radius = 6;       // Inner radius of the colon dots
-colon_y_offset = 47;    // Y distance from center for the two dots (+/- 47mm)
+colon_y_offset = 46;    // Y distance from center for the two dots (+/- 46mm)
 
 // --- 4-Pin Magnetic Pogo Pin Connector Parameters ---
-pogo_ear_span       = 23.6; // Total outer span across mounting ears
-pogo_ear_pitch      = 18.5; // Center-to-center spacing between ear screw holes
-pogo_hole_d         = 1.8;  // Pilot hole diameter for M2 self-tapping screws
-pogo_hole_depth     = 5.5;  // Depth of screw hole into mounting boss
-pogo_body_w         = 15.0; // Central body width
-pogo_body_h         = 8.2;  // Central body height (Z-axis)
-pogo_flange_thick   = 2.0;  // Thickness of connector mounting ear flange
-pogo_boss_r         = 3.2;  // Outer radius of M2 screw bosses
+pogo_ear_span       = 23.9; // Total outer span across mounting ears (23.5mm nominal + 0.4mm clearance)
+pogo_ear_pitch      = 20.0; // Center-to-center spacing between ear screw holes (20.0mm exact)
+pogo_hole_d         = 1.8;  // Pilot hole diameter for M2 screws (1.8mm exact)
+pogo_hole_depth     = 7.0;  // Deep thread depth into reinforced boss
+pogo_body_w         = 18.0; // Central body width (17.5mm nominal + 0.5mm clearance)
+pogo_body_h         = 4.4;  // Central body height (4.0mm nominal + 0.4mm clearance)
+pogo_body_r         = 2.2;  // Corner radius for rounded stadium profile (4.4mm / 2)
+pogo_boss_depth     = 3.0;  // Boss seating face is exactly 3.0mm deep from outside wall surface
+pogo_flange_thick   = 1.0;  // Thickness of connector mounting ear flange (1.0mm exact)
+pogo_boss_r         = 3.0;  // Outer radius of internal screw bosses
 pogo_pass_depth     = 10.0; // Inward wiring clearance
 pogo_z              = 6.0;  // Centered along Z in the 12mm tunnel depth
 
@@ -39,79 +43,71 @@ pogo_z              = 6.0;  // Centered along Z in the 12mm tunnel depth
 diffuser_w = strip_width + 2;      
 total_seg_w = diffuser_w + white_wall * 2; 
 
-digit_height = pitch * 2 + total_seg_w + margin_y * 2; // 234.4 mm (matches 7segment_pogo)
-total_depth = tunnel_depth + diffuser_thick;           // 13 mm
+digit_height = pitch_y_top + pitch_y_bot + total_seg_w + margin_y * 2; // 230.4 mm (matches 7segment_pogo)
+total_depth = tunnel_depth + diffuser_thick;           // 13.0 mm
 
 // -------------------------------------------------------------
 // Pogo Pin Connector Support Modules
 // -------------------------------------------------------------
 
-
-
-module colon_pogo_cutout(is_left = false) {
-    side = is_left ? -1 : 1;
-    wall_x = side * spacer_width / 2;
-    inner_x = side * (spacer_width / 2 - 2.0);
-    
-    // 1. Through-wall window for central magnetic connector contact face ONLY (15.0 x 8.2 mm)
-    // Completely leaves the outer 1.0mm wall covering the side mounting ears
-    translate([wall_x, 0, pogo_z])
-        cube([6, pogo_body_w, pogo_body_h], center=true);
-        
-    // 2. Lower U-notch below connector (Z = -backplate_thick to Z = 1.9mm) across full ear width (25.4mm)
-    // Filled flush by the backplate outer wall extension upon assembly
-    h_low = (pogo_z - pogo_body_h/2) - (-backplate_thick);
-    translate([wall_x, 0, -backplate_thick + h_low/2])
-        cube([6, pogo_ear_span + 0.4, h_low + 0.1], center=true);
-        
-    // 3. Internal ear pocket & insertion slot on the inside of the wall (behind outer 1.0mm wall)
-    // Accommodates the 25.0mm total ear span inside the housing without exposing ears to outside
-    translate([inner_x + side * 0.4, 0, pogo_z])
-        cube([pogo_flange_thick + 0.8, pogo_ear_span, pogo_body_h + 0.4], center=true);
-        
-    // 4. Inward wiring clearance
-    translate([inner_x - side * (pogo_pass_depth/2), 0, (pogo_z + pogo_body_h/2 - backplate_thick)/2])
-        cube([pogo_pass_depth + 0.1, pogo_body_w, pogo_z + pogo_body_h/2 + backplate_thick + 0.2], center=true);
-        
-    // 5. Sense Resistor Stash Pocket (for 4.7k resistor inside colon)
-    translate([inner_x - side * 4.0, side * 8.0, pogo_z - 3.0])
-        cube([5.0, 3.5, 2.5], center=true);
-}
-
-// Integrated pogo cradle on colon_backplate:
-// Supplies the outer wall section below the connector, the horizontal connector seating shelf, and the rear clamping tabs
-module colon_pogo_backplate_cradle() {
-    for (side = [-1, 1]) {
-        wall_x = side * (spacer_width / 2);
-        inner_x = side * (spacer_width / 2 - 2.0);
-        h_wall = (pogo_z - pogo_body_h/2) - (-backplate_thick);
-        
-        // 1. Outer side wall extension below connector across full ear span (Z = -backplate_thick to Z = 1.9mm)
-        translate([wall_x - side * 1.0, 0, -backplate_thick + h_wall/2])
-            cube([2.0, pogo_ear_span - 0.2, h_wall], center=true);
-            
-        // 2. Connector seating floor / support shelf under connector body and ears
-        translate([inner_x - side * 0.5, 0, pogo_z - pogo_body_h/2 - 0.5])
-            cube([3.0, pogo_ear_span, 1.0], center=true);
-            
-        // 3. Vertical rear clamping wedge tabs behind connector ears
-        tab_x = inner_x - side * pogo_flange_thick;
-        tab_thick = 2.0;
-        
-        for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-            translate([tab_x - side * tab_thick/2, y, 0]) {
-                hull() {
-                    translate([0, 0, 0.5])
-                        cube([tab_thick, 5.0, 1.0], center=true);
-                    translate([0, 0, pogo_z])
-                        cube([tab_thick, 5.0, 1.0], center=true);
-                    translate([-side * 0.6, 0, pogo_z + 2.0])
-                        cube([tab_thick - 1.2, 5.0, 1.0], center=true);
-                }
-            }
+module rounded_stadium_slot(depth, length_y, height_z, center = true) {
+    r = height_z / 2;
+    linear_extrude(height = depth, center = center) {
+        hull() {
+            translate([0, -(length_y/2 - r)]) circle(r = r, $fn = 24);
+            translate([0,  (length_y/2 - r)]) circle(r = r, $fn = 24);
         }
     }
 }
+
+// Internal Screw Bosses added to the inner face of colon side walls (start at -3.0mm from outside face)
+module colon_pogo_mounting_bosses(is_left = false) {
+    side = is_left ? -1 : 1;
+    wall_x = side * spacer_width / 2; // Outside face (0.0mm reference)
+    inner_x = side * (spacer_width / 2 - 2.0); // Inside face of 2mm wall
+    boss_face_x = wall_x - side * pogo_boss_depth; // Exactly -3.0mm from outside face
+    boss_len = 6.0; // Inward extension from boss face into housing cavity
+    
+    for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
+        hull() {
+            translate([inner_x + side * 0.1, y, pogo_z])
+                cube([0.2, pogo_boss_r * 2, pogo_body_h + 2.0], center=true);
+            translate([boss_face_x - side * boss_len, y, pogo_z])
+                rotate([0, 90, 0])
+                    cylinder(h=0.5, r=pogo_boss_r, center=true, $fn=24);
+        }
+    }
+}
+
+module colon_pogo_cutout(is_left = false) {
+    side = is_left ? -1 : 1;
+    wall_x = side * spacer_width / 2; // Outside face (0.0mm reference)
+    inner_x = side * (spacer_width / 2 - 2.0);
+    boss_face_x = wall_x - side * pogo_boss_depth; // -3.0mm from outside
+    
+    // 1. Full Connector Pocket (23.9 x 4.4 mm) recessed 3.0mm deep from outside
+    translate([wall_x - side * (pogo_boss_depth / 2 - 0.05), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = pogo_boss_depth + 0.1, length_y = pogo_ear_span, height_z = pogo_body_h, center = true);
+        
+    // 2. Central Body Inward Wiring Opening (18.0 x 4.4 mm) extending 7.0mm inward behind wall
+    translate([wall_x - side * (3.5 + 2.0), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = 7.0, length_y = pogo_body_w, height_z = pogo_body_h, center = true);
+        
+    // 3. 2x Screw Pilot Holes drilled into bosses starting at boss_face_x (-3.0mm from outside)
+    for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
+        translate([boss_face_x + side * 0.5, y, pogo_z])
+            rotate([0, -side * 90, 0])
+                cylinder(h = pogo_hole_depth + 1.0, r = pogo_hole_d / 2, $fn = 20);
+    }
+    
+    // 4. Sense Resistor Stash Pocket (for 4.7k resistor inside colon)
+    translate([inner_x - side * 4.0, side * 8.0, pogo_z - 3.0])
+        cube([5.0, 3.5, 2.5], center = true);
+}
+
+
 
 // Visual 3D model of the 4-pin magnetic connector
 module pogo_connector_model(is_male = true) {
@@ -234,6 +230,10 @@ module colon_frontplate_black() {
             translate([-spacer_width/2 + 6, digit_height/2 - 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
             translate([spacer_width/2 - 6, -digit_height/2 + 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
             translate([-spacer_width/2 + 6, -digit_height/2 + 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
+            
+            // 4. Internal Pogo screw bosses on left and right walls
+            colon_pogo_mounting_bosses(is_left = true);
+            colon_pogo_mounting_bosses(is_left = false);
         }
         
         // White colon lightguide cylindrical boreholes (through-holes to front face)
@@ -253,10 +253,6 @@ module colon_frontplate_black() {
         // Pogo connector mounting cutouts on both left and right walls
         colon_pogo_cutout(is_left = true);
         colon_pogo_cutout(is_left = false);
-        
-        // Central wiring pass-through tunnel connecting left and right pogo connectors
-        translate([0, 0, pogo_z])
-            cube([spacer_width + 2, 8.0, 6.0], center=true);
             
         // Wire & solder joint clearance notches
         colon_wire_clearance_notches(1.8);
@@ -327,14 +323,9 @@ module colon_led_placement_indicators() {
 
 module colon_backplate() {
     difference() {
-        union() {
-            // Main flat plate
-            translate([-(spacer_width - 4.4)/2, -(digit_height - 4.4)/2, -backplate_thick])
-                cube([spacer_width - 4.4, digit_height - 4.4, backplate_thick]);
-                
-            // Pogo connector cradles (outer side wall extensions, seating shelves, and rear clamping tabs)
-            colon_pogo_backplate_cradle();
-        }
+        // Main flat plate (shrunk by 2mm per side for walls + 0.2mm clearance)
+        translate([-(spacer_width - 4.4)/2, -(digit_height - 4.4)/2, -backplate_thick])
+            cube([spacer_width - 4.4, digit_height - 4.4, backplate_thick]);
             
         // Recesses for LED PCBs (12x20mm, 2mm deep)
         for (y = [colon_y_offset, -colon_y_offset]) {

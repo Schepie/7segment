@@ -455,7 +455,7 @@ module backplate(panel_id = 1) {
         translate([0, -100, -backplate_thick - 0.1])
             linear_extrude(1.0)
                 mirror([1, 0, 0])
-                    text("© Designed by Geert Schepers", size=4.2, font="Liberation Sans:style=Bold", halign="center", valign="center");
+                    text("© Designed by GSC", size=4.2, font="Liberation Sans:style=Bold", halign="center", valign="center");
     }
 }
 

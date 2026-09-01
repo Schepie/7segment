@@ -5,13 +5,15 @@
 // Designed for Bambu Lab AMS / multi-material 3D printing.
 
 // --- Key Parameters ---
-panel_id = 1;           // Set to 1 (leftmost), 2, 3 (middle), or 4 (rightmost end panel)
-show_pogo_hardware = false; // Set to true to preview 3D pogo connectors sitting in mounting pockets
+panel_id              = 1;     // Set to 1 (leftmost), 2, 3 (middle), or 4 (rightmost end panel)
 
-// --- Visibility Toggles (By default front plates are hidden) ---
-show_frontplate_black = false; // Set to true to view black frontplate housing
-show_frontplate_white = false; // Set to true to view white diffuser frontplate
-show_backplate = true;         // Set to true to view backplate
+// --- Visibility & Exploded View Toggles ---
+show_frontplate_black = true;  // Set to true to view black frontplate housing
+show_frontplate_white = true;  // Set to true to view white diffuser frontplate
+show_backplate        = true;  // Set to true to view backplate
+show_pogo_hardware    = true;  // Set to true to preview 3D pogo connectors sitting in mounting pockets
+exploded_view         = false; // Set to true to view all layers exploded along Z and X axes
+explode_distance      = 35.0;  // Distance between exploded layers in mm
 
 pitch_x = 92;           // Distance between the middle of the vertical LED strips = 92mm
 pitch_y_top = 92;       // Distance from middle horizontal cavity to top horizontal cavity = 92mm
@@ -36,19 +38,22 @@ mid_pocket_w = 34.0;                      // 34.0mm width (horizontal channel = 
 mid_pocket_l = 47.8;                      // Grown vertically by 1.9mm on each end (from 44.0mm) to grow both ends equally
 
 // --- 4-Pin Magnetic Pogo Pin Connector Parameters ---
-// Specifically sized for the 4-pin male/female magnetic connector with mounting ears (23.2mm outer span)
-// Pin 1: 5V Power
-// Pin 2: GND
-// Pin 3: WS2812B Data (DO -> DI)
-// Pin 4: SENSE (Panel detection & auto-identification resistor ladder)
-pogo_ear_span       = 23.6; // Total outer span across mounting ears (23.2mm nominal + 0.4mm clearance)
-pogo_ear_pitch      = 18.5; // Center-to-center spacing between ear screw holes
-pogo_hole_d         = 1.8;  // Pilot hole diameter for M2 self-tapping screws (set to 3.2 for M2 heat-set inserts)
-pogo_hole_depth     = 5.5;  // Depth of screw hole into mounting boss
-pogo_body_w         = 15.0; // Central body width (houses 4 pins and 2 side magnets)
-pogo_body_h         = 8.2;  // Central body height (Z-axis)
-pogo_flange_thick   = 2.0;  // Thickness of connector mounting ear flange
-pogo_boss_r         = 3.2;  // Outer radius of M2 screw bosses
+// Outside-Mount Parameters:
+// - Full length across ears: 23.5 mm (+0.4mm clearance = 23.9 mm span)
+// - Center-to-center hole pitch: 20.0 mm
+// - Central body length: 17.5 mm (+0.5mm clearance = 18.0 mm)
+// - Body thickness (Z-height): 4.0 mm (+0.4mm clearance = 4.4 mm)
+// - Boss depth from outside: 3.0 mm (ensures connector front face sits flush with outer surface)
+// - Mounting hole diameter: 1.8 mm
+pogo_ear_span       = 23.9; // Total outer span across mounting ears (23.5mm nominal + 0.4mm clearance)
+pogo_ear_pitch      = 20.0; // Center-to-center spacing between ear screw holes (20.0mm exact)
+pogo_hole_d         = 1.8;  // Pilot hole diameter for M2 screws (1.8mm exact)
+pogo_hole_depth     = 7.0;  // Deep thread depth into reinforced internal boss
+pogo_body_w         = 18.0; // Central body width (17.5mm nominal + 0.5mm clearance)
+pogo_body_h         = 4.4;  // Central body height (4.0mm nominal + 0.4mm clearance)
+pogo_body_r         = 2.2;  // Corner radius for rounded stadium profile (4.4mm / 2)
+pogo_boss_depth     = 3.0;  // Boss seating face is exactly 3.0mm deep from outside wall surface
+pogo_boss_r         = 3.0;  // Outer radius of internal screw bosses (dia 6.0 mm)
 pogo_pass_depth     = 10.0; // Inward wiring clearance for solder pins and 4-wire harness
 pogo_z              = 6.0;  // Centered along Z in the 12mm tunnel depth
 
@@ -211,42 +216,24 @@ module rtc_ds1302_mount() {
     }
 }
 
-// Shared connector clearance notches cut into underside of front plates (bottom 3.1mm at Z=0..3.1)
-module connector_clearance_notches(h = 6.2) {
-    translate([0, 0, -h/2 - 0.1]) {
-        // Middle left & right (matching enlarged 34.0 x 47.8 mm transition cavities)
-        translate([-pitch_x/2, 0, 0]) translate([-13, -mid_pocket_l/2, 0]) cube([mid_pocket_w, mid_pocket_l, h + 0.2]);
-        translate([pitch_x/2, 0, 0]) translate([13 - mid_pocket_w, -mid_pocket_l/2, 0]) cube([mid_pocket_w, mid_pocket_l, h + 0.2]);
-        
-        // Top left & right (matching enlarged 34.5 x 31.6 mm corner pockets)
-        translate([-pitch_x/2, pitch_y_top, 0]) translate([-13.5, 13.5 - corner_pocket_h, 0]) cube([corner_pocket_w, corner_pocket_h, h + 0.2]);
-        translate([pitch_x/2, pitch_y_top, 0]) translate([13.5 - corner_pocket_w, 13.5 - corner_pocket_h, 0]) cube([corner_pocket_w, corner_pocket_h, h + 0.2]);
-        
-        // Bottom left & right (matching enlarged 34.5 x 31.6 mm corner pockets)
-        translate([-pitch_x/2, -pitch_y_bot, 0]) translate([-13.5, -13.5, 0]) cube([corner_pocket_w, corner_pocket_h, h + 0.2]);
-        translate([pitch_x/2, -pitch_y_bot, 0]) translate([13.5 - corner_pocket_w, -13.5, 0]) cube([corner_pocket_w, corner_pocket_h, h + 0.2]);
-    }
-}
-
 // -------------------------------------------------------------
 // Pogo Pin Connector Support Modules
 // -------------------------------------------------------------
 
-// Internal M2 screw bosses added to the inner face of the side wall
+// Internal Screw Bosses added to the inner face of the side wall (start at -3.0mm from outside face)
 module pogo_mounting_bosses(is_left = false) {
     side = is_left ? -1 : 1;
-    wall_x = side * digit_width / 2;
+    wall_x = side * digit_width / 2; // Outside face of wall (0.0mm reference)
     inner_x = side * (digit_width / 2 - 2.0); // Inside face of 2mm wall
-    boss_len = 5.0; // Inward extension from wall
+    boss_face_x = wall_x - side * pogo_boss_depth; // Exactly -3.0mm from outside face
+    boss_len = 6.0; // Inward extension from boss face into housing cavity
     
     for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-        // Reinforced boss cylinder blended securely into outer wall
+        // Reinforced boss cylinder blended from inner wall to boss back
         hull() {
-            // Base embedded 1.5mm into outer wall for clean manifold union
-            translate([inner_x + side * 1.0, y, pogo_z])
-                cube([2.0, pogo_boss_r * 2, pogo_body_h + 1.8], center=true);
-            // Cylinder extending inward with M2 pilot hole
-            translate([inner_x - side * boss_len, y, pogo_z])
+            translate([inner_x + side * 0.1, y, pogo_z])
+                cube([0.2, pogo_boss_r * 2, pogo_body_h + 2.0], center=true);
+            translate([boss_face_x - side * boss_len, y, pogo_z])
                 rotate([0, 90, 0])
                     cylinder(h=0.5, r=pogo_boss_r, center=true, $fn=24);
         }
@@ -308,35 +295,58 @@ module frontplate_perimeter_cable_holders() {
     }
 }
 
-// Pogo connector cutouts and pilot screw holes subtracted from the frontplate
+// USB-C Cutout module (14.1mm width horizontal along Y, 6.0mm height vertical along Z with 2.0mm flat vertical ends)
+module usb_c_profile_2d(width = 14.1, height = 6.0, flat_vert = 2.0) {
+    r = (height - flat_vert) / 2; // 2.0 mm corner radius
+    // When rotated with rotate([0, 90, 0]), 2D Y-axis becomes 3D Y-axis (horizontal along wall), and 2D X-axis becomes 3D -Z axis (vertical):
+    dy = width / 2 - r;           // 5.05 mm along Y (horizontal)
+    dz = flat_vert / 2;           // 1.0 mm along X (vertical in 3D)
+    hull() {
+        translate([-dz, -dy]) circle(r = r, $fn = 24);
+        translate([ dz, -dy]) circle(r = r, $fn = 24);
+        translate([-dz,  dy]) circle(r = r, $fn = 24);
+        translate([ dz,  dy]) circle(r = r, $fn = 24);
+    }
+}
+
+// Rounded Stadium cutout module (pill shape with semi-circular ends along X)
+module rounded_stadium_slot(depth, length_y, height_z, center = true) {
+    r = height_z / 2;
+    linear_extrude(height = depth, center = center) {
+        hull() {
+            translate([0, -(length_y/2 - r)]) circle(r = r, $fn = 24);
+            translate([0,  (length_y/2 - r)]) circle(r = r, $fn = 24);
+        }
+    }
+}
+
+// Pogo connector cutouts and pilot screw holes subtracted from the frontplate (Outside Mount)
 module pogo_mounting_cutout(is_left = false) {
     side = is_left ? -1 : 1;
-    wall_x = side * digit_width / 2;
+    wall_x = side * digit_width / 2; // Outside face (0.0mm reference)
     inner_x = side * (digit_width / 2 - 2.0);
+    boss_face_x = wall_x - side * pogo_boss_depth; // -3.0mm from outside
     
-    // 1. Through-wall cutout for central magnetic connector body (flush with outer wall face)
-    translate([wall_x, 0, pogo_z])
-        cube([6, pogo_body_w, pogo_body_h], center=true);
+    // 1. Full Connector Pocket (23.9 x 4.4 mm) recessed 3.0mm deep from outside (from wall_x to boss_face_x)
+    translate([wall_x - side * (pogo_boss_depth / 2 - 0.05), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = pogo_boss_depth + 0.1, length_y = pogo_ear_span, height_z = pogo_body_h, center = true);
         
-    // 2. Ear recess on the inside of the wall (accommodates 23.5mm total ear span)
-    translate([inner_x + side * 0.5, 0, pogo_z])
-        cube([pogo_flange_thick + 1.0, pogo_ear_span, pogo_body_h + 0.6], center=true);
+    // 2. Central Body Through-Opening (18.0 x 4.4 mm) passing cleanly through the 2mm wall into the inside cavity
+    translate([wall_x - side * (3.0 + 0.1), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = 6.2, length_y = pogo_body_w, height_z = pogo_body_h, center = true);
         
-    // 3. Inward wiring and solder-pin clearance cavity
-    translate([inner_x - side * (pogo_pass_depth/2), 0, pogo_z])
-        cube([pogo_pass_depth + 0.1, pogo_body_w, pogo_body_h + 1.0], center=true);
-        
-    // 4. 2x M2 Screw Pilot Holes into the mounting bosses
+    // 3. 2x Screw Pilot Holes (1.8mm dia, 7mm deep) drilled into the bosses starting at boss_face_x (-3.0mm from outside)
     for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-        translate([inner_x, y, pogo_z])
-            rotate([0, side * 90, 0])
-                cylinder(h=pogo_hole_depth + 1.0, r=pogo_hole_d/2, $fn=16);
+        translate([boss_face_x + side * 0.5, y, pogo_z])
+            rotate([0, -side * 90, 0])
+                cylinder(h = pogo_hole_depth + 1.0, r = pogo_hole_d / 2, $fn = 20);
     }
     
-    // 5. Dedicated Sense Resistor Stash Pocket (5 x 3 x 2.5 mm cavity)
-    // Neatly stashes a 1/8W or 0805 sense resistor between Pin 4 and GND
+    // 4. Dedicated Sense Resistor Stash Pocket (5 x 3.5 x 2.5 mm cavity inside)
     translate([inner_x - side * 4.0, side * 8.0, pogo_z - 3.0])
-        cube([5.0, 3.5, 2.5], center=true);
+        cube([5.0, 3.5, 2.5], center = true);
 }
 
 // Visual 3D model of the 4-pin magnetic connector with mounting ears
@@ -541,9 +551,11 @@ module frontplate_black(panel_id = panel_id) {
         
         // Left Wall: USB-C port on Panel 1, or Pogo receiver on Panels 2, 3, 4
         if (panel_id == 1) {
-            // USB-C Snap-In Connector Cutout (Panel 1: 14.1mm width x 7.2mm height)
+            // USB-C Snap-In Cutout: 14.1mm width x 6.0mm height with 2.0mm flat ends and 2.0mm corner radii
             translate([-digit_width/2, 0, pogo_z]) 
-                cube([10, 14.1, 7.2], center=true);
+                rotate([0, 90, 0])
+                    linear_extrude(height = 10.0, center = true)
+                        usb_c_profile_2d(width = 14.1, height = 6.0, flat_vert = 2.0);
         } else {
             // Left Pogo Connector Mounting Cutout (Panels 2, 3, 4)
             pogo_mounting_cutout(is_left = true);
@@ -553,9 +565,6 @@ module frontplate_black(panel_id = panel_id) {
         if (panel_id < 4) {
             pogo_mounting_cutout(is_left = false);
         }
-
-        // Connector clearance and wire routing notches (all 6 junctions)
-        connector_clearance_notches(6.2);
     }
 }
 
@@ -711,7 +720,7 @@ module backplate(panel_id = panel_id) {
         translate([0, -100, -backplate_thick - 0.1])
             linear_extrude(1.0)
                 mirror([1, 0, 0])
-                    text("© Geert Schepers • POGO EDITION", size=3.8, font="Liberation Sans:style=Bold", halign="center", valign="center");
+                    text("© GSC • POGO EDITION", size=3.8, font="Liberation Sans:style=Bold", halign="center", valign="center");
     }
 }
 
@@ -752,22 +761,37 @@ module rear_joining_bracket(thickness = 3.0, countersunk = true) {
     }
 }
 
-// --- Render Assembly ---
-// When loaded in Bambu Studio / OrcaSlicer, frontplate_black and frontplate_white align automatically.
+// --- Render Assembly / Exploded View ---
+// Explode offsets:
+exp_white_z = exploded_view ? explode_distance * 1.0 : 0;
+exp_black_z = 0;
+exp_back_z  = exploded_view ? -explode_distance * 1.0 : 0;
+exp_pogo_x  = exploded_view ? explode_distance * 0.8 : 0;
 
-if (show_frontplate_black) color("DimGray") frontplate_black();
-if (show_frontplate_white) translate([0, 0, 20]) color("White") frontplate_white();
-if (show_backplate) color("SlateGray") backplate();
+if (show_frontplate_black) 
+    translate([0, 0, exp_black_z]) 
+        color("DimGray") 
+            frontplate_black();
+
+if (show_frontplate_white) 
+    translate([0, 0, exp_white_z]) 
+        color("White") 
+            frontplate_white();
+
+if (show_backplate) 
+    translate([0, 0, exp_back_z]) 
+        color("SlateGray") 
+            backplate();
 
 module pogo_connectors_preview(panel_id = panel_id) {
     if (panel_id < 4) {
         // Right-facing pogo connector (male pogo pins facing outward toward next panel)
-        translate([digit_width/2 - 2.0, 0, pogo_z])
+        translate([digit_width/2 - pogo_boss_depth + 1.0 + exp_pogo_x, 0, pogo_z])
             pogo_connector_model(is_male = true);
     }
     if (panel_id > 1) {
         // Left-facing pogo connector (female flat pads facing outward toward previous panel)
-        translate([-digit_width/2 + 2.0, 0, pogo_z])
+        translate([-digit_width/2 + pogo_boss_depth - 1.0 - exp_pogo_x, 0, pogo_z])
             rotate([0, 180, 0])
                 pogo_connector_model(is_male = false);
     }

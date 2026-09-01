@@ -3,7 +3,7 @@
 // Isolated cutouts from the 7-segment housing for rapid test printing.
 // =========================================================================
 
-include <7segment_pogo.scad>
+include <./7segment_pogo.scad>
 
 // Ensure full display elements are hidden
 show_frontplate_black = false;
@@ -12,7 +12,7 @@ show_backplate = false;
 show_pogo_hardware = false;
 
 /* [Coupon Selection] */
-coupon_type = "both"; // ["usb", "pogo", "both"]
+coupon_type = "pogo"; // ["usb", "pogo", "both"]
 
 // Coupon 1: Flat Rectangular 40 x 20 mm Plate (2.0mm thick) with 14.1 x 7.2 mm USB Cutout
 module coupon_usb_c() {
@@ -33,16 +33,16 @@ module coupon_usb_c() {
 
 // Coupon 2: 4-Pin Magnetic Pogo Pin Connector Wall Cutout (with M2 screw bosses)
 module coupon_pogo_pin() {
-    wall_x = digit_width / 2; // +69.2 mm (Right wall with pogo transmitter mount)
+    wall_x = digit_width / 2; // Right outer wall face
     
     translate([-wall_x + 4.0, 0, 0]) {
         intersection() {
             // Full Panel 1 housing with pogo mounting features
             frontplate_black(panel_id = 1);
             
-            // Tight bounding box around the Pogo pocket & bosses (40mm long x 16mm deep x 13mm high)
-            translate([wall_x - 6.0, 0, total_depth / 2])
-                cube([16.0, 40.0, total_depth + 1.0], center=true);
+            // Bounding box around the Pogo pocket & bosses (16mm thick x 40mm wide x full housing Z height)
+            translate([wall_x - 6.0, 0, (total_depth - backplate_thick) / 2])
+                cube([20.0, 40.0, total_depth + backplate_thick + 4.0], center = true);
         }
     }
 }
