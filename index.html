@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padel Scoreboard - 7-Segment & Games/Sets Interactive Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/scoreboard.css">
+</head>
+<body class="env-night">
+
+    <!-- Top App Header / Live HUD -->
+    <header class="app-header">
+        <div class="brand-section">
+            <div class="brand-logo">
+                <span class="logo-badge">PADEL 7-SEG</span>
+                <div>
+                    <h1 class="brand-title">Modular Scoreboard Simulator</h1>
+                    <p class="brand-sub">WS2812B NeoPixel • BLE Wear OS & Racket Clicker • Games & Sets Ladder</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="hud-summary">
+            <div class="hud-item">
+                <span class="hud-label">Team 1 Points</span>
+                <span class="hud-val team1-col" id="hudT1Score">00</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Games</span>
+                <span class="hud-val accent-col" id="hudGames">0 - 0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Team 2 Points</span>
+                <span class="hud-val team2-col" id="hudT2Score">00</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Sets</span>
+                <span class="hud-val" id="hudSets">0 - 0</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <a href="settings.html" class="btn-header" style="text-decoration: none; color: inherit;">
+                <span class="icon">⚙️</span> Settings
+            </a>
+            <a href="ota.html" class="btn-header" style="text-decoration: none; color: inherit;">
+                <span class="icon">⚡</span> BLE Flash
+            </a>
+            <button class="btn-header primary" id="btnAutoPlay">
+                <span>▶</span> Auto Demo Match
+            </button>
+            <button class="btn-header" id="btnSound">
+                <span class="icon">🔊</span> Sound On
+            </button>
+            <button class="btn-header" id="btnFullscreen">
+                <span>⛶</span> Fullscreen
+            </button>
+        </div>
+    </header>
+
+    <!-- 1-Click Demo Scenarios Bar -->
+    <nav class="scenarios-bar">
+        <span class="scenarios-title">🎬 Demo Scenarios:</span>
+        <button class="scenario-pill highlight" data-scenario="side-swap">
+            <span>↔</span> Side-Swap Wipe
+        </button>
+        <button class="scenario-pill" data-scenario="deuce-ad">
+            <span>⚔️</span> Deuce & Ad (40-40)
+        </button>
+        <button class="scenario-pill danger" data-scenario="golden-point">
+            <span>⚡</span> Golden Point (Punto de Oro)
+        </button>
+        <button class="scenario-pill" data-scenario="tie-break">
+            <span>🔥</span> Tie-Break (6-6)
+        </button>
+        <button class="scenario-pill" data-scenario="set-point">
+            <span>🎯</span> Set Point Clinch
+        </button>
+        <button class="scenario-pill" data-scenario="match-point">
+            <span>🏆</span> Championship Match Point
+        </button>
+        <button class="scenario-pill" data-scenario="ble-flash">
+            <span>📶</span> BLE Connect 3x Flash
+        </button>
+        <button class="scenario-pill" data-scenario="rainbow-attract">
+            <span>🌈</span> Rainbow Showroom
+        </button>
+    </nav>
+
+    <!-- Main Scoreboard Display Stage -->
+    <main class="main-stage">
+        <div class="board-3d-wrapper" id="board3DContainer">
+            
+            <!-- 5-Panel Docked Scoreboard Assembly (Matching CAD Model) -->
+            <div class="scoreboard-assembly" id="padelScoreboard">
+                
+                <!-- Panel 1: Digit 0 (Team 1 Tens) -->
+                <div class="module-panel digit-panel" id="digit-0">
+                    <div class="digit-svg-container">
+                        <svg class="digit-svg" viewBox="0 0 100 180">
+                            <!-- Top (t) -->
+                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
+                            <!-- Top-Left (tl) -->
+                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
+                            <!-- Top-Right (tr) -->
+                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
+                            <!-- Middle (m) -->
+                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
+                            <!-- Bottom-Left (bl) -->
+                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
+                            <!-- Bottom-Right (br) -->
+                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
+                            <!-- Bottom (b) -->
+                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Panel 2: Digit 1 (Team 1 Ones) -->
+                <div class="module-panel digit-panel" id="digit-1">
+                    <div class="digit-svg-container">
+                        <svg class="digit-svg" viewBox="0 0 100 180">
+                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
+                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
+                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
+                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
+                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
+                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
+                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Panel 3: Central Games & Sets Snap Carrier Indicator Module (56mm width) -->
+                <div class="module-panel games-sets-panel" id="gamesSetsModule">
+                    <!-- Top Sets Section -->
+                    <div>
+                        <div class="ladder-section-title" id="labelSets">SETS</div>
+                        <div class="ladder-columns">
+                            <!-- Team 1 Sets Column (Left) -->
+                            <div class="ladder-col">
+                                <div class="sets-matrix">
+                                    <div class="diffuser-dot set-dot" id="set-dot-l-2" title="Team 1 Set 2"></div>
+                                    <div class="diffuser-dot set-dot" id="set-dot-l-1" title="Team 1 Set 1"></div>
+                                </div>
+                            </div>
+                            <!-- Team 2 Sets Column (Right) -->
+                            <div class="ladder-col">
+                                <div class="sets-matrix">
+                                    <div class="diffuser-dot set-dot" id="set-dot-r-2" title="Team 2 Set 2"></div>
+                                    <div class="diffuser-dot set-dot" id="set-dot-r-1" title="Team 2 Set 1"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center Laser Divider Text -->
+                    <div class="ladder-divider">
+                        <div class="ladder-section-title illuminated" id="labelGames">GAMES</div>
+                    </div>
+
+                    <!-- Bottom Games Section (9 Dots per side) -->
+                    <div class="ladder-columns">
+                        <!-- Team 1 Games Column (Left, 9 to 1 top-to-bottom or 1 to 9) -->
+                        <div class="ladder-col">
+                            <div class="games-matrix">
+                                <div class="diffuser-dot" id="game-dot-l-9"></div>
+                                <div class="diffuser-dot" id="game-dot-l-8"></div>
+                                <div class="diffuser-dot" id="game-dot-l-7"></div>
+                                <div class="diffuser-dot" id="game-dot-l-6"></div>
+                                <div class="diffuser-dot" id="game-dot-l-5"></div>
+                                <div class="diffuser-dot" id="game-dot-l-4"></div>
+                                <div class="diffuser-dot" id="game-dot-l-3"></div>
+                                <div class="diffuser-dot" id="game-dot-l-2"></div>
+                                <div class="diffuser-dot" id="game-dot-l-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- Team 2 Games Column (Right) -->
+                        <div class="ladder-col">
+                            <div class="games-matrix">
+                                <div class="diffuser-dot" id="game-dot-r-9"></div>
+                                <div class="diffuser-dot" id="game-dot-r-8"></div>
+                                <div class="diffuser-dot" id="game-dot-r-7"></div>
+                                <div class="diffuser-dot" id="game-dot-r-6"></div>
+                                <div class="diffuser-dot" id="game-dot-r-5"></div>
+                                <div class="diffuser-dot" id="game-dot-r-4"></div>
+                                <div class="diffuser-dot" id="game-dot-r-3"></div>
+                                <div class="diffuser-dot" id="game-dot-r-2"></div>
+                                <div class="diffuser-dot" id="game-dot-r-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel 4: Digit 2 (Team 2 Tens) -->
+                <div class="module-panel digit-panel" id="digit-2">
+                    <div class="digit-svg-container">
+                        <svg class="digit-svg" viewBox="0 0 100 180">
+                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
+                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
+                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
+                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
+                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
+                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
+                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Panel 5: Digit 3 (Team 2 Ones) -->
+                <div class="module-panel digit-panel" id="digit-3">
+                    <div class="digit-svg-container">
+                        <svg class="digit-svg" viewBox="0 0 100 180">
+                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
+                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
+                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
+                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
+                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
+                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
+                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
+                        </svg>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Interactive Companion Hardware Gadgets -->
+        <div class="companion-stage">
+            
+            <!-- 1. Galaxy Watch / Wear OS Smartwatch Emulator -->
+            <div class="gadget-card">
+                <div class="gadget-header">
+                    <span class="gadget-title">⌚ Galaxy Watch BLE Remote</span>
+                    <span class="gadget-status">Connected</span>
+                </div>
+                <div class="watch-frame">
+                    <div class="watch-top-info">
+                        <span id="watchSets">Set 1 (0-0)</span>
+                        <span class="watch-badge" id="watchSwapBadge">NORMAL</span>
+                    </div>
+
+                    <div class="watch-score-row">
+                        <button class="watch-btn-score t1" id="watchBtnT1">
+                            <span id="watchScoreT1">0</span>
+                            <span class="watch-btn-label">T1 +1</span>
+                        </button>
+                        <div style="font-size:12px;font-weight:800;color:#64748b;" id="watchGames">0-0</div>
+                        <button class="watch-btn-score t2" id="watchBtnT2">
+                            <span id="watchScoreT2">0</span>
+                            <span class="watch-btn-label">T2 +1</span>
+                        </button>
+                    </div>
+
+                    <div class="watch-bot-actions">
+                        <button class="watch-btn-action" id="watchBtnUndo">↺ UNDO</button>
+                        <button class="watch-btn-action" id="watchBtnSwap">↔ SWAP</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Padel Racket BLE Clicker Button Emulator -->
+            <div class="gadget-card">
+                <div class="gadget-header">
+                    <span class="gadget-title">🎾 Padel Racket BLE Button</span>
+                    <span class="gadget-status">Active</span>
+                </div>
+                <div class="racket-device-frame">
+                    <div class="racket-handle">
+                        <div class="racket-led" id="racketLedFeedback"></div>
+                    </div>
+                    <button class="racket-button-cap" id="racketTactileButton">
+                        CLICK / HOLD
+                    </button>
+                    <p class="racket-hint">
+                        <strong>Click</strong> = +1 Point<br>
+                        <strong>Hold (1.2s)</strong> = Side Swap
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom Control Drawer & Live Stream -->
+    <footer class="bottom-controls-container">
+        
+        <!-- Live Scoring Actions -->
+        <div class="control-group">
+            <span class="control-title">🎮 Referee Scoring Controls</span>
+            <div class="btn-grid-scoring">
+                <button class="btn-score-act t1" id="btnPointT1">Team 1 (+1)</button>
+                <button class="btn-score-act t2" id="btnPointT2">Team 2 (+1)</button>
+                <button class="btn-score-act secondary" id="btnUndo">↺ Undo (U)</button>
+                <button class="btn-score-act secondary" id="btnSideSwap">↔ Swap Sides (S)</button>
+                <button class="btn-score-act secondary" id="btnReset" style="grid-column: span 2;">🔄 Reset Match (R)</button>
+            </div>
+        </div>
+
+        <!-- Event Log Box -->
+        <div class="control-group">
+            <span class="control-title">📜 BLE Telemetry & Match Stream</span>
+            <div class="event-log-box" id="eventLogStream"></div>
+        </div>
+
+        <!-- Customization Panel -->
+        <div class="control-group">
+            <span class="control-title">⚙️ Hardware Optics & View</span>
+            <div class="options-panel">
+                <div class="option-row">
+                    <span>Golden Point (No-Ad):</span>
+                    <label class="switch-label">
+                        <input type="checkbox" id="toggleGoldenPoint">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+                <div class="option-row">
+                    <span>LED Theme:</span>
+                    <select class="select-dark" id="themeSelect">
+                        <option value="classic">Classic (Cyan / Crimson)</option>
+                        <option value="electric">Cyber (Lime / Magenta)</option>
+                        <option value="wimbledon">Wimbledon (Green / Gold)</option>
+                        <option value="monochrome">Pro (White / Amber)</option>
+                    </select>
+                </div>
+                <div class="option-row">
+                    <span>Court Light:</span>
+                    <select class="select-dark" id="envSelect">
+                        <option value="night">Night Floodlight</option>
+                        <option value="arena">Indoor Arena</option>
+                        <option value="day">Sunny Outdoor</option>
+                    </select>
+                </div>
+                <div class="option-row">
+                    <span>3D Tilt:</span>
+                    <input type="range" class="range-dark" id="tiltRange" min="-25" max="25" value="0">
+                </div>
+                <div class="option-row">
+                    <span>Speed:</span>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-header" data-speed="1" style="padding: 2px 8px; font-size: 11px;">1x</button>
+                        <button class="btn-header" data-speed="2" style="padding: 2px 8px; font-size: 11px;">2x</button>
+                        <button class="btn-header" data-speed="4" style="padding: 2px 8px; font-size: 11px;">4x</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </footer>
+
+    <!-- Championship Victory Celebration Overlay -->
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="victory-card">
+            <div class="victory-trophy">🏆</div>
+            <h2 class="victory-title">MATCH FINISHED</h2>
+            <p class="victory-winner" id="victoryWinnerName">TEAM 1 WINS!</p>
+            <button class="btn-header primary" id="btnDismissVictory" style="margin-top: 12px; padding: 10px 24px;">
+                Continue / Replay
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/audio.js"></script>
+    <script src="js/scoreboard.js"></script>
+    <script src="js/match-engine.js"></script>
+    <script src="js/controller.js"></script>
+</body>
+</html>

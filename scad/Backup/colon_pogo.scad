@@ -6,19 +6,6 @@
 // --- Key Parameters ---
 spacer_width = 36;      // Width of the colon spacer in mm
 show_pogo_hardware = true; // Set to true to preview 3D pogo connectors sitting in mounting pockets
-show_wiring = true;        // Set to true to preview LED PCBs and internal wiring
-
-/* [Inspection & Quality Control] */
-clearance_gap   = 0.2;  // [0.05:0.05:1.0] Minimum clearance gap to verify in mm (violations in Magenta)
-cutaway_depth   = 0.0;  // [-100:1:100] Offset along cut axis for cutaway view (mm)
-
-// --- Transparency / Opacity Settings (0.0 = transparent, 1.0 = solid) ---
-alpha_frontplate_black = 1.0; // [0.0:0.05:1.0]
-alpha_frontplate_white = 1.0; // [0.0:0.05:1.0]
-alpha_backplate        = 1.0; // [0.0:0.05:1.0]
-alpha_pogo_hardware    = 1.0; // [0.0:0.05:1.0]
-
-use <assembly_inspector.scad>
 
 pitch_x = 92.0;           // Matches 7segment_pogo digit pitch (92 mm)
 pitch_y_top = 92.0;
@@ -52,13 +39,6 @@ pogo_boss_r         = 3.0;  // Outer radius of internal screw bosses
 pogo_pass_depth     = 10.0; // Inward wiring clearance
 pogo_z              = 6.0;  // Centered along Z in the 12mm tunnel depth
 
-// --- Backplate Connector Tower & Stepped Lap-Joint Parameters ---
-pogo_tower_w        = 32.0; // Total width of connector tower along Y (centered at Y = 0)
-pogo_tower_h        = 10.5; // Top height of connector tower along Z (above Z = 0)
-lap_step_w          = 1.0;  // Width of stepped lap-joint overlap along Y and Z
-lap_step_d          = 1.0;  // Depth of stepped lap-joint shelf into wall thickness
-tower_clearance     = 0.2;  // Clearance per side for smooth slide-on fit of frontplate over tower
-
 // --- Calculated Dimensions ---
 diffuser_w = strip_width + 2;      
 total_seg_w = diffuser_w + white_wall * 2; 
@@ -80,112 +60,58 @@ module rounded_stadium_slot(depth, length_y, height_z, center = true) {
     }
 }
 
-// Monolithic Connector Tower integrated on the Colon Backplate (Left or Right wall)
-module colon_backplate_connector_tower(is_left = false) {
+// Internal Screw Bosses added to the inner face of colon side walls (start at -3.0mm from outside face)
+module colon_pogo_mounting_bosses(is_left = false) {
     side = is_left ? -1 : 1;
     wall_x = side * spacer_width / 2; // Outside face (0.0mm reference)
     inner_x = side * (spacer_width / 2 - 2.0); // Inside face of 2mm wall
-    boss_face_x = wall_x - side * pogo_boss_depth; // Seating plane: -3.0mm from outside
-    boss_len = 6.0; // Inward boss extension
+    boss_face_x = wall_x - side * pogo_boss_depth; // Exactly -3.0mm from outside face
+    boss_len = 6.0; // Inward extension from boss face into housing cavity
     
-    difference() {
-        union() {
-            // 1. Outer Wall Section (from wall_x to outer shelf step)
-            translate([wall_x - side * (2.0 - lap_step_d)/2, 0, (pogo_tower_h - backplate_thick)/2])
-                cube([2.0 - lap_step_d, pogo_tower_w, pogo_tower_h + backplate_thick], center = true);
-                
-            // 2. Inner Stepped Tongue / Backing Flange (Lap Joint Overlap)
-            translate([inner_x + side * lap_step_d/2, 0, (pogo_tower_h + lap_step_w - backplate_thick)/2])
-                cube([lap_step_d, pogo_tower_w + lap_step_w * 2, pogo_tower_h + lap_step_w + backplate_thick], center = true);
-                
-            // 3. Reinforced Solid Screw Bosses & Downward Web Anchors
-            for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-                hull() {
-                    translate([inner_x + side * 0.1, y, pogo_z])
-                        cube([0.2, pogo_boss_r * 2, pogo_body_h + 2.0], center = true);
-                    translate([boss_face_x - side * boss_len, y, pogo_z])
-                        rotate([0, 90, 0])
-                            cylinder(h = 0.5, r = pogo_boss_r, center = true, $fn = 24);
-                }
-                // Solid downward anchor web to backplate floor
-                translate([(inner_x + (boss_face_x - side * boss_len))/2, y, (pogo_z - backplate_thick)/2])
-                    cube([abs(inner_x - (boss_face_x - side * boss_len)), pogo_boss_r * 2, pogo_z + backplate_thick], center = true);
-            }
-            
-            // 4. Solid Monolithic Base Floor Footing
-            // Fills the floor from Z = -backplate_thick to Z = 0 under the tower and fuses it directly into the backplate
-            translate([(wall_x + (inner_x - side * 4.0))/2, 0, -backplate_thick/2])
-                cube([abs(wall_x - (inner_x - side * 4.0)), pogo_tower_w, backplate_thick], center = true);
+    for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
+        hull() {
+            translate([inner_x + side * 0.1, y, pogo_z])
+                cube([0.2, pogo_boss_r * 2, pogo_body_h + 2.0], center=true);
+            translate([boss_face_x - side * boss_len, y, pogo_z])
+                rotate([0, 90, 0])
+                    cylinder(h=0.5, r=pogo_boss_r, center=true, $fn=24);
         }
-        
-        // --- SUBTRACTIONS ---
-        // 1. Full Outside-Mount Stadium Pocket (23.9 x 4.4 mm, 3.0mm deep from outside)
-        translate([wall_x - side * (pogo_boss_depth / 2 - 0.05), 0, pogo_z])
-            rotate([0, 90, 0])
-                rounded_stadium_slot(depth = pogo_boss_depth + 0.1, length_y = pogo_ear_span, height_z = pogo_body_h, center = true);
-            
-        // 2. Central Body Through-Opening (18.0 x 4.4 mm) passing into interior
-        translate([wall_x - side * (3.0 + 3.0), 0, pogo_z])
-            rotate([0, 90, 0])
-                rounded_stadium_slot(depth = 8.0, length_y = pogo_body_w, height_z = pogo_body_h, center = true);
-            
-        // 3. 2x Screw Pilot Holes drilled into bosses from boss_face_x
-        for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-            translate([boss_face_x + side * 0.5, y, pogo_z])
-                rotate([0, -side * 90, 0])
-                    cylinder(h = pogo_hole_depth + 1.0, r = pogo_hole_d / 2, $fn = 20);
-        }
-        
-        // 4. Sense Resistor Stash Pocket (5.0 x 3.5 x 2.5 mm cavity)
-        translate([inner_x - side * 4.0, side * 8.0, 2.0])
-            cube([5.0, 3.5, 3.0], center = true);
-                    // 5. Downward Wire Drop Chute (stays safely inside inner wall)
-            translate([inner_x - side * 3.5, 0, pogo_z / 2])
-                cube([5.0, 12.0, pogo_z + 0.1], center = true);
     }
 }
 
-// U-Shaped Retaining Collar added to the inside face of the colon frontplate wall (above Z = 0)
-module colon_frontplate_tower_u_collar(is_left = false) {
+module colon_pogo_cutout(is_left = false) {
     side = is_left ? -1 : 1;
-    inner_x = side * (spacer_width / 2 - 2.0); // Inside face of 2mm wall
-    collar_thick = 2.0;                         // Inward extension into frontplate cavity
-    collar_w = pogo_tower_w + lap_step_w * 2 + 5.0; // 39.0 mm total collar width along Y
-    collar_h = total_depth;                     // Height above Z = 0 (13.0 mm)
+    wall_x = side * spacer_width / 2; // Outside face (0.0mm reference)
+    inner_x = side * (spacer_width / 2 - 2.0);
+    boss_face_x = wall_x - side * pogo_boss_depth; // -3.0mm from outside
     
-    translate([inner_x - side * collar_thick / 2, 0, collar_h / 2])
-        cube([collar_thick, collar_w, collar_h], center = true);
-}
-
-// Stepped U-Notch & Retention Channel cutout subtracted from the colon frontplate side skirt & U-collar
-module colon_frontplate_stepped_notch(is_left = false) {
-    side = is_left ? -1 : 1;
-    wall_x = side * spacer_width / 2; // Outside face
-    inner_x = side * (spacer_width / 2 - 2.0); // Inside face
-    
-    // 1. Outer notch cutout (32.4mm wide along Y, 10.7mm high along Z)
-    translate([wall_x - side * (2.0 - lap_step_d)/2 + side * 0.25, 0, (pogo_tower_h + tower_clearance - backplate_thick - 1.0)/2])
-        cube([2.0 - lap_step_d + 0.6, pogo_tower_w + tower_clearance * 2, pogo_tower_h + tower_clearance + backplate_thick + 1.0], center = true);
+    // 1. Full Connector Pocket (23.9 x 4.4 mm) recessed 3.0mm deep from outside
+    translate([wall_x - side * (pogo_boss_depth / 2 - 0.05), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = pogo_boss_depth + 0.1, length_y = pogo_ear_span, height_z = pogo_body_h, center = true);
         
-    // 2. Inner stepped U-channel rebate cutout (34.4mm wide along Y, 11.7mm high along Z)
-    translate([inner_x + side * lap_step_d/2, 0, (pogo_tower_h + lap_step_w + tower_clearance - backplate_thick - 1.0)/2])
-        cube([lap_step_d + 0.1, pogo_tower_w + lap_step_w * 2 + tower_clearance * 2, pogo_tower_h + lap_step_w + tower_clearance + backplate_thick + 1.0], center = true);
-
-    // 3. Central boss & wiring clearance pocket through the inner collar (above Z = 0)
-    translate([inner_x - side * 1.5, 0, (pogo_tower_h + tower_clearance)/2])
-        cube([3.5, 29.0, pogo_tower_h + tower_clearance + 0.1], center = true);
-
-    // 4. Lead-in Chamfer on collar bottom edge at Z = 0 for smooth vertical mating
-    translate([inner_x - side * 1.0, 0, 0.4])
-        rotate([0, side * 45, 0])
-            cube([1.2, pogo_tower_w + lap_step_w * 2 + 1.0, 1.2], center = true);
+    // 2. Central Body Inward Wiring Opening (18.0 x 4.4 mm) extending 7.0mm inward behind wall
+    translate([wall_x - side * (3.5 + 2.0), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = 7.0, length_y = pogo_body_w, height_z = pogo_body_h, center = true);
+        
+    // 3. 2x Screw Pilot Holes drilled into bosses starting at boss_face_x (-3.0mm from outside)
+    for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
+        translate([boss_face_x + side * 0.5, y, pogo_z])
+            rotate([0, -side * 90, 0])
+                cylinder(h = pogo_hole_depth + 1.0, r = pogo_hole_d / 2, $fn = 20);
+    }
+    
+    // 4. Sense Resistor Stash Pocket (for 4.7k resistor inside colon)
+    translate([inner_x - side * 4.0, side * 8.0, pogo_z - 3.0])
+        cube([5.0, 3.5, 2.5], center = true);
 }
 
 
 
 // Visual 3D model of the 4-pin magnetic connector
-module pogo_connector_model(is_male = true, alpha = 1.0) {
-    color("#1e293b", alpha) {
+module pogo_connector_model(is_male = true) {
+    color("#1e293b") {
         cube([4.8, 14.6, 7.8], center=true);
         for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
             difference() {
@@ -200,12 +126,12 @@ module pogo_connector_model(is_male = true, alpha = 1.0) {
             }
         }
     }
-    color("#cbd5e1", alpha) {
+    color("#cbd5e1") {
         for (my = [-5.2, 5.2]) {
             translate([1.5, my, 0]) rotate([0, 90, 0]) cylinder(h=2.0, r=1.5, center=true, $fn=20);
         }
     }
-    color("#f59e0b", alpha) {
+    color("#f59e0b") {
         for (i = [-1.5, -0.5, 0.5, 1.5]) {
             py = i * 2.54;
             if (is_male) {
@@ -300,15 +226,14 @@ module colon_frontplate_black() {
             }
                 
             // 3. Corner backplate screw bosses
-            for (x = [spacer_width/2 - 6, -spacer_width/2 + 6]) {
-                for (y = [digit_height/2 - 6, -digit_height/2 + 6]) {
-                    translate([x, y, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
-                }
-            }
+            translate([spacer_width/2 - 6, digit_height/2 - 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
+            translate([-spacer_width/2 + 6, digit_height/2 - 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
+            translate([spacer_width/2 - 6, -digit_height/2 + 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
+            translate([-spacer_width/2 + 6, -digit_height/2 + 6, 0]) cylinder(h=total_depth - 1.2, r=4.2, $fn=20);
             
-            // 4. U-shape retention collars around left and right connector towers
-            colon_frontplate_tower_u_collar(is_left = true);
-            colon_frontplate_tower_u_collar(is_left = false);
+            // 4. Internal Pogo screw bosses on left and right walls
+            colon_pogo_mounting_bosses(is_left = true);
+            colon_pogo_mounting_bosses(is_left = false);
         }
         
         // White colon lightguide cylindrical boreholes (through-holes to front face)
@@ -320,15 +245,14 @@ module colon_frontplate_black() {
         colon_lightguide_snap_teeth(is_subtraction = true);
         
         // Screw holes for backplate (M3 heat-set inserts)
-        for (x = [spacer_width/2 - 6, -spacer_width/2 + 6]) {
-            for (y = [digit_height/2 - 6, -digit_height/2 + 6]) {
-                translate([x, y, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
-            }
-        }
+        translate([spacer_width/2 - 6, digit_height/2 - 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        translate([-spacer_width/2 + 6, digit_height/2 - 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        translate([spacer_width/2 - 6, -digit_height/2 + 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        translate([-spacer_width/2 + 6, -digit_height/2 + 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
         
-        // Stepped U-Notch cutouts mating over the backplate connector towers
-        colon_frontplate_stepped_notch(is_left = true);
-        colon_frontplate_stepped_notch(is_left = false);
+        // Pogo connector mounting cutouts on both left and right walls
+        colon_pogo_cutout(is_left = true);
+        colon_pogo_cutout(is_left = false);
             
         // Wire & solder joint clearance notches
         colon_wire_clearance_notches(1.8);
@@ -365,7 +289,7 @@ module colon_led_placement_indicators() {
     for (y_center = [colon_y_offset, -colon_y_offset]) {
         // 1. Center alignment crosshair ticks on left & right shoulders (at X = +/-6.0mm, Y = center)
         translate([0, y_center, -0.3]) {
-            linear_extrude(0.3) {
+            linear_extrude(0.4) {
                 // Centerline tick marks
                 for (side = [-1, 1]) {
                     translate([side * 6.0, 0])
@@ -382,7 +306,7 @@ module colon_led_placement_indicators() {
         
         // 2. PCB corner alignment L-brackets at the 4 corners of the 12x20mm PCB
         translate([0, y_center, -0.3]) {
-            linear_extrude(0.3) {
+            linear_extrude(0.4) {
                 for (sx = [-6.0, 6.0]) {
                     for (sy = [-10.0, 10.0]) {
                         translate([sx, sy]) {
@@ -399,17 +323,9 @@ module colon_led_placement_indicators() {
 
 module colon_backplate() {
     difference() {
-        union() {
-            // Main flat plate (shrunk by 2mm per side for walls + 0.2mm clearance)
-            translate([-(spacer_width - 4.4)/2, -(digit_height - 4.4)/2, -backplate_thick])
-                cube([spacer_width - 4.4, digit_height - 4.4, backplate_thick]);
-                
-            // Left Connector Tower (Female Pogo)
-            colon_backplate_connector_tower(is_left = true);
-            
-            // Right Connector Tower (Male Pogo)
-            colon_backplate_connector_tower(is_left = false);
-        }
+        // Main flat plate (shrunk by 2mm per side for walls + 0.2mm clearance)
+        translate([-(spacer_width - 4.4)/2, -(digit_height - 4.4)/2, -backplate_thick])
+            cube([spacer_width - 4.4, digit_height - 4.4, backplate_thick]);
             
         // Recesses for LED PCBs (12x20mm, 2mm deep)
         for (y = [colon_y_offset, -colon_y_offset]) {
@@ -435,10 +351,6 @@ module colon_backplate() {
         translate([0, 0, -strip_recess_depth/2]) 
             cube([12, colon_y_offset * 2, strip_recess_depth + 0.1], center=true);
             
-        // Direct Horizontal Wire Pass-Through Channel (stays safely inside inner 2mm walls)
-        translate([0, 0, -strip_recess_depth/2 + 0.05])
-            cube([spacer_width - 4.8, 10.0, strip_recess_depth + 0.1], center=true);
-            
         // Visual LED placement indicators (LED target frame & corner brackets)
         colon_led_placement_indicators();
             
@@ -461,6 +373,7 @@ module colon_backplate() {
 }
 
 // --- 3D Electronics & Wiring Visualization ---
+show_wiring = true; // Set to true to preview LED PCBs, solder pads, sense resistor, and wiring harness
 
 // Helper: 3D wire segment connecting point A to point B
 module wire_segment(p1, p2, r=0.45) {
@@ -652,104 +565,59 @@ module colon_electronics_wiring_preview() {
 }
 
 // --- Render Mode ---
-render_mode = "exploded"; // ["exploded", "assembled", "collision_check", "clearance_check", "cutaway_x", "cutaway_y", "cutaway_z", "slice_z", "wiring_view", "wiring_closeup", "lightguide_inspection", "backplate_only", "frontplate_black_only", "frontplate_white_only"]
+render_mode = "exploded"; // ["exploded", "assembled", "wiring_view", "wiring_closeup", "lightguide_inspection", "backplate_only", "frontplate_black_only", "frontplate_white_only"]
 
-module colon_pogo_connectors_preview(alpha = alpha_pogo_hardware) {
+module colon_pogo_connectors_preview() {
     // Left-facing female pogo connector (receives from Digit 2)
     translate([-spacer_width/2 + 2.0, 0, pogo_z])
         rotate([0, 180, 0])
-            pogo_connector_model(is_male = false, alpha = alpha);
+            pogo_connector_model(is_male = false);
             
     // Right-facing male pogo connector (transmits to Digit 3)
     translate([spacer_width/2 - 2.0, 0, pogo_z])
-        pogo_connector_model(is_male = true, alpha = alpha);
+        pogo_connector_model(is_male = true);
 }
 
 module render_colon_assembly() {
-    if (render_mode == "collision_check") {
-        // Interference between colon housing and backplate
-        show_collision() {
-            colon_frontplate_black();
-            colon_backplate();
-        }
-        // Interference between colon housing and white lightguides
-        show_collision() {
-            colon_frontplate_black();
-            colon_frontplate_white();
-        }
-    } else if (render_mode == "clearance_check") {
-        check_clearance(gap = clearance_gap) {
-            colon_backplate();
-            colon_frontplate_black();
-        }
-    } else if (render_mode == "cutaway_x") {
-        cutaway(axis = "x", cut_depth = cutaway_depth) {
-            color("DimGray", alpha_frontplate_black) colon_frontplate_black();
-            color("White", alpha_frontplate_white) colon_frontplate_white();
-            color("SlateGray", alpha_backplate) colon_backplate();
-            if (show_pogo_hardware) colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
-            if (show_wiring) colon_electronics_wiring_preview();
-        }
-    } else if (render_mode == "cutaway_y") {
-        cutaway(axis = "y", cut_depth = cutaway_depth) {
-            color("DimGray", alpha_frontplate_black) colon_frontplate_black();
-            color("White", alpha_frontplate_white) colon_frontplate_white();
-            color("SlateGray", alpha_backplate) colon_backplate();
-            if (show_pogo_hardware) colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
-            if (show_wiring) colon_electronics_wiring_preview();
-        }
-    } else if (render_mode == "cutaway_z") {
-        cutaway(axis = "z", cut_depth = cutaway_depth) {
-            color("DimGray", alpha_frontplate_black) colon_frontplate_black();
-            color("White", alpha_frontplate_white) colon_frontplate_white();
-            color("SlateGray", alpha_backplate) colon_backplate();
-            if (show_pogo_hardware) colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
-            if (show_wiring) colon_electronics_wiring_preview();
-        }
-    } else if (render_mode == "slice_z") {
-        slice_2d(cut_z = pogo_z) {
-            colon_frontplate_black();
-            colon_backplate();
-        }
-    } else if (render_mode == "exploded") {
-        color("DimGray", alpha_frontplate_black) colon_frontplate_black();
-        translate([0, 0, 20]) color("White", alpha_frontplate_white) colon_frontplate_white();
-        translate([0, 0, -20]) color("SlateGray", alpha_backplate) colon_backplate();
+    if (render_mode == "exploded") {
+        color("DimGray") colon_frontplate_black();
+        translate([0, 0, 20]) color("White") colon_frontplate_white();
+        translate([0, 0, -20]) color("SlateGray") colon_backplate();
         if (show_pogo_hardware) {
-            colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
+            colon_pogo_connectors_preview();
         }
         if (show_wiring) {
             translate([0, 0, -20]) colon_electronics_wiring_preview();
         }
     } else if (render_mode == "assembled") {
-        color("DimGray", alpha_frontplate_black) colon_frontplate_black();
-        color("White", alpha_frontplate_white) colon_frontplate_white();
-        color("SlateGray", alpha_backplate) colon_backplate();
+        color("DimGray") colon_frontplate_black();
+        color("White") colon_frontplate_white();
+        color("SlateGray") colon_backplate();
         if (show_pogo_hardware) {
-            colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
+            colon_pogo_connectors_preview();
         }
         if (show_wiring) {
             colon_electronics_wiring_preview();
         }
     } else if (render_mode == "lightguide_inspection") {
         // Shows white reflector cylinder seated directly over backplate and LED for optical inspection
-        color("SlateGray", alpha_backplate) colon_backplate();
-        color("White", alpha_frontplate_white) colon_frontplate_white();
+        color("SlateGray") colon_backplate();
+        color("White") colon_frontplate_white();
         colon_electronics_wiring_preview();
     } else if (render_mode == "wiring_view") {
-        color("SlateGray", alpha_backplate) colon_backplate();
-        colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
+        color("SlateGray") colon_backplate();
+        colon_pogo_connectors_preview();
         colon_electronics_wiring_preview();
     } else if (render_mode == "wiring_closeup") {
-        color("SlateGray", alpha_backplate) colon_backplate();
-        colon_pogo_connectors_preview(alpha = alpha_pogo_hardware);
+        color("SlateGray") colon_backplate();
+        colon_pogo_connectors_preview();
         colon_electronics_wiring_preview();
     } else if (render_mode == "backplate_only") {
-        color("SlateGray", alpha_backplate) colon_backplate();
+        color("SlateGray") colon_backplate();
     } else if (render_mode == "frontplate_black_only") {
-        color("DimGray", alpha_frontplate_black) colon_frontplate_black();
+        color("DimGray") colon_frontplate_black();
     } else if (render_mode == "frontplate_white_only") {
-        color("White", alpha_frontplate_white) colon_frontplate_white();
+        color("White") colon_frontplate_white();
     }
 }
 

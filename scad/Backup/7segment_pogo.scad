@@ -5,31 +5,15 @@
 // Designed for Bambu Lab AMS / multi-material 3D printing.
 
 // --- Key Parameters ---
-panel_id              = 1;     // [1:4]
+panel_id              = 1;     // Set to 1 (leftmost), 2, 3 (middle), or 4 (rightmost end panel)
 
-// --- Visibility, Assembly & Inspection Modes ---
-/* [Inspection & Quality Control] */
-inspection_mode       = "exploded"; // ["assembled": Fully Assembled View, "exploded": Exploded Layer View, "collision_check": Interference Check (Red Collisions), "clearance_check": Clearance Gap Check (Magenta), "cutaway_x": Cutaway Cross-Section (X-Axis), "cutaway_y": Cutaway Cross-Section (Y-Axis), "slice_z": 2D Seam Slice Profile (Z-Plane)]
-clearance_gap         = 0.2;  // [0.05:0.05:1.0] Minimum clearance gap to verify in mm (violations highlighted in Magenta)
-cutaway_depth         = 0.0;  // [-100:1:100] Offset along cut axis for cutaway view (mm)
-
-/* [Layer Visibility Toggles] */
+// --- Visibility & Exploded View Toggles ---
 show_frontplate_black = true;  // Set to true to view black frontplate housing
 show_frontplate_white = true;  // Set to true to view white diffuser frontplate
 show_backplate        = true;  // Set to true to view backplate
 show_pogo_hardware    = true;  // Set to true to preview 3D pogo connectors sitting in mounting pockets
-exploded_view         = true;  // Legacy toggle (used when inspection_mode is exploded)
-explode_distance      = 55.0;  // Distance between exploded layers in mm
-
-/* [Transparency / Opacity Settings] */
-alpha_frontplate_black = 1.0;  // [0.0:0.05:1.0]
-alpha_frontplate_white = 1.0;  // [0.0:0.05:1.0]
-alpha_backplate        = 1.0;  // [0.0:0.05:1.0]
-alpha_pogo_hardware    = 1.0;  // [0.0:0.05:1.0]
-
-use <assembly_inspector.scad>
-use <rear_joining_bracket_hinged.scad>
-use <rear_corner_foot.scad>
+exploded_view         = false; // Set to true to view all layers exploded along Z and X axes
+explode_distance      = 35.0;  // Distance between exploded layers in mm
 
 pitch_x = 92;           // Distance between the middle of the vertical LED strips = 92mm
 pitch_y_top = 92;       // Distance from middle horizontal cavity to top horizontal cavity = 92mm
@@ -52,7 +36,6 @@ corner_pocket_h = 31.6;                   // Grown vertically by 1.9mm (from 29.
 corner_pocket_size = 31.6;                // Corner pocket vertical size
 mid_pocket_w = 34.0;                      // 34.0mm width (horizontal channel = exactly 50.0 mm)
 mid_pocket_l = 47.8;                      // Grown vertically by 1.9mm on each end (from 44.0mm) to grow both ends equally
-connector_corner_relief_h = 2.0;          // Cutout depth from bottom of frontplate segment corners (mm) for LED connector clearance
 
 // --- 4-Pin Magnetic Pogo Pin Connector Parameters ---
 // Outside-Mount Parameters:
@@ -73,13 +56,6 @@ pogo_boss_depth     = 3.0;  // Boss seating face is exactly 3.0mm deep from outs
 pogo_boss_r         = 3.0;  // Outer radius of internal screw bosses (dia 6.0 mm)
 pogo_pass_depth     = 10.0; // Inward wiring clearance for solder pins and 4-wire harness
 pogo_z              = 6.0;  // Centered along Z in the 12mm tunnel depth
-
-// --- Backplate Connector Tower & Stepped Lap-Joint Parameters ---
-pogo_tower_w        = 32.0; // Total width of connector tower along Y (centered at Y = 0)
-pogo_tower_h        = 10.5; // Top height of connector tower along Z (above Z = 0)
-lap_step_w          = 1.0;  // Width of stepped lap-joint overlap along Y and Z
-lap_step_d          = 1.0;  // Depth of stepped lap-joint shelf into wall thickness
-tower_clearance     = 0.2;  // Clearance per side for smooth slide-on fit of frontplate over tower
 
 tunnel_depth = 12.4;    // Depth of the light tunnel (calculated from total_depth - diffuser_thick)
 diffuser_thick = 0.6;   // Thickness of the white top diffuser layer (0.6mm high brightness, 0.8mm balanced)
@@ -123,9 +99,10 @@ digit_height = pitch_y_top + pitch_y_bot + total_seg_w + margin_y * 2;
 
 // --- Shapes & Helpers ---
 
-// Pointy-end polygon for classic 7-segment display aesthetic (centered at origin, flush from Z = 0 to h)
+// Pointy-end polygon for classic 7-segment display aesthetic (centered at origin)
 module segment_shape(l, w, h) {
-    linear_extrude(height = h)
+    translate([0, 0, -0.1])
+    linear_extrude(height = h + 0.2)
     polygon([
         [-l/2 + w/2, -w/2],
         [l/2 - w/2, -w/2],
@@ -240,12 +217,88 @@ module rtc_ds1302_mount() {
 }
 
 // -------------------------------------------------------------
-// Backplate Connector Tower & Cable Support Modules
+// Pogo Pin Connector Support Modules
 // -------------------------------------------------------------
 
-// USB-C Cutout profile (14.1mm width horizontal along Y, 6.0mm height vertical along Z with 2.0mm flat vertical ends)
+// Internal Screw Bosses added to the inner face of the side wall (start at -3.0mm from outside face)
+module pogo_mounting_bosses(is_left = false) {
+    side = is_left ? -1 : 1;
+    wall_x = side * digit_width / 2; // Outside face of wall (0.0mm reference)
+    inner_x = side * (digit_width / 2 - 2.0); // Inside face of 2mm wall
+    boss_face_x = wall_x - side * pogo_boss_depth; // Exactly -3.0mm from outside face
+    boss_len = 6.0; // Inward extension from boss face into housing cavity
+    
+    for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
+        // Reinforced boss cylinder blended from inner wall to boss back
+        hull() {
+            translate([inner_x + side * 0.1, y, pogo_z])
+                cube([0.2, pogo_boss_r * 2, pogo_body_h + 2.0], center=true);
+            translate([boss_face_x - side * boss_len, y, pogo_z])
+                rotate([0, 90, 0])
+                    cylinder(h=0.5, r=pogo_boss_r, center=true, $fn=24);
+        }
+    }
+}
+
+// Robust Snap-In Cable Clip fused directly to the inner perimeter wall and ceiling
+module perimeter_wall_clip(x_pos, y_pos, along_x = false, side_sign = -1) {
+    clip_len = 8.0;      // Length along the wall (8.0mm)
+    clip_reach = 5.5;    // Projection from wall into the housing (5.5mm)
+    wire_w = 3.6;        // Wire cavity width for high-current wires
+    wire_h = 4.2;        // Wire cavity height (4.2mm)
+    lip_w = 1.1;         // Retention overhang lip (1.1mm)
+    
+    translate([x_pos, y_pos, 0]) {
+        rotate([0, 0, along_x ? (side_sign > 0 ? 90 : -90) : (side_sign > 0 ? 180 : 0)]) {
+            // Local frame: Wall is at X = 0, clip extends in +X direction
+            difference() {
+                // 1. Solid clip body firmly rooted into perimeter wall and front ceiling
+                translate([clip_reach/2 - 0.5, 0, (total_depth - 1.0)/2 + 1.0])
+                    cube([clip_reach + 1.0, clip_len, total_depth - 1.0], center=true);
+                    
+                // 2. Wire pocket holding wires snugly against the wall (centered at Z = pogo_z)
+                translate([wire_w/2 + 0.3, 0, pogo_z])
+                    cube([wire_w + 0.6, clip_len + 0.2, wire_h], center=true);
+                    
+                // 3. Rear insertion slot (Z = 0 up to pocket) with snap retention lip
+                translate([wire_w/2 - lip_w/2, 0, pogo_z/2])
+                    cube([wire_w - lip_w + 0.2, clip_len + 0.2, pogo_z + 0.1], center=true);
+                    
+                // 4. 45-degree lead-in chamfer for smooth wire press-in
+                translate([wire_w - 0.2, 0, 1.2])
+                    rotate([0, 45, 0])
+                        cube([2.0, clip_len + 0.4, 2.0], center=true);
+            }
+        }
+    }
+}
+
+module frontplate_perimeter_cable_holders() {
+    // 1. Left inner wall (X = -67.2mm, pointing inward +X): Upper and Lower runs
+    for (y = [-70.0, -40.0, 40.0, 70.0]) {
+        perimeter_wall_clip(-67.2, y, along_x = false, side_sign = -1);
+    }
+    
+    // 2. Right inner wall (X = +67.2mm, pointing inward -X): Upper and Lower runs
+    for (y = [-70.0, -40.0, 40.0, 70.0]) {
+        perimeter_wall_clip(67.2, y, along_x = false, side_sign = 1);
+    }
+    
+    // 3. Top short side wall (Y = +104.0mm, pointing inward -Y)
+    for (x = [-45.0, -20.0, 20.0, 45.0]) {
+        perimeter_wall_clip(x, 104.0, along_x = true, side_sign = 1);
+    }
+    
+    // 4. Bottom short side wall (Y = -104.0mm, pointing inward +Y)
+    for (x = [-45.0, -20.0, 20.0, 45.0]) {
+        perimeter_wall_clip(x, -104.0, along_x = true, side_sign = -1);
+    }
+}
+
+// USB-C Cutout module (14.1mm width horizontal along Y, 6.0mm height vertical along Z with 2.0mm flat vertical ends)
 module usb_c_profile_2d(width = 14.1, height = 6.0, flat_vert = 2.0) {
     r = (height - flat_vert) / 2; // 2.0 mm corner radius
+    // When rotated with rotate([0, 90, 0]), 2D Y-axis becomes 3D Y-axis (horizontal along wall), and 2D X-axis becomes 3D -Z axis (vertical):
     dy = width / 2 - r;           // 5.05 mm along Y (horizontal)
     dz = flat_vert / 2;           // 1.0 mm along X (vertical in 3D)
     hull() {
@@ -267,183 +320,38 @@ module rounded_stadium_slot(depth, length_y, height_z, center = true) {
     }
 }
 
-// Monolithic Connector Tower integrated on the Backplate (Left or Right wall)
-module backplate_connector_tower(is_left = false, is_usb = false) {
+// Pogo connector cutouts and pilot screw holes subtracted from the frontplate (Outside Mount)
+module pogo_mounting_cutout(is_left = false) {
     side = is_left ? -1 : 1;
-    wall_x = side * digit_width / 2; // Outside face of 2mm wall
-    inner_x = side * (digit_width / 2 - 2.0); // Inside face of 2mm wall
-    boss_face_x = wall_x - side * pogo_boss_depth; // Seating plane: -3.0mm from outside
-    boss_len = 6.0; // Inward boss extension
+    wall_x = side * digit_width / 2; // Outside face (0.0mm reference)
+    inner_x = side * (digit_width / 2 - 2.0);
+    boss_face_x = wall_x - side * pogo_boss_depth; // -3.0mm from outside
     
-    difference() {
-        union() {
-            // 1. Outer Wall Section (from wall_x to outer shelf step)
-            // Height: -backplate_thick to pogo_tower_h (10.5mm)
-            // Y-width: pogo_tower_w (32.0mm)
-            translate([wall_x - side * (2.0 - lap_step_d)/2, 0, (pogo_tower_h - backplate_thick)/2])
-                cube([2.0 - lap_step_d, pogo_tower_w, pogo_tower_h + backplate_thick], center = true);
-                
-            // 2. Inner Stepped Tongue / Backing Flange (Lap Joint Overlap)
-            // Height: -backplate_thick to (pogo_tower_h + lap_step_w) (11.5mm)
-            // Y-width: pogo_tower_w + 2 * lap_step_w (34.0mm)
-            translate([inner_x + side * lap_step_d/2, 0, (pogo_tower_h + lap_step_w - backplate_thick)/2])
-                cube([lap_step_d, pogo_tower_w + lap_step_w * 2, pogo_tower_h + lap_step_w + backplate_thick], center = true);
-                
-            // 3. Reinforced Solid Screw Bosses & Downward Web Anchors
-            if (!is_usb) {
-                for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-                    hull() {
-                        translate([inner_x + side * 0.1, y, pogo_z])
-                            cube([0.2, pogo_boss_r * 2, pogo_body_h + 2.0], center = true);
-                        translate([boss_face_x - side * boss_len, y, pogo_z])
-                            rotate([0, 90, 0])
-                                cylinder(h = 0.5, r = pogo_boss_r, center = true, $fn = 24);
-                    }
-                    // Solid downward anchor web to backplate floor
-                    translate([(inner_x + (boss_face_x - side * boss_len))/2, y, (pogo_z - backplate_thick)/2])
-                        cube([abs(inner_x - (boss_face_x - side * boss_len)), pogo_boss_r * 2, pogo_z + backplate_thick], center = true);
-                }
-            } else {
-                // Solid anchor block around USB-C port
-                translate([(inner_x + wall_x - side * 4.0)/2, 0, (pogo_z - backplate_thick)/2])
-                    cube([abs(inner_x - (wall_x - side * 4.0)), 20.0, pogo_z + backplate_thick], center = true);
-            }
-            
-            // 4. Solid Monolithic Base Floor Footing
-            // Fills the floor from Z = -backplate_thick to Z = 0 under the tower and fuses it directly into the backplate
-            translate([(wall_x + (inner_x - side * 4.0))/2, 0, -backplate_thick/2])
-                cube([abs(wall_x - (inner_x - side * 4.0)), pogo_tower_w, backplate_thick], center = true);
-        }
+    // 1. Full Connector Pocket (23.9 x 4.4 mm) recessed 3.0mm deep from outside (from wall_x to boss_face_x)
+    translate([wall_x - side * (pogo_boss_depth / 2 - 0.05), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = pogo_boss_depth + 0.1, length_y = pogo_ear_span, height_z = pogo_body_h, center = true);
         
-        // --- SUBTRACTIONS (Cut from Tower) ---
-        if (is_usb) {
-            // Horizontal USB-C Port Cutout (14.1 x 6.0 mm, 2.0mm corner radius)
-            translate([wall_x, 0, pogo_z])
-                rotate([0, 90, 0])
-                    linear_extrude(height = 20.0, center = true)
-                        usb_c_profile_2d(width = 14.1, height = 6.0, flat_vert = 2.0);
-                        
-            // Interior Wire Exit Relief Pocket (toward ESP32)
-            translate([inner_x - side * 2.0, 0, pogo_z])
-                cube([6.0, 16.0, 8.0], center = true);
-        } else {
-            // 1. Full Outside-Mount Stadium Pocket (23.9 x 4.4 mm, 3.0mm deep from outside)
-            translate([wall_x - side * (pogo_boss_depth / 2 - 0.05), 0, pogo_z])
-                rotate([0, 90, 0])
-                    rounded_stadium_slot(depth = pogo_boss_depth + 0.1, length_y = pogo_ear_span, height_z = pogo_body_h, center = true);
-                
-            // 2. Central Body Through-Opening (18.0 x 4.4 mm) passing through into inside cavity
-            translate([wall_x - side * (3.0 + 3.0), 0, pogo_z])
-                rotate([0, 90, 0])
-                    rounded_stadium_slot(depth = 8.0, length_y = pogo_body_w, height_z = pogo_body_h, center = true);
-                
-            // 3. 2x Screw Pilot Holes (1.8mm dia, 7mm deep) drilled into bosses from boss_face_x
-            for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
-                translate([boss_face_x + side * 0.5, y, pogo_z])
-                    rotate([0, -side * 90, 0])
-                        cylinder(h = pogo_hole_depth + 1.0, r = pogo_hole_d / 2, $fn = 20);
-            }
-            
-            // 4. Sense Resistor Pocket (5.0 x 3.5 x 2.5 mm cavity)
-            translate([inner_x - side * 4.0, side * 8.0, 2.0])
-                cube([5.0, 3.5, 3.0], center = true);
-                
-            // 5. Downward Wire Drop Chute (leads wires directly to sub-floor channel, safely inside inner wall)
-            translate([inner_x - side * 3.5, 0, pogo_z / 2])
-                cube([5.0, 12.0, pogo_z + 0.1], center = true);
-        }
-    }
-}
-
-// U-Shaped Retaining Collar added to the inside face of the frontplate wall (above Z = 0)
-// Forms an internal U-border and backing flange that traps and supports the backplate tower on 3 sides
-// NOTE: Sits strictly above Z = 0 so the backplate floor (Z <= 0) can seat completely flush into the frontplate skirt
-module frontplate_tower_u_collar(is_left = false) {
-    side = is_left ? -1 : 1;
-    inner_x = side * (digit_width / 2 - 2.0); // Inside face of 2mm wall
-    collar_thick = 2.0;                        // Inward extension into frontplate cavity
-    collar_w = pogo_tower_w + lap_step_w * 2 + 5.0; // 39.0 mm total collar width along Y
-    collar_h = total_depth;                    // Height above Z = 0 (13.0 mm)
-    
-    // Starts at Z = 0 and extends upward to total_depth
-    translate([inner_x - side * collar_thick / 2, 0, collar_h / 2])
-        cube([collar_thick, collar_w, collar_h], center = true);
-}
-
-// Stepped U-Notch & Retention Channel cutout subtracted from the frontplate side skirt & U-collar
-module frontplate_tower_stepped_notch(is_left = false) {
-    side = is_left ? -1 : 1;
-    wall_x = side * digit_width / 2; // Outside face
-    inner_x = side * (digit_width / 2 - 2.0); // Inside face
-    
-    // 1. Outer notch cutout (32.4mm wide along Y, 10.7mm high along Z)
-    // Cuts outer 1mm of wall from Z = -backplate_thick to pogo_tower_h
-    translate([wall_x - side * (2.0 - lap_step_d)/2 + side * 0.25, 0, (pogo_tower_h + tower_clearance - backplate_thick - 1.0)/2])
-        cube([2.0 - lap_step_d + 0.6, pogo_tower_w + tower_clearance * 2, pogo_tower_h + tower_clearance + backplate_thick + 1.0], center = true);
+    // 2. Central Body Through-Opening (18.0 x 4.4 mm) passing cleanly through the 2mm wall into the inside cavity
+    translate([wall_x - side * (3.0 + 0.1), 0, pogo_z])
+        rotate([0, 90, 0])
+            rounded_stadium_slot(depth = 6.2, length_y = pogo_body_w, height_z = pogo_body_h, center = true);
         
-    // 2. Inner stepped U-channel rebate cutout (34.4mm wide along Y, 11.7mm high along Z)
-    // Cuts inner 1mm of wall from Z = -backplate_thick to pogo_tower_h + lap_step_w
-    translate([inner_x + side * lap_step_d/2, 0, (pogo_tower_h + lap_step_w + tower_clearance - backplate_thick - 1.0)/2])
-        cube([lap_step_d + 0.1, pogo_tower_w + lap_step_w * 2 + tower_clearance * 2, pogo_tower_h + lap_step_w + tower_clearance + backplate_thick + 1.0], center = true);
-
-    // 3. Central boss & wiring clearance pocket through the inner collar (above Z = 0)
-    // Leaves top retaining roof (Z = 11.7 to 13.0mm) and left/right retention rails (Y < -17.2, Y > +17.2mm)
-    translate([inner_x - side * 1.5, 0, (pogo_tower_h + tower_clearance)/2])
-        cube([3.5, 29.0, pogo_tower_h + tower_clearance + 0.1], center = true);
-
-    // 4. Lead-in Chamfer on collar bottom edge at Z = 0 for smooth vertical mating
-    translate([inner_x - side * 1.0, 0, 0.4])
-        rotate([0, side * 45, 0])
-            cube([1.2, pogo_tower_w + lap_step_w * 2 + 1.0, 1.2], center = true);
-}
-
-// Backplate Cable Retention Clips (fused directly to backplate floor at Z = 0)
-module backplate_wire_clip(along_x = false) {
-    clip_len = 6.0;    // Length along wire path (6.0mm)
-    clip_w = 4.0;      // Width across clip (4.0mm)
-    clip_h = 3.8;      // Height above backplate floor (3.8mm)
-    wire_slot_w = 2.4; // Wire slot width
-    
-    rotate([0, 0, along_x ? 90 : 0]) {
-        difference() {
-            translate([0, 0, clip_h/2])
-                cube([clip_w, clip_len, clip_h], center = true);
-            // Wire retention U-channel with lead-in chamfer
-            translate([0, 0, clip_h/2 + 0.5])
-                cube([wire_slot_w, clip_len + 0.2, clip_h], center = true);
-        }
-    }
-}
-
-module backplate_perimeter_cable_holders() {
-    // 1. Left inner wall run (X = -61.5mm, centered in 11mm perimeter channel): Upper and Lower runs
-    for (y = [-70.0, -40.0, 40.0, 70.0]) {
-        translate([-61.5, y, 0])
-            backplate_wire_clip(along_x = false);
+    // 3. 2x Screw Pilot Holes (1.8mm dia, 7mm deep) drilled into the bosses starting at boss_face_x (-3.0mm from outside)
+    for (y = [-pogo_ear_pitch/2, pogo_ear_pitch/2]) {
+        translate([boss_face_x + side * 0.5, y, pogo_z])
+            rotate([0, -side * 90, 0])
+                cylinder(h = pogo_hole_depth + 1.0, r = pogo_hole_d / 2, $fn = 20);
     }
     
-    // 2. Right inner wall run (X = +61.5mm, centered in 11mm perimeter channel): Upper and Lower runs
-    for (y = [-70.0, -40.0, 40.0, 70.0]) {
-        translate([61.5, y, 0])
-            backplate_wire_clip(along_x = false);
-    }
-    
-    // 3. Top short side wall run (Y = +107.5mm, centered in 11mm perimeter channel above Seg A)
-    for (x = [-45.0, -20.0, 20.0, 45.0]) {
-        translate([x, 107.5, 0])
-            backplate_wire_clip(along_x = true);
-    }
-    
-    // 4. Bottom short side wall run (Y = -107.5mm, centered in 11mm perimeter channel below Seg D)
-    for (x = [-45.0, -20.0, 20.0, 45.0]) {
-        translate([x, -107.5, 0])
-            backplate_wire_clip(along_x = true);
-    }
+    // 4. Dedicated Sense Resistor Stash Pocket (5 x 3.5 x 2.5 mm cavity inside)
+    translate([inner_x - side * 4.0, side * 8.0, pogo_z - 3.0])
+        cube([5.0, 3.5, 2.5], center = true);
 }
 
 // Visual 3D model of the 4-pin magnetic connector with mounting ears
-module pogo_connector_model(is_male = true, alpha = 1.0) {
-    color("#1e293b", alpha) { // Dark gray / black molded body
+module pogo_connector_model(is_male = true) {
+    color("#1e293b") { // Dark gray / black molded body
         // Central body
         cube([4.8, 14.6, 7.8], center=true);
         // Left & right mounting ears
@@ -462,13 +370,13 @@ module pogo_connector_model(is_male = true, alpha = 1.0) {
         }
     }
     // Silver alignment magnets on both sides of pins
-    color("#cbd5e1", alpha) {
+    color("#cbd5e1") {
         for (my = [-5.2, 5.2]) {
             translate([1.5, my, 0]) rotate([0, 90, 0]) cylinder(h=2.0, r=1.5, center=true, $fn=20);
         }
     }
     // Gold contact pins
-    color("#f59e0b", alpha) {
+    color("#f59e0b") {
         for (i = [-1.5, -0.5, 0.5, 1.5]) {
             py = i * 2.54;
             if (is_male) {
@@ -582,41 +490,6 @@ module all_segments_snap_subtractions() {
     layout_vert(false) single_segment_snap_teeth(total_seg_l_y_bot, total_seg_w, is_subtraction = true);
 }
 
-// Cutout for the miter corners of a single segment (from Z = 0 to cut_h)
-// Stops precisely at (l/2 - w/2) where the angled lines meet the straight/vertical channel walls
-module single_segment_corner_cutout(l, w, cut_h = connector_corner_relief_h) {
-    if (cut_h > 0) {
-        base_x = l/2 - w/2;
-        base_y = (w + 4)/2 + 0.05;
-        tip_x = base_x + base_y; // exact 45-degree angle matching segment miter
-        
-        translate([0, 0, -0.1])
-        linear_extrude(height = cut_h + 0.1) {
-            // Positive end (+X)
-            polygon([
-                [base_x, -base_y],
-                [tip_x, 0],
-                [base_x, base_y]
-            ]);
-            // Negative end (-X)
-            polygon([
-                [-base_x, -base_y],
-                [-tip_x, 0],
-                [-base_x, base_y]
-            ]);
-        }
-    }
-}
-
-// Relief cutouts applied strictly to the miter corners of each of the 7 segments
-module all_segments_corner_cutouts(cut_h = connector_corner_relief_h) {
-    layout_horiz(false, false) single_segment_corner_cutout(total_seg_l_x, total_seg_w, cut_h);
-    layout_horiz(true, false) single_segment_corner_cutout(total_seg_l_x, total_seg_w, cut_h);
-    layout_horiz(false, true) single_segment_corner_cutout(total_seg_l_x, total_seg_w, cut_h);
-    layout_vert(true) single_segment_corner_cutout(total_seg_l_y_top, total_seg_w, cut_h);
-    layout_vert(false) single_segment_corner_cutout(total_seg_l_y_bot, total_seg_w, cut_h);
-}
-
 // --- Components ---
 
 module frontplate_black(panel_id = panel_id) {
@@ -638,25 +511,24 @@ module frontplate_black(panel_id = panel_id) {
             layout_vert(true) segment_shape(total_seg_l_y_top + 4, total_seg_w + 4, total_depth);
             layout_vert(false) segment_shape(total_seg_l_y_bot + 4, total_seg_w + 4, total_depth);
                 
-            // 3. Corner screw posts for backplate (flush with Z = 0 interface)
-            for (x = [digit_width/2 - 6, -digit_width/2 + 6]) {
-                for (y = [(pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6]) {
-                    translate([x, y, 0]) cylinder(h=total_depth, r=4, $fn=20);
-                }
-            }
+            // 3. Corner screw posts for backplate
+            translate([digit_width/2 - 6, (pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, -0.1]) cylinder(h=total_depth + 0.1, r=4, $fn=20);
+            translate([-digit_width/2 + 6, (pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, -0.1]) cylinder(h=total_depth + 0.1, r=4, $fn=20);
+            translate([digit_width/2 - 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6, -0.1]) cylinder(h=total_depth + 0.1, r=4, $fn=20);
+            translate([-digit_width/2 + 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6, -0.1]) cylinder(h=total_depth + 0.1, r=4, $fn=20);
             
-            // 4. Center VESA 50x50 mm screw posts (flush with Z = 0 interface)
-            for (x = [-25, 25]) {
-                for (y = [-25, 25]) {
-                    translate([x, y, 0]) cylinder(h=total_depth, r=4.5, $fn=24);
-                }
-            }
-            
-            // 5. U-shape retention collars / borders around connector towers
-            frontplate_tower_u_collar(is_left = true);
+            // 4. Right-side Pogo Connector Mounting Bosses (Panels 1, 2, 3)
             if (panel_id < 4) {
-                frontplate_tower_u_collar(is_left = false);
+                pogo_mounting_bosses(is_left = false);
             }
+            
+            // 5. Left-side Pogo Connector Mounting Bosses (Panels 2, 3, 4)
+            if (panel_id > 1) {
+                pogo_mounting_bosses(is_left = true);
+            }
+            
+            // 6. Integrated Perimeter Cable Retention Holders (running along inner left, bottom, and right walls)
+            frontplate_perimeter_cable_holders();
         }
         
         // NOW cut out the actual white segment spaces
@@ -671,30 +543,28 @@ module frontplate_black(panel_id = panel_id) {
             all_segments_snap_subtractions();
         }
 
-        // Corner screw holes for backplate to mount (M3 heat-set inserts, 4.2mm diameter)
-        for (x = [digit_width/2 - 6, -digit_width/2 + 6]) {
-            for (y = [(pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6]) {
-                translate([x, y, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
-            }
+        // Screw holes for backplate to mount (sized for standard M3 heat-set inserts, 4.2mm diameter)
+        translate([digit_width/2 - 6, (pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        translate([-digit_width/2 + 6, (pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        translate([digit_width/2 - 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        translate([-digit_width/2 + 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
+        
+        // Left Wall: USB-C port on Panel 1, or Pogo receiver on Panels 2, 3, 4
+        if (panel_id == 1) {
+            // USB-C Snap-In Cutout: 14.1mm width x 6.0mm height with 2.0mm flat ends and 2.0mm corner radii
+            translate([-digit_width/2, 0, pogo_z]) 
+                rotate([0, 90, 0])
+                    linear_extrude(height = 10.0, center = true)
+                        usb_c_profile_2d(width = 14.1, height = 6.0, flat_vert = 2.0);
+        } else {
+            // Left Pogo Connector Mounting Cutout (Panels 2, 3, 4)
+            pogo_mounting_cutout(is_left = true);
         }
         
-        // Center VESA 50x50 mm screw holes (M3 heat-set inserts, 4.2mm diameter)
-        for (x = [-25, 25]) {
-            for (y = [-25, 25]) {
-                translate([x, y, -1]) cylinder(h=total_depth - 0.5, r=2.1, $fn=20);
-            }
-        }
-        
-        // Left Wall: Stepped U-Notch mating over the backplate connector tower (USB on P1, Pogo on P2/3/4)
-        frontplate_tower_stepped_notch(is_left = true);
-        
-        // Right Wall: Stepped U-Notch mating over the backplate connector tower (Panels 1, 2, 3; Panel 4 is solid)
+        // Right Wall: Pogo transmitter on Panels 1, 2, 3 (Panel 4 remains completely solid)
         if (panel_id < 4) {
-            frontplate_tower_stepped_notch(is_left = false);
+            pogo_mounting_cutout(is_left = false);
         }
-        
-        // Cut 2mm from the bottom of segment corners, stopping where walls become straight/vertical
-        all_segments_corner_cutouts(cut_h = connector_corner_relief_h);
     }
 }
 
@@ -727,14 +597,14 @@ module backplate(panel_id = panel_id) {
             translate([-(digit_width - 4.4)/2, (pitch_y_top - pitch_y_bot)/2 - (digit_height - 4.4)/2, -backplate_thick])
                 cube([digit_width - 4.4, digit_height - 4.4, backplate_thick]);
                 
-            // Solid reinforcing pads under VESA mount holes (running full depth through plate to Z = 0)
+            // Solid reinforcing pillars under VESA mount screw bosses (running full depth through plate)
             for (x = [-25, 25]) {
                 for (y = [-25, 25]) {
-                    translate([x, y, -backplate_thick]) cylinder(h = backplate_thick, r = 5.0, $fn = 30);
+                    translate([x, y, -backplate_thick]) cylinder(h = backplate_thick + 4.0, r = 5.0, $fn = 30);
                 }
             }
             
-            // ESP32 Mini snap-fit locking cradle & RTC Mount (only on panel 1)
+            // ESP32 Mini snap-fit locking cradle (only on panel 1)
             if (panel_id == 1) {
                 translate([0, -50, 0])
                     esp32_cradle();
@@ -743,21 +613,6 @@ module backplate(panel_id = panel_id) {
                 translate([0, 50, 0])
                     rtc_ds1302_mount();
             }
-            
-            // Left Connector Tower (USB-C on Panel 1, Female Pogo on Panels 2, 3, 4)
-            if (panel_id == 1) {
-                backplate_connector_tower(is_left = true, is_usb = true);
-            } else if (panel_id > 1) {
-                backplate_connector_tower(is_left = true, is_usb = false);
-            }
-            
-            // Right Connector Tower (Male Pogo on Panels 1, 2, 3; Panel 4 is solid end)
-            if (panel_id < 4) {
-                backplate_connector_tower(is_left = false, is_usb = false);
-            }
-            
-            // Integrated Backplate Cable Retention Clips
-            backplate_perimeter_cable_holders();
         }
             
         // Recesses for all 7 LED strip channels (2mm deep from Z = 0, enlarged 10% to 13.2mm width)
@@ -788,24 +643,6 @@ module backplate(panel_id = panel_id) {
         // 7. Bottom-Right Vertical (Seg C): X = +47
         translate([pitch_x/2, -pitch_y_bot/2, -strip_recess_depth/2])
             cube([strip_channel_width, pitch_y_bot, strip_recess_depth + 0.1], center=true);
-            
-        // Direct Sub-Floor Wire Pass-Through Channels (Connectors to LED Strips, stays inside inner wall)
-        // 1. Direct Left Connector to Mid-Left Junction Trough (stops at X = -67.0mm, leaving 2.4mm solid outer wall)
-        translate([-56.0, 0, -strip_recess_depth/2 + 0.05])
-            cube([22.0, 10.0, strip_recess_depth + 0.1], center = true);
-
-        // 2. Direct Right Connector to Mid-Right Junction Trough (stops at X = +67.0mm, leaving 2.4mm solid outer wall)
-        translate([56.0, 0, -strip_recess_depth/2 + 0.05])
-            cube([22.0, 10.0, strip_recess_depth + 0.1], center = true);
-
-        // 3. Perimeter Sub-Floor Wire Highways (routing DI/DO and BI/BO along left and right flanks)
-        // Left Highway (X = -58.0mm, spanning Y = -92 to +92)
-        translate([-58.0, 0, -strip_recess_depth/2 + 0.05])
-            cube([6.0, pitch_y_top + pitch_y_bot + 20.0, strip_recess_depth + 0.1], center = true);
-
-        // Right Highway (X = +58.0mm, spanning Y = -92 to +92)
-        translate([58.0, 0, -strip_recess_depth/2 + 0.05])
-            cube([6.0, pitch_y_top + pitch_y_bot + 20.0, strip_recess_depth + 0.1], center = true);
             
         // Cable routing channels (panel 1 only):
         if (panel_id == 1) {
@@ -843,7 +680,7 @@ module backplate(panel_id = panel_id) {
             }
         }
             
-        // 1. Corner mounting screw holes (M3 clearance, 3.2mm) with countersink for flush heads
+        // Mounting screw holes (M3 clearance, 3.2mm) with countersink for flush heads
         for (x = [digit_width/2 - 6, -digit_width/2 + 6]) {
             for (y = [(pitch_y_top - pitch_y_bot)/2 + digit_height/2 - 6, (pitch_y_top - pitch_y_bot)/2 - digit_height/2 + 6]) {
                 translate([x, y, -backplate_thick - 0.1]) {
@@ -853,21 +690,16 @@ module backplate(panel_id = panel_id) {
             }
         }
         
-        // 2. Center VESA 50x50 mm mounting holes (M3 clearance, 3.2mm) with punch-out thin cover
-        // Features a 0.4mm punchable membrane so the backplate is 100% solid by default, but easily punched when needed
+        // VESA-like mounting pattern (50x50 mm) in the center of the backplate
         for (x = [-25, 25]) {
             for (y = [-25, 25]) {
-                // Internal clearance borehole & countersink starting behind 0.4mm thin skin
-                translate([x, y, -backplate_thick + 0.4]) {
-                    cylinder(h = backplate_thick - 0.4 + 0.1, r = 1.6, $fn = 20);       // Main shaft clearance
-                    cylinder(h = 1.6, r1 = 3.2, r2 = 1.6, $fn = 20);                    // Flush countersink cone
-                }
+                translate([x, y, -backplate_thick + 0.4]) cylinder(h=backplate_thick + 6, r=2.1, $fn=20);
                 
-                // Debossed visual target guide ring on outside face (0.2mm deep, leaves 0.2mm knockout perforation)
-                translate([x, y, -backplate_thick - 0.05])
+                // Debossed guide ring on outside (0.2mm deep)
+                translate([x, y, -backplate_thick - 0.1])
                     difference() {
-                        cylinder(h = 0.25, r = 2.5, $fn = 24);
-                        translate([0, 0, -0.05]) cylinder(h = 0.35, r = 2.1, $fn = 24);
+                        cylinder(h=0.3, r=2.5, $fn=20);
+                        translate([0, 0, -0.1]) cylinder(h=0.5, r=2.1, $fn=20);
                     }
             }
         }
@@ -929,85 +761,43 @@ module rear_joining_bracket(thickness = 3.0, countersunk = true) {
     }
 }
 
-module pogo_connectors_preview(panel_id = panel_id, alpha = alpha_pogo_hardware, exp_x = 0) {
+// --- Render Assembly / Exploded View ---
+// Explode offsets:
+exp_white_z = exploded_view ? explode_distance * 1.0 : 0;
+exp_black_z = 0;
+exp_back_z  = exploded_view ? -explode_distance * 1.0 : 0;
+exp_pogo_x  = exploded_view ? explode_distance * 0.8 : 0;
+
+if (show_frontplate_black) 
+    translate([0, 0, exp_black_z]) 
+        color("DimGray") 
+            frontplate_black();
+
+if (show_frontplate_white) 
+    translate([0, 0, exp_white_z]) 
+        color("White") 
+            frontplate_white();
+
+if (show_backplate) 
+    translate([0, 0, exp_back_z]) 
+        color("SlateGray") 
+            backplate();
+
+module pogo_connectors_preview(panel_id = panel_id) {
     if (panel_id < 4) {
         // Right-facing pogo connector (male pogo pins facing outward toward next panel)
-        translate([digit_width/2 - pogo_boss_depth + 1.0 + exp_x, 0, pogo_z])
-            pogo_connector_model(is_male = true, alpha = alpha);
+        translate([digit_width/2 - pogo_boss_depth + 1.0 + exp_pogo_x, 0, pogo_z])
+            pogo_connector_model(is_male = true);
     }
     if (panel_id > 1) {
         // Left-facing pogo connector (female flat pads facing outward toward previous panel)
-        translate([-digit_width/2 + pogo_boss_depth - 1.0 - exp_x, 0, pogo_z])
+        translate([-digit_width/2 + pogo_boss_depth - 1.0 - exp_pogo_x, 0, pogo_z])
             rotate([0, 180, 0])
-                pogo_connector_model(is_male = false, alpha = alpha);
+                pogo_connector_model(is_male = false);
     }
 }
 
-// --- Render Assembly & Inspection Logic ---
-module render_7segment_assembly() {
-    if (inspection_mode == "collision_check") {
-        // 1. Interference between Black Housing and Backplate
-        show_collision() {
-            frontplate_black(panel_id = panel_id);
-            backplate(panel_id = panel_id);
-        }
-        // 2. Interference between Black Housing and White Diffusers
-        show_collision() {
-            frontplate_black(panel_id = panel_id);
-            frontplate_white();
-        }
-    } else if (inspection_mode == "clearance_check") {
-        // Check minimum gap between Backplate and Black Frontplate
-        check_clearance(gap = clearance_gap) {
-            backplate(panel_id = panel_id);
-            frontplate_black(panel_id = panel_id);
-        }
-    } else if (inspection_mode == "cutaway_x") {
-        cutaway(axis = "x", cut_depth = cutaway_depth) {
-            if (show_frontplate_black) color("DimGray", alpha_frontplate_black) frontplate_black(panel_id = panel_id);
-            if (show_frontplate_white) color("White", alpha_frontplate_white) frontplate_white();
-            if (show_backplate) color("SlateGray", alpha_backplate) backplate(panel_id = panel_id);
-            if (show_pogo_hardware) pogo_connectors_preview(panel_id, alpha = alpha_pogo_hardware);
-        }
-    } else if (inspection_mode == "cutaway_y") {
-        cutaway(axis = "y", cut_depth = cutaway_depth) {
-            if (show_frontplate_black) color("DimGray", alpha_frontplate_black) frontplate_black(panel_id = panel_id);
-            if (show_frontplate_white) color("White", alpha_frontplate_white) frontplate_white();
-            if (show_backplate) color("SlateGray", alpha_backplate) backplate(panel_id = panel_id);
-            if (show_pogo_hardware) pogo_connectors_preview(panel_id, alpha = alpha_pogo_hardware);
-        }
-    } else if (inspection_mode == "slice_z") {
-        slice_2d(cut_z = pogo_z) {
-            frontplate_black(panel_id = panel_id);
-            backplate(panel_id = panel_id);
-        }
-    } else {
-        // Assembled or Exploded View
-        is_exp = (inspection_mode == "exploded") || (exploded_view && inspection_mode != "assembled");
-        exp_white_z = is_exp ? explode_distance * 1.0 : 0;
-        exp_black_z = 0;
-        exp_back_z  = is_exp ? -explode_distance * 1.0 : 0;
-        exp_pogo_x  = is_exp ? explode_distance * 0.8 : 0;
-
-        if (show_frontplate_black) 
-            translate([0, 0, exp_black_z]) 
-                color("DimGray", alpha_frontplate_black) 
-                    frontplate_black(panel_id = panel_id);
-
-        if (show_frontplate_white) 
-            translate([0, 0, exp_white_z]) 
-                color("White", alpha_frontplate_white) 
-                    frontplate_white();
-
-        if (show_backplate) 
-            translate([0, 0, exp_back_z]) 
-                color("SlateGray", alpha_backplate) 
-                    backplate(panel_id = panel_id);
-
-        if (show_pogo_hardware) {
-            pogo_connectors_preview(panel_id, alpha = alpha_pogo_hardware, exp_x = exp_pogo_x);
-        }
-    }
+// Optional preview of the 4-pin magnetic pogo connectors mounted in place
+if (show_pogo_hardware) {
+    pogo_connectors_preview(panel_id);
 }
-
-render_7segment_assembly();

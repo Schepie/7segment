@@ -21,6 +21,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 #include <NimBLEDevice.h>
+#include "ble_fota.h"
 
 // ==============================================================================
 // Hardware Configuration
@@ -110,13 +111,32 @@ int getDigitBaseLed(int digitIndex) {
   }
 }
 
+// ==============================================================================
+// 7-Segment Hardware Remapping (Panel 1 Custom Wiring)
+// ==============================================================================
+// Logical segment indices: [0]BL, [1]B, [2]BR, [3]M, [4]TL, [5]T, [6]TR
+// Standard Panels (Digits 1, 2, 3): Slot 0=BL, Slot 1=B, Slot 2=BR, Slot 3=M, Slot 4=TL, Slot 5=T, Slot 6=TR
+// First Panel (Digit 0) Hardware Variation: First segment is TR (Slot 0=TR, Slot 1=T, Slot 2=TL, Slot 3=M, Slot 4=BR, Slot 5=B, Slot 6=BL)
+#define PANEL0_CUSTOM_WIRING true
+
+#if PANEL0_CUSTOM_WIRING
+// Maps logical segment index [0..6] to physical 4-LED slot on Digit 0:
+// BL(0)->Slot 6, B(1)->Slot 5, BR(2)->Slot 4, M(3)->Slot 3, TL(4)->Slot 2, T(5)->Slot 1, TR(6)->Slot 0
+const uint8_t panel0SegmentMap[7] = { 6, 5, 4, 3, 2, 1, 0 };
+#endif
+
 void drawDigit(int digitIndex, int numIndex, uint32_t color) {
   if (digitIndex < 0 || digitIndex >= NUM_DIGITS) return;
   if (numIndex < 0 || numIndex > 12) numIndex = 10; // 10 = Blank
 
   int baseLed = getDigitBaseLed(digitIndex);
   for (int seg = 0; seg < 7; seg++) {
-    int startPixel = baseLed + (seg * LEDS_PER_SEGMENT);
+#if PANEL0_CUSTOM_WIRING
+    int physSeg = (digitIndex == 0) ? panel0SegmentMap[seg] : seg;
+#else
+    int physSeg = seg;
+#endif
+    int startPixel = baseLed + (physSeg * LEDS_PER_SEGMENT);
     bool segOn = (numbers[numIndex][seg] == 1);
     for (int i = 0; i < LEDS_PER_SEGMENT; i++) {
       int p = startPixel + i;
@@ -235,6 +255,27 @@ void scoreboardTask(void* parameter) {
   pCharacteristic->setValue("0000");
 
   pService->start();
+
+  // Initialize BLE FOTA Service
+  BleFota::init(pServer);
+  BleFota::setCallbacks(
+    [](int percent) {
+      pixels.clear();
+      drawDigit(0, (percent / 10) % 10, pixels.Color(0, 200, 255));
+      drawDigit(1, percent % 10, pixels.Color(0, 200, 255));
+      drawDigit(2, (percent / 10) % 10, pixels.Color(0, 200, 255));
+      drawDigit(3, percent % 10, pixels.Color(0, 200, 255));
+      pixels.show();
+    },
+    [](bool inProgress, bool success) {
+      if (!inProgress && success) {
+        pixels.clear();
+        for (int i = 0; i < NUMPIXELS; i++) pixels.setPixelColor(i, pixels.Color(0, 255, 0));
+        pixels.show();
+      }
+    }
+  );
+
   pServer->start();
 
   NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
@@ -249,6 +290,10 @@ void scoreboardTask(void* parameter) {
   displayScore("0000", false);
 
   while (true) {
+    if (BleFota::isUpdating()) {
+      vTaskDelay(pdMS_TO_TICKS(100));
+      continue;
+    }
     if (triggerConnectAnimation) {
       triggerConnectAnimation = false;
       // Flash all blue 3 times

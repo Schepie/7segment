@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 BLE Firmware Flasher (FOTA)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0d14;
+            --bg-card: rgba(18, 24, 38, 0.75);
+            --bg-card-border: rgba(255, 255, 255, 0.08);
+            --primary: #00d2ff;
+            --primary-glow: rgba(0, 210, 255, 0.35);
+            --success: #00e676;
+            --error: #ff3366;
+            --warning: #ffb300;
+            --text-main: #f0f4f8;
+            --text-muted: #8a99ad;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #17243c 0%, var(--bg-base) 75%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 580px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header {
+            text-align: center;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 210, 255, 0.12);
+            color: var(--primary);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .badge-pill::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .step-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .step-info h3 {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .step-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn {
+            appearance: none;
+            border: none;
+            outline: none;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d2ff 0%, #0077ff 100%);
+            color: #fff;
+            box-shadow: 0 4px 16px var(--primary-glow);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(0, 210, 255, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .file-dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius-md);
+            padding: 22px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .file-dropzone:hover {
+            border-color: var(--primary);
+            background: rgba(0, 210, 255, 0.04);
+        }
+
+        .file-dropzone input {
+            display: none;
+        }
+
+        .dropzone-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .dropzone-filename {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+
+        /* Progress Area */
+        .progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 4px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00d2ff, #00e676);
+            border-radius: 99px;
+            transition: width 0.15s ease;
+            box-shadow: 0 0 12px rgba(0, 230, 118, 0.5);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-val {
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 2px;
+        }
+
+        /* Console Log */
+        .console-box {
+            background: #06090e;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #a0aec0;
+            max-height: 140px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .console-box .log-err { color: var(--error); }
+        .console-box .log-suc { color: var(--success); }
+        .console-box .log-pri { color: var(--primary); }
+
+        .back-link {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        /* Match Configuration Styles */
+        .config-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .config-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .config-card-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 520px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .config-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .config-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .pill-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .pill-btn {
+            flex: 1;
+            padding: 9px 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .pill-btn:hover:not(.active) {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .pill-btn.active {
+            background: linear-gradient(135deg, #00d2ff, #0088cc);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 210, 255, 0.35);
+        }
+
+        .pill-btn.active.gp {
+            background: linear-gradient(135deg, #ffb300, #ff8f00);
+            box-shadow: 0 2px 8px rgba(255, 179, 0, 0.35);
+        }
+
+        .config-status {
+            font-size: 12px;
+            text-align: center;
+            min-height: 18px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <span class="badge-pill">Bluetooth Low Energy</span>
+        <h1>Wireless Firmware Flasher</h1>
+        <p class="subtitle">Flash any compiled .bin directly to your 7-segment display over BLE</p>
+    </div>
+
+    <div class="card">
+        <!-- Step 1: Connect -->
+        <div class="step-row">
+            <div class="step-info">
+                <h3>1. Connect to ESP32 Display</h3>
+                <p id="deviceStatus">No device connected</p>
+            </div>
+            <button class="btn btn-secondary" id="btnConnect">
+                <span>⚡ Connect BLE</span>
+            </button>
+        </div>
+
+        <!-- Step 2: Pick File -->
+        <div class="step-info">
+            <h3>2. Select Firmware Binary (.bin)</h3>
+            <p>From your PlatformIO <code>.pio/build/&lt;env&gt;/firmware.bin</code></p>
+        </div>
+
+        <div class="file-dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept=".bin">
+            <div class="dropzone-label" id="fileLabel">📁 Click to choose firmware.bin</div>
+            <div class="dropzone-filename" id="fileName"></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 6px;">
+            <button type="button" class="btn btn-secondary" id="btnPreset4Digits" style="flex: 1; font-size: 13px; padding: 10px 8px; text-align: center;">
+                ⚡ Auto-Load 4-Digit Firmware
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnPresetSets" style="flex: 1; font-size: 13px; padding: 10px 8px; text-align: center;">
+                🏆 Auto-Load Sets & Match
+            </button>
+        </div>
+
+        <!-- Step 3: Flash Action -->
+        <button class="btn btn-primary" id="btnFlash" disabled>
+            <span>🚀 Start Wireless Flash</span>
+        </button>
+
+        <!-- Progress Tracker -->
+        <div class="progress-box" id="progressSection" style="display: none;">
+            <div class="progress-header">
+                <span id="progressStatus">Streaming firmware chunks...</span>
+                <span id="progressPercent" style="font-family: 'JetBrains Mono', monospace;">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Transferred</div>
+                    <div class="stat-val" id="statTransferred">0 / 0 KB</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Speed</div>
+                    <div class="stat-val" id="statSpeed">0.0 KB/s</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ETA</div>
+                    <div class="stat-val" id="statEta">--s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Output -->
+        <div class="console-box" id="consoleBox">
+            <div>[Ready] Open in Chrome or Edge with Web Bluetooth enabled.</div>
+        </div>
+    </div>
+
+    <!-- Match Rules & Game Mode Configuration Card -->
+    <div class="config-card" id="configCard">
+        <div class="config-card-header">
+            <span style="font-size: 24px;">⚙️</span>
+            <div>
+                <h2>Match Rules & Game Modes</h2>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    Configures scoring rules for standalone play (Xiaomi remote clicker)
+                </p>
+            </div>
+        </div>
+
+        <div class="config-grid">
+            <!-- Golden Point vs Advantage -->
+            <div class="config-group">
+                <span class="config-label">Deuce (40-40) Rule</span>
+                <div class="pill-toggle" id="toggleGp">
+                    <button type="button" class="pill-btn active" data-val="0">⚔️ Advantage</button>
+                    <button type="button" class="pill-btn gp" data-val="1">⚡ Golden Point</button>
+                </div>
+            </div>
+
+            <!-- Sets to Win -->
+            <div class="config-group">
+                <span class="config-label">Match Length</span>
+                <div class="pill-toggle" id="toggleSets">
+                    <button type="button" class="pill-btn" data-val="1">🥇 1 Set</button>
+                    <button type="button" class="pill-btn active" data-val="2">🏆 Best of 3</button>
+                </div>
+            </div>
+
+            <!-- Games per Set -->
+            <div class="config-group">
+                <span class="config-label">Games per Set</span>
+                <div class="pill-toggle" id="toggleGames">
+                    <button type="button" class="pill-btn active" data-val="6">🎾 6 Games</button>
+                    <button type="button" class="pill-btn" data-val="9">🚀 9 Games</button>
+                </div>
+            </div>
+
+            <!-- Tiebreak -->
+            <div class="config-group">
+                <span class="config-label">Tiebreak at 6-6 (or 8-8)</span>
+                <div class="pill-toggle" id="toggleTb">
+                    <button type="button" class="pill-btn active" data-val="1">🔥 Tiebreak ON</button>
+                    <button type="button" class="pill-btn" data-val="0">🚫 Advantage</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" id="btnSaveConfig" disabled style="padding: 12px; font-size: 14px;">
+            <span>💾 Apply & Save Rules to Scoreboard</span>
+        </button>
+        <div class="config-status" id="cfgStatusText">Connect to ESP32 above to view & edit match rules</div>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 16px; margin-top: 10px;">
+        <a href="settings.html" class="back-link">⚙️ Display & Score Settings</a>
+        <a href="index.html" class="back-link">← Return to Simulator</a>
+    </div>
+</div>
+
+<script>
+    // BLE FOTA UUIDs
+    const FOTA_SERVICE_UUID  = 'fb1e4001-54ae-4a28-9f74-dfccb248601d';
+    const FOTA_CHAR_CONTROL  = 'fb1e4002-54ae-4a28-9f74-dfccb248601d';
+    const FOTA_CHAR_DATA     = 'fb1e4003-54ae-4a28-9f74-dfccb248601d';
+    const WATCH_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+    const WATCH_CHAR_UUID    = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+
+    let bleDevice = null;
+    let controlChar = null;
+    let dataChar = null;
+    let watchChar = null;
+    let selectedFile = null;
+    let fileBuffer = null;
+    let isFlashing = false;
+
+    let currentConfig = {
+        gp: 0,
+        sets: 2,
+        games: 6,
+        tb: 1
+    };
+
+    // UI elements
+    const btnConnect = document.getElementById('btnConnect');
+    const deviceStatus = document.getElementById('deviceStatus');
+    const btnSaveConfig = document.getElementById('btnSaveConfig');
+    const cfgStatusText = document.getElementById('cfgStatusText');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileLabel = document.getElementById('fileLabel');
+    const fileName = document.getElementById('fileName');
+    const btnFlash = document.getElementById('btnFlash');
+    const progressSection = document.getElementById('progressSection');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressBar = document.getElementById('progressBar');
+    const statTransferred = document.getElementById('statTransferred');
+    const statSpeed = document.getElementById('statSpeed');
+    const statEta = document.getElementById('statEta');
+    const consoleBox = document.getElementById('consoleBox');
+
+    function log(msg, type = '') {
+        const d = document.createElement('div');
+        if (type) d.className = 'log-' + type;
+        const time = new Date().toLocaleTimeString();
+        d.textContent = `[${time}] ${msg}`;
+        consoleBox.appendChild(d);
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    // Connect via Web Bluetooth
+    btnConnect.addEventListener('click', async () => {
+        if (!navigator.bluetooth) {
+            log('Web Bluetooth is not supported in this browser. Please use Chrome or Edge.', 'err');
+            alert('Web Bluetooth is only supported in Google Chrome, Microsoft Edge, and Opera.');
+            return;
+        }
+
+        try {
+            log('Requesting Bluetooth device...', 'pri');
+            bleDevice = await navigator.bluetooth.requestDevice({
+                filters: [
+                    { services: [FOTA_SERVICE_UUID] },
+                    { namePrefix: 'ESP32' },
+                    { namePrefix: 'Padel' }
+                ],
+                optionalServices: [
+                    FOTA_SERVICE_UUID,
+                    '4fafc201-1fb5-459e-8fcc-c5c9c331914b'
+                ]
+            });
+
+            log(`Connecting to GATT Server on ${bleDevice.name || 'ESP32'}...`);
+            bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+            const server = await bleDevice.gatt.connect();
+            log('Connected! Discovering FOTA Service...', 'suc');
+
+            const service = await server.getPrimaryService(FOTA_SERVICE_UUID);
+            controlChar = await service.getCharacteristic(FOTA_CHAR_CONTROL);
+            dataChar = await service.getCharacteristic(FOTA_CHAR_DATA);
+
+            // Subscribe to control notifications
+            await controlChar.startNotifications();
+            controlChar.addEventListener('characteristicvaluechanged', onControlNotification);
+
+            deviceStatus.textContent = `Connected to ${bleDevice.name || 'ESP32'}`;
+            deviceStatus.style.color = 'var(--success)';
+            btnConnect.textContent = '✓ Connected';
+            btnConnect.disabled = true;
+
+            log('FOTA GATT characteristics ready!', 'suc');
+            checkReadyToFlash();
+
+            // Also discover Match Rules & Config Service
+            try {
+                const watchService = await server.getPrimaryService(WATCH_SERVICE_UUID);
+                watchChar = await watchService.getCharacteristic(WATCH_CHAR_UUID);
+                await watchChar.startNotifications();
+                watchChar.addEventListener('characteristicvaluechanged', onWatchNotification);
+                btnSaveConfig.disabled = false;
+                cfgStatusText.textContent = 'Connected! Loading rules from scoreboard...';
+                cfgStatusText.style.color = 'var(--primary)';
+                log('Match Rules & Config service connected!', 'suc');
+            } catch (cfgErr) {
+                log(`Config service note: ${cfgErr.message}`);
+            }
+
+        } catch (err) {
+            log(`Connection error: ${err.message}`, 'err');
+        }
+    });
+
+    function onDisconnected() {
+        log('Device disconnected', 'err');
+        deviceStatus.textContent = 'Disconnected';
+        deviceStatus.style.color = 'var(--error)';
+        btnConnect.textContent = '⚡ Connect BLE';
+        btnConnect.disabled = false;
+        btnFlash.disabled = true;
+        watchChar = null;
+        btnSaveConfig.disabled = true;
+        cfgStatusText.textContent = 'Connect to ESP32 above to view & edit match rules';
+        cfgStatusText.style.color = 'var(--text-muted)';
+    }
+
+    function onWatchNotification(event) {
+        const text = new TextDecoder().decode(event.target.value);
+        if (text.startsWith('CFG,')) {
+            log(`Scoreboard config: ${text}`, 'suc');
+            const gpMatch = text.match(/GP=(\d)/);
+            const setsMatch = text.match(/SETS=(\d)/);
+            const gamesMatch = text.match(/GAMES=(\d)/);
+            const tbMatch = text.match(/TB=(\d)/);
+            if (gpMatch) updateToggleUI('toggleGp', parseInt(gpMatch[1]));
+            if (setsMatch) updateToggleUI('toggleSets', parseInt(setsMatch[1]));
+            if (gamesMatch) updateToggleUI('toggleGames', parseInt(gamesMatch[1]));
+            if (tbMatch) updateToggleUI('toggleTb', parseInt(tbMatch[1]));
+            cfgStatusText.textContent = '✓ Scoreboard rules synchronized!';
+            cfgStatusText.style.color = 'var(--success)';
+        }
+    }
+
+    function setupToggleGroup(containerId, configKey) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.querySelectorAll('.pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentConfig[configKey] = parseInt(btn.dataset.val);
+                cfgStatusText.textContent = 'Click "Apply & Save Rules to Scoreboard" to save';
+                cfgStatusText.style.color = 'var(--warning)';
+            });
+        });
+    }
+
+    function updateToggleUI(containerId, val) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.querySelectorAll('.pill-btn').forEach(btn => {
+            if (parseInt(btn.dataset.val) === val) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        if (containerId === 'toggleGp') currentConfig.gp = val;
+        if (containerId === 'toggleSets') currentConfig.sets = val;
+        if (containerId === 'toggleGames') currentConfig.games = val;
+        if (containerId === 'toggleTb') currentConfig.tb = val;
+    }
+
+    setupToggleGroup('toggleGp', 'gp');
+    setupToggleGroup('toggleSets', 'sets');
+    setupToggleGroup('toggleGames', 'games');
+    setupToggleGroup('toggleTb', 'tb');
+
+    btnSaveConfig.addEventListener('click', async () => {
+        if (!watchChar) return;
+        const payload = `CFG,GP=${currentConfig.gp},SETS=${currentConfig.sets},GAMES=${currentConfig.games},TB=${currentConfig.tb}`;
+        try {
+            btnSaveConfig.disabled = true;
+            cfgStatusText.textContent = 'Saving rules to scoreboard flash...';
+            cfgStatusText.style.color = 'var(--primary)';
+            await watchChar.writeValue(new TextEncoder().encode(payload));
+            log(`Sent config payload: ${payload}`, 'suc');
+            cfgStatusText.textContent = '✓ Rules successfully applied & saved in Flash!';
+            cfgStatusText.style.color = 'var(--success)';
+        } catch (err) {
+            log(`Save config error: ${err.message}`, 'err');
+            cfgStatusText.textContent = `Failed: ${err.message}`;
+            cfgStatusText.style.color = 'var(--error)';
+        } finally {
+            btnSaveConfig.disabled = false;
+        }
+    });
+
+    function onControlNotification(event) {
+        const val = event.target.value;
+        const resp = val.getUint8(0);
+        if (resp === 0x05 && val.byteLength >= 2) {
+            const pct = val.getUint8(1);
+            // ESP32 progress confirmation
+        } else if (resp === 0x02) {
+            log('★ ESP32 reported flash completed and verified!', 'suc');
+        } else if (resp === 0x0F) {
+            const errCode = val.byteLength >= 2 ? val.getUint8(1) : 0;
+            log(`ESP32 reported OTA error code: ${errCode}`, 'err');
+        }
+    }
+
+    // File selection
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        selectedFile = file;
+        fileLabel.textContent = 'Selected Firmware:';
+        fileName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        log(`Loaded file: ${file.name} (${file.size} bytes)`);
+
+        fileBuffer = await file.arrayBuffer();
+        checkReadyToFlash();
+    });
+
+    function checkReadyToFlash() {
+        if (controlChar && dataChar && fileBuffer && !isFlashing) {
+            btnFlash.disabled = false;
+        } else {
+            btnFlash.disabled = true;
+        }
+    }
+
+    async function loadPresetBinary(filename, labelText) {
+        try {
+            log(`Fetching preset firmware '${filename}'...`, 'pri');
+            const resp = await fetch(filename);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+            fileBuffer = await resp.arrayBuffer();
+            selectedFile = { name: filename, size: fileBuffer.byteLength };
+            fileLabel.textContent = 'Selected Firmware:';
+            fileName.textContent = `${labelText} (${(fileBuffer.byteLength / 1024).toFixed(1)} KB)`;
+            log(`Successfully loaded ${filename} (${fileBuffer.byteLength} bytes)!`, 'suc');
+            checkReadyToFlash();
+        } catch (err) {
+            log(`Auto-fetch failed (${err.message}). If using file://, please click the dropzone above and choose '${filename}'.`, 'err');
+        }
+    }
+
+    const btnPreset4Digits = document.getElementById('btnPreset4Digits');
+    if (btnPreset4Digits) {
+        btnPreset4Digits.addEventListener('click', () => {
+            loadPresetBinary('firmware_4digits.bin', '4-Digit Scoreboard (112 LEDs)');
+        });
+    }
+
+    const btnPresetSets = document.getElementById('btnPresetSets');
+    if (btnPresetSets) {
+        btnPresetSets.addEventListener('click', () => {
+            loadPresetBinary('firmware_sets_and_match.bin', 'Sets & Match Scoreboard (136 LEDs)');
+        });
+    }
+
+    // Auto-load 4-digits firmware on load if served over HTTP
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.location.protocol.startsWith('http')) {
+            loadPresetBinary('firmware_4digits.bin', '4-Digit Scoreboard (112 LEDs)');
+        }
+    });
+
+    // Start Flash
+    btnFlash.addEventListener('click', async () => {
+        if (!controlChar || !dataChar || !fileBuffer) return;
+
+        isFlashing = true;
+        btnFlash.disabled = true;
+        progressSection.style.display = 'flex';
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+        progressStatus.textContent = 'Preparing flash partition...';
+
+        const totalBytes = fileBuffer.byteLength;
+        const bytes = new Uint8Array(fileBuffer);
+
+        try {
+            log(`Sending START command for ${totalBytes} bytes...`, 'pri');
+
+            // Wait for ESP32 to finish Update.begin() and acknowledge
+            let startAckReceived = false;
+            let espReportedMtu = 0;
+
+            const onStartAck = (event) => {
+                const val = event.target.value;
+                const resp = val.getUint8(0);
+                if (resp === 0x01) { // FOTA_RESP_OK
+                    startAckReceived = true;
+                    if (val.byteLength >= 4) {
+                        espReportedMtu = val.getUint8(2) | (val.getUint8(3) << 8);
+                    }
+                } else if (resp === 0x0F) { // FOTA_RESP_ERROR
+                    const err = val.byteLength >= 2 ? val.getUint8(1) : 0;
+                    throw new Error(`ESP32 rejected START (Update.begin error ${err})`);
+                }
+            };
+
+            controlChar.addEventListener('characteristicvaluechanged', onStartAck);
+
+            // Command 0x01 + 4-byte size (little-endian)
+            const startCmd = new Uint8Array(5);
+            startCmd[0] = 0x01;
+            startCmd[1] = totalBytes & 0xFF;
+            startCmd[2] = (totalBytes >> 8) & 0xFF;
+            startCmd[3] = (totalBytes >> 16) & 0xFF;
+            startCmd[4] = (totalBytes >> 24) & 0xFF;
+
+            if (controlChar.writeValueWithResponse) {
+                await controlChar.writeValueWithResponse(startCmd);
+            } else {
+                await controlChar.writeValue(startCmd);
+            }
+
+            // Wait up to 5s for ESP32 flash partition erase/init
+            const startWaitDeadline = Date.now() + 5000;
+            while (!startAckReceived && Date.now() < startWaitDeadline) {
+                await new Promise(r => setTimeout(r, 60));
+            }
+            controlChar.removeEventListener('characteristicvaluechanged', onStartAck);
+
+            if (!startAckReceived) {
+                log('Warning: No START ACK from ESP32, proceeding with cautious transfer...', 'pri');
+            } else {
+                log(`ESP32 flash partition ready! (ESP32 MTU payload: ${espReportedMtu || 'default'})`, 'suc');
+            }
+
+            // Determine chunk size
+            let maxBrowserSize = dataChar.maxWriteWithoutResponseSize || 0;
+            let chunkSize = 20; // safe baseline for Windows BLE default ATT MTU 23
+
+            if (maxBrowserSize > 0) {
+                chunkSize = maxBrowserSize;
+                log(`Browser reported max write size: ${chunkSize} bytes`, 'pri');
+            } else if (espReportedMtu > 0) {
+                chunkSize = Math.min(espReportedMtu, 480);
+                log(`Using ESP32 reported MTU size: ${chunkSize} bytes`, 'pri');
+            } else {
+                log(`Using safe 20-byte chunks for maximum Windows BLE compatibility.`, 'pri');
+            }
+
+            progressStatus.textContent = 'Streaming firmware...';
+
+            let offset = 0;
+            const startTime = Date.now();
+            let packetCount = 0;
+
+            while (offset < totalBytes) {
+                const chunkLen = Math.min(chunkSize, totalBytes - offset);
+                const chunk = bytes.subarray(offset, offset + chunkLen);
+
+                try {
+                    if (dataChar.writeValueWithoutResponse) {
+                        await dataChar.writeValueWithoutResponse(chunk);
+                    } else {
+                        await dataChar.writeValue(chunk);
+                    }
+                } catch (writeErr) {
+                    log(`Write error at ${offset} with chunk size ${chunkSize}: ${writeErr.message}`, 'err');
+                    // Downsize chunk to 20 bytes if failed with larger chunk
+                    if (chunkSize > 20) {
+                        chunkSize = 20;
+                        log(`Downsizing chunk size to safe 20 bytes and retrying...`, 'pri');
+                        await new Promise(r => setTimeout(r, 60));
+                        continue; // retry current offset
+                    } else {
+                        // Try fallback to writeWithResponse
+                        log('Retrying with writeWithResponse...', 'pri');
+                        if (dataChar.writeValueWithResponse) {
+                            await dataChar.writeValueWithResponse(chunk);
+                        } else {
+                            await dataChar.writeValue(chunk);
+                        }
+                    }
+                }
+
+                offset += chunkLen;
+                packetCount++;
+
+                // Queue pacing: prevent Windows Bluetooth stack buffer overflow
+                if (packetCount % 12 === 0) {
+                    await new Promise(r => setTimeout(r, 8));
+                }
+
+                // Update UI metrics every 2% or every 50 packets
+                if (packetCount % 20 === 0 || offset >= totalBytes) {
+                    const pct = Math.floor((offset / totalBytes) * 100);
+                    progressBar.style.width = `${pct}%`;
+                    progressPercent.textContent = `${pct}%`;
+
+                    const elapsedSec = (Date.now() - startTime) / 1000;
+                    const speedKB = elapsedSec > 0 ? (offset / 1024) / elapsedSec : 0;
+                    const remainingBytes = totalBytes - offset;
+                    const etaSec = speedKB > 0 ? Math.ceil((remainingBytes / 1024) / speedKB) : 0;
+
+                    statTransferred.textContent = `${(offset / 1024).toFixed(0)} / ${(totalBytes / 1024).toFixed(0)} KB`;
+                    statSpeed.textContent = `${speedKB.toFixed(1)} KB/s`;
+                    statEta.textContent = `${etaSec}s`;
+                }
+            }
+
+            log(`All ${totalBytes} bytes sent in ${((Date.now() - startTime) / 1000).toFixed(1)}s! Finalizing...`, 'pri');
+            progressStatus.textContent = 'Verifying flash...';
+
+            // Wait 200ms before sending END command
+            await new Promise(r => setTimeout(r, 200));
+
+            // Command 0x02: End OTA
+            const endCmd = new Uint8Array([0x02]);
+            if (controlChar.writeValueWithResponse) {
+                await controlChar.writeValueWithResponse(endCmd);
+            } else {
+                await controlChar.writeValue(endCmd);
+            }
+
+            progressBar.style.width = '100%';
+            progressPercent.textContent = '100%';
+            progressStatus.textContent = '✓ Flash Complete! Rebooting...';
+            log('★ Flash Complete! ESP32 is rebooting into the new firmware.', 'suc');
+
+            setTimeout(() => {
+                alert('Firmware successfully flashed! The scoreboard is now rebooting.');
+            }, 1000);
+
+        } catch (err) {
+            log(`Flash error: ${err.message}`, 'err');
+            progressStatus.textContent = 'Flash Failed';
+            alert(`Flashing error: ${err.message}`);
+        } finally {
+            isFlashing = false;
+        }
+    });
+</script>
+
+</body>
+</html>
