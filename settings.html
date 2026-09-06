@@ -19,8 +19,8 @@
     <style>
         :root {
             --bg-base: #080c14;
-            --bg-surface: #101624;
-            --bg-card: rgba(16, 23, 37, 0.85);
+            --bg-surface: #101726;
+            --bg-card: rgba(16, 23, 38, 0.9);
             --bg-card-border: rgba(255, 255, 255, 0.08);
 
             --team1-blue: #00d2ff;
@@ -56,29 +56,28 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: radial-gradient(circle at 50% -10%, #152238 0%, var(--bg-base) 80%);
+            background: radial-gradient(circle at 50% 0%, #16243c 0%, var(--bg-base) 85%);
             color: var(--text-main);
-            min-height: 100vh;
-            min-height: 100dvh;
+            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 0;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
+        /* App Shell */
         .mobile-shell {
             width: 100%;
-            max-width: 480px;
+            max-width: 440px;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            min-height: 100dvh;
-            padding: calc(10px + var(--safe-top)) 12px calc(14px + var(--safe-bottom)) 12px;
-            gap: 10px;
+            padding: calc(6px + var(--safe-top)) 10px calc(8px + var(--safe-bottom)) 10px;
+            gap: 8px;
         }
 
-        /* Top Header & BLE Bar */
+        /* Compact Sticky Header */
         .app-header {
             display: flex;
             align-items: center;
@@ -88,7 +87,7 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--bg-card-border);
             border-radius: var(--radius-lg);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            flex-shrink: 0;
         }
 
         .brand-block {
@@ -98,23 +97,12 @@
         }
 
         .brand-title {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 900;
             letter-spacing: -0.01em;
             display: flex;
             align-items: center;
             gap: 5px;
-        }
-
-        .brand-badge {
-            font-size: 9px;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 1px 5px;
-            border-radius: 4px;
-            background: rgba(0, 210, 255, 0.15);
-            color: var(--team1-blue);
-            border: 1px solid rgba(0, 210, 255, 0.3);
         }
 
         .header-actions {
@@ -127,12 +115,12 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 99px;
             font-size: 12px;
             font-weight: 800;
             border: 1px solid rgba(0, 210, 255, 0.4);
-            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(0, 119, 255, 0.3));
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.25), rgba(0, 119, 255, 0.4));
             color: #fff;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -143,7 +131,7 @@
         }
 
         .btn-ble-pill.connected {
-            background: rgba(0, 230, 118, 0.15);
+            background: rgba(0, 230, 118, 0.18);
             border-color: rgba(0, 230, 118, 0.4);
             color: var(--accent-green);
         }
@@ -166,104 +154,58 @@
             50% { opacity: 0.4; transform: scale(1.2); }
         }
 
-        .nav-icon-btn {
-            padding: 6px 8px;
-            font-size: 12px;
-            color: var(--text-muted);
-            text-decoration: none;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-sm);
-        }
-
-        /* Thumb-friendly Segmented Tab Navigation */
-        .tab-nav {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr 1fr auto;
-            gap: 5px;
-            background: rgba(12, 17, 28, 0.7);
-            padding: 4px;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--bg-card-border);
-        }
-
-        .tab-btn {
+        /* Main Screen Container */
+        .main-stage {
+            flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 9px 4px;
-            font-size: 12px;
-            font-weight: 700;
-            border-radius: var(--radius-md);
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s ease;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
         }
 
-        .tab-btn.active {
-            background: var(--bg-surface);
-            color: var(--text-main);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
-        }
-
-        .tab-btn.active[data-tab="court"] {
-            color: var(--team1-blue);
-        }
-
-        .tab-btn.active[data-tab="display"] {
-            color: var(--accent-gold);
-        }
-
-        .tab-btn.active[data-tab="rules"] {
-            color: var(--accent-green);
-        }
-
-        /* Tab Content Panels */
-        .tab-content {
+        .tab-pane {
             display: none;
             flex-direction: column;
-            gap: 10px;
-            flex: 1;
+            height: 100%;
+            gap: 8px;
         }
 
-        .tab-content.active {
+        .tab-pane.active {
             display: flex;
         }
 
-        /* Card Container */
-        .m-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--bg-card-border);
+        /* ================================================= */
+        /* TAB 1: COURT (Zero-Scroll Screen)                 */
+        /* ================================================= */
+        #paneCourt {
+            justify-content: space-between;
+        }
+
+        /* Digital Score Display */
+        .score-board {
+            background: #04070d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-xl);
-            padding: 14px;
+            padding: 10px 8px;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 16px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            gap: 6px;
+            flex-shrink: 0;
         }
 
-        /* 4-Digit Display Mirror */
-        .mirror-box {
-            background: #04070d;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-lg);
-            padding: 12px 8px;
+        .score-grid {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
-            gap: 8px;
             align-items: center;
-            box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+            gap: 6px;
         }
 
         .team-pod {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
         }
 
         .team-pod-name {
@@ -276,152 +218,184 @@
         .team-pod-name.t1 { color: var(--team1-blue); }
         .team-pod-name.t2 { color: var(--team2-red); }
 
-        .digit-lcd {
+        .lcd-digits {
             font-family: var(--font-display);
-            font-size: clamp(34px, 10vw, 44px);
+            font-size: clamp(34px, 9vw, 42px);
             font-weight: 900;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             line-height: 1;
-            padding: 6px 8px;
+            padding: 6px 10px;
             border-radius: var(--radius-md);
-            background: rgba(0, 0, 0, 0.6);
+            background: #020408;
             border: 1px solid rgba(255, 255, 255, 0.06);
-            min-width: 76px;
+            min-width: 78px;
             text-align: center;
         }
 
-        .digit-lcd.t1 {
+        .lcd-digits.t1 {
             color: var(--team1-blue);
-            text-shadow: 0 0 12px var(--team1-glow);
+            text-shadow: 0 0 14px var(--team1-glow);
         }
 
-        .digit-lcd.t2 {
+        .lcd-digits.t2 {
             color: var(--team2-red);
-            text-shadow: 0 0 12px var(--team2-glow);
+            text-shadow: 0 0 14px var(--team2-glow);
         }
 
-        .center-scores {
+        .middle-ladder {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 3px;
-            padding: 0 6px;
+            padding: 0 8px;
             border-left: 1px dashed rgba(255, 255, 255, 0.1);
             border-right: 1px dashed rgba(255, 255, 255, 0.1);
         }
 
-        .score-row-mini {
+        .ladder-label {
             font-size: 9px;
             font-weight: 800;
             color: var(--text-muted);
             text-transform: uppercase;
         }
 
-        .score-val-mini {
+        .ladder-score {
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
             font-weight: 800;
             color: #fff;
-            background: rgba(255, 255, 255, 0.06);
-            padding: 1px 6px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 6px;
             border-radius: 4px;
         }
 
-        .court-side-banner {
+        .court-banner {
             display: flex;
             align-items: center;
             justify-content: space-between;
             font-size: 11px;
+            font-weight: 600;
             color: var(--text-muted);
-            padding: 0 4px;
+            padding: 2px 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* HUGE Court Remote Scoring Buttons */
-        .big-remote-grid {
+        /* HUGE Scoring Buttons (Filling remaining viewport) */
+        .scoring-hero {
+            flex: 1;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            margin-top: 2px;
+            min-height: 140px;
         }
 
-        .btn-big-score {
+        .btn-giant-score {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 22px 10px;
+            gap: 4px;
             border-radius: var(--radius-xl);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            font-size: 18px;
-            font-weight: 900;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
             transition: transform 0.1s ease, filter 0.15s ease;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
         }
 
-        .btn-big-score:active {
-            transform: scale(0.95);
+        .btn-giant-score:active {
+            transform: scale(0.96);
         }
 
-        .btn-big-score.t1 {
-            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(0, 119, 255, 0.35));
-            border-color: rgba(0, 210, 255, 0.45);
-            color: var(--team1-blue);
-            box-shadow: 0 8px 24px -4px var(--team1-glow);
+        .btn-giant-score.t1 {
+            background: linear-gradient(145deg, rgba(0, 210, 255, 0.25), rgba(0, 119, 255, 0.45));
+            border-color: rgba(0, 210, 255, 0.55);
+            color: #fff;
+            box-shadow: 0 8px 30px -4px var(--team1-glow);
         }
 
-        .btn-big-score.t2 {
-            background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 0, 60, 0.35));
-            border-color: rgba(255, 51, 102, 0.45);
-            color: var(--team2-red);
-            box-shadow: 0 8px 24px -4px var(--team2-glow);
+        .btn-giant-score.t2 {
+            background: linear-gradient(145deg, rgba(255, 51, 102, 0.25), rgba(255, 0, 60, 0.45));
+            border-color: rgba(255, 51, 102, 0.55);
+            color: #fff;
+            box-shadow: 0 8px 30px -4px var(--team2-glow);
         }
 
-        .btn-big-score:disabled {
-            opacity: 0.4;
+        .giant-plus {
+            font-family: var(--font-display);
+            font-size: clamp(34px, 9vw, 44px);
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .giant-team-title {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .btn-giant-score:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
-        /* Tool Bar Row */
-        .tools-row {
+        /* Quick Tool Bar */
+        .court-tools {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 6px;
+            flex-shrink: 0;
         }
 
-        .btn-m-tool {
-            padding: 12px 4px;
+        .btn-tool-chip {
+            padding: 10px 4px;
             font-size: 11px;
             font-weight: 700;
-            border-radius: var(--radius-md);
-            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            background: var(--bg-card);
             border: 1px solid var(--bg-card-border);
             color: var(--text-muted);
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
             transition: all 0.15s ease;
         }
 
-        .btn-m-tool:active {
-            transform: scale(0.96);
-            background: rgba(255,255,255,0.08);
+        .btn-tool-chip:active {
+            transform: scale(0.95);
+            background: rgba(255,255,255,0.1);
         }
 
-        .btn-m-tool:disabled {
-            opacity: 0.4;
+        .btn-tool-chip:disabled {
+            opacity: 0.35;
         }
 
-        .btn-m-tool.danger {
+        .btn-tool-chip.danger {
             color: var(--team2-red);
         }
 
-        /* Settings Items */
-        .m-section-title {
+        /* ================================================= */
+        /* TAB 2 & 3: DISPLAY & RULES (Scrollable cards)     */
+        /* ================================================= */
+        .scroll-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .section-header {
             font-size: 12px;
             font-weight: 800;
             text-transform: uppercase;
@@ -429,21 +403,21 @@
             color: var(--text-muted);
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: space-between;
         }
 
-        .m-pill-grid {
+        .pills-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
             gap: 6px;
         }
 
-        .m-pill-btn {
+        .pill-select {
             padding: 10px 4px;
             font-size: 12px;
             font-weight: 700;
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.08);
             color: var(--text-muted);
             cursor: pointer;
@@ -451,39 +425,33 @@
             transition: all 0.15s ease;
         }
 
-        .m-pill-btn:active {
+        .pill-select:active {
             transform: scale(0.96);
         }
 
-        .m-pill-btn.active {
-            background: rgba(0, 210, 255, 0.16);
+        .pill-select.active {
+            background: rgba(0, 210, 255, 0.18);
             color: var(--team1-blue);
             border-color: rgba(0, 210, 255, 0.5);
             box-shadow: 0 0 10px var(--team1-glow);
         }
 
-        .m-pill-btn.active.gp {
+        .pill-select.active.gp {
             background: rgba(255, 179, 0, 0.18);
             color: var(--accent-gold);
             border-color: rgba(255, 179, 0, 0.5);
             box-shadow: 0 0 10px var(--accent-gold-glow);
         }
 
-        /* Slider Box */
-        .m-slider-box {
+        /* Slider */
+        .slider-wrap {
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.25);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: var(--radius-lg);
             padding: 12px;
-        }
-
-        .slider-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
         input[type="range"] {
@@ -498,26 +466,26 @@
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             background: var(--accent-gold);
-            box-shadow: 0 0 12px var(--accent-gold);
+            box-shadow: 0 0 10px var(--accent-gold);
             cursor: pointer;
         }
 
-        /* RTC Box */
-        .m-rtc-card {
+        /* Clock Card */
+        .clock-card {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.25);
             border: 1px solid rgba(255, 255, 255, 0.05);
             border-radius: var(--radius-lg);
             padding: 12px;
         }
 
-        .m-time-num {
+        .clock-num {
             font-family: var(--font-display);
             font-size: 22px;
             font-weight: 900;
@@ -525,66 +493,102 @@
             text-shadow: 0 0 10px var(--accent-green-glow);
         }
 
-        /* Primary Action Buttons */
-        .btn-full-action {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 15px;
-            border-radius: var(--radius-lg);
-            border: none;
-            font-size: 15px;
-            font-weight: 900;
+        .btn-sync-time {
+            padding: 9px 14px;
+            border-radius: var(--radius-md);
+            background: rgba(0, 230, 118, 0.18);
+            border: 1px solid rgba(0, 230, 118, 0.4);
+            color: var(--accent-green);
+            font-size: 12px;
+            font-weight: 800;
             cursor: pointer;
-            transition: all 0.15s ease;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-        }
-
-        .btn-full-action:active {
-            transform: scale(0.97);
         }
 
         .btn-save-gold {
+            padding: 14px;
+            border-radius: var(--radius-lg);
+            border: none;
             background: linear-gradient(135deg, var(--accent-gold), #ff8800);
             color: #1a0f00;
+            font-size: 15px;
+            font-weight: 900;
+            cursor: pointer;
             box-shadow: 0 6px 20px -3px var(--accent-gold-glow);
+            margin-top: 4px;
         }
 
-        .btn-sync-green {
-            background: rgba(0, 230, 118, 0.16);
-            border: 1px solid rgba(0, 230, 118, 0.35);
-            color: var(--accent-green);
-            padding: 10px 14px;
-            font-size: 13px;
+        .btn-save-gold:active {
+            transform: scale(0.97);
         }
 
-        .btn-full-action:disabled {
+        .btn-save-gold:disabled {
             opacity: 0.4;
             cursor: not-allowed;
             transform: none;
         }
 
-        /* Toast Bar */
-        .toast-bar {
-            font-size: 12px;
-            font-weight: 700;
-            text-align: center;
-            color: var(--text-muted);
-            min-height: 18px;
+        /* Bottom Fixed Navigation Bar */
+        .bottom-nav {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr 0.8fr;
+            gap: 4px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
             padding: 4px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--bg-card-border);
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
-        /* Console Log Box */
+        .bottom-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .bottom-nav-btn span.icon {
+            font-size: 18px;
+        }
+
+        .bottom-nav-btn.active {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .bottom-nav-btn.active[data-tab="court"] {
+            color: var(--team1-blue);
+        }
+
+        .bottom-nav-btn.active[data-tab="display"] {
+            color: var(--accent-gold);
+        }
+
+        .bottom-nav-btn.active[data-tab="rules"] {
+            color: var(--accent-green);
+        }
+
+        /* Log console */
         .log-box {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
-            line-height: 1.4;
             color: #8899aa;
-            background: #04070d;
+            background: #03060a;
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius-md);
-            padding: 10px;
+            padding: 8px;
             max-height: 120px;
             overflow-y: auto;
             display: flex;
@@ -595,15 +599,13 @@
         .log-suc { color: var(--accent-green); }
         .log-err { color: var(--team2-red); }
         .log-pri { color: var(--team1-blue); }
-        .log-war { color: var(--accent-gold); }
 
-        /* Guide link */
-        .m-guide-link {
+        .app-link {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             color: var(--team1-blue);
             background: rgba(0, 0, 0, 0.4);
-            padding: 8px 10px;
+            padding: 8px;
             border-radius: var(--radius-sm);
             border: 1px solid rgba(0, 210, 255, 0.2);
             word-break: break-all;
@@ -617,207 +619,226 @@
 
 <div class="mobile-shell">
 
-    <!-- Top Compact Header & Connection Status -->
+    <!-- Top Sleek Header -->
     <header class="app-header">
         <div class="brand-block">
-            <img src="favicon.png" alt="Icon" style="width: 24px; height: 24px; border-radius: 6px; box-shadow: 0 0 8px rgba(0,210,255,0.4); object-fit: cover;">
-            <div class="brand-title">
-                Padel Score
-                <span class="brand-badge">BLE</span>
-            </div>
+            <img src="favicon.png" alt="Icon" style="width: 26px; height: 26px; border-radius: 7px; box-shadow: 0 0 8px rgba(0,210,255,0.4); object-fit: cover;">
+            <div class="brand-title">Padel Score</div>
         </div>
         <div class="header-actions">
             <button type="button" class="btn-ble-pill" id="btnBleConnect">
                 <span class="status-dot" id="bleStatusDot"></span>
                 <span id="bleStatusText">Connect</span>
             </button>
-            <a href="index.html" class="nav-icon-btn" title="Simulator">🖥️</a>
-            <a href="ota.html" class="nav-icon-btn" title="Flash">⚡</a>
+            <a href="index.html" class="btn-tool-chip" style="padding: 5px 8px; border-radius: 8px; text-decoration: none;" title="Simulator">🖥️</a>
+            <a href="ota.html" class="btn-tool-chip" style="padding: 5px 8px; border-radius: 8px; text-decoration: none;" title="Flash">⚡</a>
         </div>
     </header>
 
-    <!-- Thumb-friendly Tab Switcher -->
-    <nav class="tab-nav">
-        <button type="button" class="tab-btn active" data-tab="court" id="tabBtnCourt">
-            <span>🎾</span> Court
-        </button>
-        <button type="button" class="tab-btn" data-tab="display" id="tabBtnDisplay">
-            <span>💡</span> Display
-        </button>
-        <button type="button" class="tab-btn" data-tab="rules" id="tabBtnRules">
-            <span>⚙️</span> Rules
-        </button>
-        <button type="button" class="tab-btn" data-tab="info" id="tabBtnInfo">
-            <span>📋</span>
-        </button>
-    </nav>
+    <!-- Main View Stage -->
+    <main class="main-stage">
 
-    <!-- ========================================== -->
-    <!-- TAB 1: COURT REMOTE & DISPLAY MIRROR       -->
-    <!-- ========================================== -->
-    <main class="tab-content active" id="paneCourt">
-        <div class="m-card">
-            <!-- 4-Digit Live Mirror -->
-            <div class="mirror-box">
-                <div class="team-pod">
-                    <span class="team-pod-name t1" id="labelT1">Team 1</span>
-                    <div class="digit-lcd t1" id="digitT1">00</div>
+        <!-- ============================================ -->
+        <!-- TAB 1: COURT (Fits 100% on phone screen)    -->
+        <!-- ============================================ -->
+        <div class="tab-pane active" id="paneCourt">
+
+            <!-- Digital Scoreboard Display Mirror -->
+            <div class="score-board">
+                <div class="score-grid">
+                    <div class="team-pod">
+                        <span class="team-pod-name t1" id="labelT1">Team 1</span>
+                        <div class="lcd-digits t1" id="digitT1">00</div>
+                    </div>
+
+                    <div class="middle-ladder">
+                        <span class="ladder-label">Games</span>
+                        <div class="ladder-score" id="ladderGames">0 - 0</div>
+                        <span class="ladder-label" style="margin-top: 3px;">Sets</span>
+                        <div class="ladder-score" id="ladderSets">0 - 0</div>
+                    </div>
+
+                    <div class="team-pod">
+                        <span class="team-pod-name t2" id="labelT2">Team 2</span>
+                        <div class="lcd-digits t2" id="digitT2">00</div>
+                    </div>
                 </div>
 
-                <div class="center-scores">
-                    <span class="score-row-mini">Games</span>
-                    <div class="score-val-mini" id="ladderGames">0 - 0</div>
-                    <span class="score-row-mini" style="margin-top: 3px;">Sets</span>
-                    <div class="score-val-mini" id="ladderSets">0 - 0</div>
-                </div>
-
-                <div class="team-pod">
-                    <span class="team-pod-name t2" id="labelT2">Team 2</span>
-                    <div class="digit-lcd t2" id="digitT2">00</div>
+                <div class="court-banner">
+                    <span id="courtSideText">↔️ L: Team 1 (Blue) | R: Team 2 (Red)</span>
+                    <span id="tbBadge" style="color: var(--accent-gold); font-weight: 900; display: none;">🔥 TIEBREAK</span>
+                    <span id="displayModeBadge" style="font-size: 10px; font-weight: 800; color: var(--accent-green);">SCORE</span>
                 </div>
             </div>
 
-            <!-- Court Status Bar -->
-            <div class="court-side-banner">
-                <span id="courtSideText">↔️ L: Team 1 (Blue) | R: Team 2 (Red)</span>
-                <span id="tbBadge" style="font-weight: 900; color: var(--accent-gold); display: none;">🔥 TB</span>
-                <span class="brand-badge" id="displayModeBadge" style="color: var(--accent-green); border-color: rgba(0,230,118,0.3);">Score</span>
-            </div>
-
-            <!-- HUGE One-Handed Scoring Buttons -->
-            <div class="big-remote-grid">
-                <button type="button" class="btn-big-score t1" id="btnPointT1" disabled>
-                    <span style="font-size: 26px;">🎾</span>
-                    <span>+1 TEAM 1</span>
+            <!-- HUGE One-Handed Scoring Touch Buttons -->
+            <div class="scoring-hero">
+                <button type="button" class="btn-giant-score t1" id="btnPointT1" disabled>
+                    <span class="giant-plus">+1</span>
+                    <span class="giant-team-title">TEAM 1</span>
                 </button>
-                <button type="button" class="btn-big-score t2" id="btnPointT2" disabled>
-                    <span style="font-size: 26px;">🎾</span>
-                    <span>+1 TEAM 2</span>
+                <button type="button" class="btn-giant-score t2" id="btnPointT2" disabled>
+                    <span class="giant-plus">+1</span>
+                    <span class="giant-team-title">TEAM 2</span>
                 </button>
             </div>
 
-            <!-- Quick Action Tools -->
-            <div class="tools-row">
-                <button type="button" class="btn-m-tool" id="btnCmdUndo" disabled>
+            <!-- Court Tool Bar -->
+            <div class="court-tools">
+                <button type="button" class="btn-tool-chip" id="btnCmdUndo" disabled>
                     <span style="font-size: 16px;">↩️</span> Undo
                 </button>
-                <button type="button" class="btn-m-tool" id="btnCmdSwap" disabled>
+                <button type="button" class="btn-tool-chip" id="btnCmdSwap" disabled>
                     <span style="font-size: 16px;">↔️</span> Swap
                 </button>
-                <button type="button" class="btn-m-tool" id="btnCmdToggleMode" disabled>
+                <button type="button" class="btn-tool-chip" id="btnCmdToggleMode" disabled>
                     <span style="font-size: 16px;">⏱️</span> Mode
                 </button>
-                <button type="button" class="btn-m-tool danger" id="btnCmdReset" disabled>
+                <button type="button" class="btn-tool-chip danger" id="btnCmdReset" disabled>
                     <span style="font-size: 16px;">🔄</span> Reset
                 </button>
             </div>
+
         </div>
-    </main>
 
-    <!-- ========================================== -->
-    <!-- TAB 2: DISPLAY & CLOCK HARDWARE SETTINGS   -->
-    <!-- ========================================== -->
-    <section class="tab-content" id="paneDisplay">
-        <div class="m-card">
-            <span class="m-section-title">☀️ LED Brightness</span>
-            
-            <div class="m-slider-box">
-                <div class="slider-head">
-                    <span style="font-size: 12px; color: var(--text-muted);">Intensity</span>
-                    <span class="brand-badge" id="brightnessValBadge" style="font-size: 11px; color: var(--accent-gold); border-color: rgba(255,179,0,0.4);">70% (180)</span>
+        <!-- ============================================ -->
+        <!-- TAB 2: DISPLAY SETTINGS                      -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneDisplay">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>☀️ LED Brightness</span>
+                    <span style="font-family: 'JetBrains Mono'; color: var(--accent-gold);" id="brightnessValBadge">70% (180)</span>
                 </div>
-                <input type="range" id="sliderBrightness" min="20" max="255" value="180" step="5">
-                <div class="m-pill-grid">
-                    <button type="button" class="m-pill-btn" data-brt="255">☀️ 100%</button>
-                    <button type="button" class="m-pill-btn active" data-brt="180">🏸 70%</button>
-                    <button type="button" class="m-pill-btn" data-brt="75">🌙 30%</button>
-                    <button type="button" class="m-pill-btn" data-brt="35">🔋 15%</button>
+
+                <div class="slider-wrap">
+                    <input type="range" id="sliderBrightness" min="20" max="255" value="180" step="5">
+                    <div class="pills-row">
+                        <button type="button" class="pill-select" data-brt="255">☀️ 100%</button>
+                        <button type="button" class="pill-select active" data-brt="180">🏸 70%</button>
+                        <button type="button" class="pill-select" data-brt="75">🌙 30%</button>
+                        <button type="button" class="pill-select" data-brt="35">🔋 15%</button>
+                    </div>
+                </div>
+
+                <div class="section-header" style="margin-top: 4px;">
+                    <span>⏱️ Inactivity Auto-Sleep</span>
+                </div>
+                <div class="pills-row" id="pillsIdleTimeout">
+                    <button type="button" class="pill-select" data-idle="60000">1 Min</button>
+                    <button type="button" class="pill-select" data-idle="180000">3 Min</button>
+                    <button type="button" class="pill-select active" data-idle="300000">5 Min</button>
+                    <button type="button" class="pill-select" data-idle="600000">10 Min</button>
+                    <button type="button" class="pill-select" data-idle="900000">15 Min</button>
+                    <button type="button" class="pill-select" data-idle="0">Never</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 4px;">
+                    <span>🕒 Phone Clock Sync (RTC)</span>
+                </div>
+                <div class="clock-card">
+                    <div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Device Time</div>
+                        <div class="clock-num" id="localTimeDisplay">--:--:--</div>
+                    </div>
+                    <button type="button" class="btn-sync-time" id="btnSyncTime" disabled>
+                        <span>⚡ Sync Clock</span>
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <span class="m-section-title" style="margin-top: 4px;">⏱️ Inactivity Sleep Timeout</span>
-            <div class="m-pill-grid" id="pillsIdleTimeout">
-                <button type="button" class="m-pill-btn" data-idle="60000">1 Min</button>
-                <button type="button" class="m-pill-btn" data-idle="180000">3 Min</button>
-                <button type="button" class="m-pill-btn active" data-idle="300000">5 Min</button>
-                <button type="button" class="m-pill-btn" data-idle="600000">10 Min</button>
-                <button type="button" class="m-pill-btn" data-idle="900000">15 Min</button>
-                <button type="button" class="m-pill-btn" data-idle="0">Never</button>
-            </div>
-
-            <span class="m-section-title" style="margin-top: 4px;">🕒 Phone Clock Sync (RTC)</span>
-            <div class="m-rtc-card">
-                <div>
-                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Device Time</div>
-                    <div class="m-time-num" id="localTimeDisplay">--:--:--</div>
+        <!-- ============================================ -->
+        <!-- TAB 3: MATCH RULES                           -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneRules">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>⚔️ Deuce (40-40) Rule</span>
                 </div>
-                <button type="button" class="btn-full-action btn-sync-green" id="btnSyncTime" disabled>
-                    <span>⚡ Sync Clock</span>
+                <div class="pills-row" id="toggleGp">
+                    <button type="button" class="pill-select active" data-val="0">⚔️ Advantage</button>
+                    <button type="button" class="pill-select gp" data-val="1">⚡ Golden Point</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🏆 Match Length</span>
+                </div>
+                <div class="pills-row" id="toggleSets">
+                    <button type="button" class="pill-select" data-val="1">🥇 1 Set</button>
+                    <button type="button" class="pill-select active" data-val="2">🏆 Best of 3</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🎾 Games per Set</span>
+                </div>
+                <div class="pills-row" id="toggleGames">
+                    <button type="button" class="pill-select active" data-val="6">🎾 6 Games</button>
+                    <button type="button" class="pill-select" data-val="9">🚀 9 Games</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🔥 Tiebreak at 6-6</span>
+                </div>
+                <div class="pills-row" id="toggleTb">
+                    <button type="button" class="pill-select active" data-val="1">🔥 Tiebreak ON</button>
+                    <button type="button" class="pill-select" data-val="0">🚫 Advantage</button>
+                </div>
+
+                <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled>
+                    <span>💾 Save Rules to Scoreboard</span>
                 </button>
             </div>
         </div>
-    </section>
 
-    <!-- ========================================== -->
-    <!-- TAB 3: MATCH RULES & GAME MODES            -->
-    <!-- ========================================== -->
-    <section class="tab-content" id="paneRules">
-        <div class="m-card">
-            <span class="m-section-title">⚔️ Deuce (40-40) Rule</span>
-            <div class="m-pill-grid" id="toggleGp">
-                <button type="button" class="m-pill-btn active" data-val="0">⚔️ Advantage</button>
-                <button type="button" class="m-pill-btn gp" data-val="1">⚡ Golden Point</button>
-            </div>
+        <!-- ============================================ -->
+        <!-- TAB 4: INFO & LOG                            -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneInfo">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>📱 Zero-Server Court Setup</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                    Runs 100% in your browser. Hosted online on GitHub Pages:
+                </p>
+                <a href="https://schepie.github.io/7segment/settings.html" target="_blank" class="app-link">
+                    https://schepie.github.io/7segment/settings.html
+                </a>
+                <p style="font-size: 11px; color: var(--text-sub); line-height: 1.4;">
+                    💡 Tap menu (⋮) ➔ <strong>"Add to Home screen"</strong> to install as a full-screen app on your phone!
+                </p>
 
-            <span class="m-section-title" style="margin-top: 2px;">🏆 Match Length</span>
-            <div class="m-pill-grid" id="toggleSets">
-                <button type="button" class="m-pill-btn" data-val="1">🥇 1 Set</button>
-                <button type="button" class="m-pill-btn active" data-val="2">🏆 Best of 3</button>
-            </div>
-
-            <span class="m-section-title" style="margin-top: 2px;">🎾 Games per Set</span>
-            <div class="m-pill-grid" id="toggleGames">
-                <button type="button" class="m-pill-btn active" data-val="6">🎾 6 Games</button>
-                <button type="button" class="m-pill-btn" data-val="9">🚀 9 Games</button>
-            </div>
-
-            <span class="m-section-title" style="margin-top: 2px;">🔥 Tiebreak at 6-6 (or 8-8)</span>
-            <div class="m-pill-grid" id="toggleTb">
-                <button type="button" class="m-pill-btn active" data-val="1">🔥 Tiebreak ON</button>
-                <button type="button" class="m-pill-btn" data-val="0">🚫 Advantage</button>
-            </div>
-
-            <button type="button" class="btn-full-action btn-save-gold" id="btnSaveConfig" disabled style="margin-top: 6px;">
-                <span>💾 Save Rules to Scoreboard</span>
-            </button>
-        </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 4: INFO & LOG                          -->
-    <!-- ========================================== -->
-    <section class="tab-content" id="paneInfo">
-        <div class="m-card">
-            <span class="m-section-title">📱 Zero-Server Court Setup</span>
-            <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                Hosted online for free via GitHub Pages. Runs 100% in your browser with no local computer or server:
-            </p>
-            <a href="https://schepie.github.io/7segment/settings.html" target="_blank" class="m-guide-link">
-                https://schepie.github.io/7segment/settings.html
-            </a>
-            <p style="font-size: 11px; color: var(--text-sub); line-height: 1.4;">
-                💡 In Chrome/Edge, tap (⋮) ➔ <strong>"Add to Home screen"</strong> to run it full-screen without address bar.
-            </p>
-
-            <span class="m-section-title" style="margin-top: 6px;">📋 Activity & BLE Event Log</span>
-            <div class="log-box" id="consoleBox">
-                <div>[Ready] Tap "Connect" to pair with ESP32 over Web Bluetooth.</div>
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>📋 BLE Event Log</span>
+                </div>
+                <div class="log-box" id="consoleBox">
+                    <div>[Ready] Tap Connect to pair with ESP32.</div>
+                </div>
             </div>
         </div>
-    </section>
 
-    <!-- Live Toast Bar -->
-    <div class="toast-bar" id="cfgStatusText">Ready for Bluetooth connection</div>
+    </main>
+
+    <!-- Native App Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button type="button" class="bottom-nav-btn active" data-tab="court" id="navCourt">
+            <span class="icon">🎾</span>
+            <span>Court</span>
+        </button>
+        <button type="button" class="bottom-nav-btn" data-tab="display" id="navDisplay">
+            <span class="icon">💡</span>
+            <span>Display</span>
+        </button>
+        <button type="button" class="bottom-nav-btn" data-tab="rules" id="navRules">
+            <span class="icon">⚙️</span>
+            <span>Rules</span>
+        </button>
+        <button type="button" class="bottom-nav-btn" data-tab="info" id="navInfo">
+            <span class="icon">📋</span>
+            <span>Info</span>
+        </button>
+    </nav>
 
 </div>
 
@@ -875,11 +896,10 @@
     const btnSyncTime        = document.getElementById('btnSyncTime');
     const localTimeDisplay   = document.getElementById('localTimeDisplay');
     const btnSaveConfig      = document.getElementById('btnSaveConfig');
-    const cfgStatusText      = document.getElementById('cfgStatusText');
     const consoleBox         = document.getElementById('consoleBox');
 
-    // Tab Navigation
-    const tabButtons = document.querySelectorAll('.tab-btn');
+    // Bottom Navigation Bar Switching
+    const navButtons = document.querySelectorAll('.bottom-nav-btn');
     const tabPanes   = {
         court: document.getElementById('paneCourt'),
         display: document.getElementById('paneDisplay'),
@@ -887,10 +907,10 @@
         info: document.getElementById('paneInfo')
     };
 
-    tabButtons.forEach(btn => {
+    navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.dataset.tab;
-            tabButtons.forEach(b => b.classList.remove('active'));
+            navButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
             Object.keys(tabPanes).forEach(k => {
@@ -937,9 +957,9 @@
         }
 
         try {
-            log('Requesting Bluetooth device...', 'pri');
+            log('Scanning for Padel Display...', 'pri');
             btnBleConnect.disabled = true;
-            bleStatusText.textContent = 'Scanning...';
+            bleStatusText.textContent = 'Scanning';
 
             bleDevice = await navigator.bluetooth.requestDevice({
                 filters: [
@@ -953,11 +973,11 @@
                 ]
             });
 
-            log(`Connecting: ${bleDevice.name || 'ESP32'}...`, 'pri');
+            log(`Connecting to ${bleDevice.name || 'ESP32'}...`, 'pri');
             bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
             const server = await bleDevice.gatt.connect();
-            log('GATT Server connected! Discovering Score Service...', 'suc');
+            log('Connected! Discovering Score Service...', 'suc');
 
             const service = await server.getPrimaryService(WATCH_SERVICE_UUID);
             watchChar = await service.getCharacteristic(WATCH_CHAR_UUID);
@@ -967,7 +987,7 @@
             watchChar.addEventListener('characteristicvaluechanged', onNotification);
 
             onConnected();
-            log('Connected and subscribed to Scoreboard!', 'suc');
+            log('Connected & synchronized with Scoreboard!', 'suc');
 
         } catch (err) {
             log(`Connection error: ${err.message}`, 'err');
@@ -981,7 +1001,6 @@
         btnBleConnect.classList.add('connected');
         bleStatusText.textContent = 'Linked';
 
-        // Enable touch buttons
         btnPointT1.disabled = false;
         btnPointT2.disabled = false;
         btnCmdUndo.disabled = false;
@@ -990,9 +1009,6 @@
         btnCmdReset.disabled = false;
         btnSyncTime.disabled = false;
         btnSaveConfig.disabled = false;
-
-        cfgStatusText.textContent = `✓ Connected to ${bleDevice.name || 'Padel Display'}`;
-        cfgStatusText.style.color = 'var(--accent-green)';
 
         // Trigger config fetch
         watchChar.readValue().catch(() => {});
@@ -1011,8 +1027,6 @@
         btnSyncTime.disabled = true;
         btnSaveConfig.disabled = true;
 
-        cfgStatusText.textContent = 'Disconnected. Tap Connect to pair.';
-        cfgStatusText.style.color = 'var(--text-muted)';
         watchChar = null;
         log('Device disconnected', 'err');
     }
@@ -1058,9 +1072,6 @@
             sliderBrightness.value = brt;
             updateBrightnessUI(brt);
         }
-
-        cfgStatusText.textContent = '✓ Rules & display settings loaded from scoreboard';
-        cfgStatusText.style.color = 'var(--accent-green)';
     }
 
     function parseScoreString(text) {
@@ -1139,12 +1150,12 @@
         if (boardState.currentMode === 'SCORE') {
             sendBleText('CMD,CLOCK');
             boardState.currentMode = 'CLOCK';
-            displayModeBadge.textContent = 'Clock';
+            displayModeBadge.textContent = 'CLOCK';
             displayModeBadge.style.color = 'var(--accent-gold)';
         } else {
             sendBleText('CMD,SCORE');
             boardState.currentMode = 'SCORE';
-            displayModeBadge.textContent = 'Score';
+            displayModeBadge.textContent = 'SCORE';
             displayModeBadge.style.color = 'var(--accent-green)';
         }
     });
@@ -1156,7 +1167,7 @@
         const pct = Math.round((val / 255) * 100);
         brightnessValBadge.textContent = `${pct}% (${val})`;
 
-        document.querySelectorAll('#paneDisplay .m-pill-btn').forEach(btn => {
+        document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
             const b = parseInt(btn.dataset.brt);
             if (!isNaN(b)) {
                 btn.classList.toggle('active', Math.abs(b - val) < 15);
@@ -1174,7 +1185,7 @@
         sendBleConfig();
     });
 
-    document.querySelectorAll('#paneDisplay .m-pill-btn').forEach(btn => {
+    document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
         const brt = parseInt(btn.dataset.brt);
         if (!isNaN(brt)) {
             btn.addEventListener('click', () => {
@@ -1192,13 +1203,11 @@
     function setupPillGroup(containerId, configKey, valAttr = 'val') {
         const container = document.getElementById(containerId);
         if (!container) return;
-        container.querySelectorAll('.m-pill-btn').forEach(btn => {
+        container.querySelectorAll('.pill-select').forEach(btn => {
             btn.addEventListener('click', () => {
-                container.querySelectorAll('.m-pill-btn').forEach(b => b.classList.remove('active'));
+                container.querySelectorAll('.pill-select').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 appConfig[configKey] = parseInt(btn.dataset[valAttr]);
-                cfgStatusText.textContent = 'Tap "Save Rules to Scoreboard" to save';
-                cfgStatusText.style.color = 'var(--accent-gold)';
             });
         });
     }
@@ -1206,7 +1215,7 @@
     function updatePillGroupUI(containerId, val, valAttr = 'val') {
         const container = document.getElementById(containerId);
         if (!container) return;
-        container.querySelectorAll('.m-pill-btn').forEach(btn => {
+        container.querySelectorAll('.pill-select').forEach(btn => {
             if (parseInt(btn.dataset[valAttr]) === val) {
                 btn.classList.add('active');
             } else {
@@ -1227,17 +1236,16 @@
     async function sendBleConfig() {
         const payload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle}`;
         btnSaveConfig.disabled = true;
-        cfgStatusText.textContent = 'Saving to Scoreboard Flash...';
-        cfgStatusText.style.color = 'var(--team1-blue)';
+        btnSaveConfig.textContent = 'Saving...';
 
         const success = await sendBleText(payload);
         btnSaveConfig.disabled = false;
+        btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
         if (success) {
-            cfgStatusText.textContent = '✓ Saved in Scoreboard Flash!';
-            cfgStatusText.style.color = 'var(--accent-green)';
+            log('Config saved to Flash', 'suc');
+            alert('✓ Rules and Display settings saved to Scoreboard Flash!');
         } else {
-            cfgStatusText.textContent = 'Failed to save settings';
-            cfgStatusText.style.color = 'var(--team2-red)';
+            alert('Failed to send settings. Check connection.');
         }
     }
 
@@ -1262,8 +1270,7 @@
 
         if (success) {
             log(`RTC synchronized: ${h}:${m}:${s}`, 'suc');
-            cfgStatusText.textContent = `✓ Clock synced to ${h}:${m}:${s}!`;
-            cfgStatusText.style.color = 'var(--accent-green)';
+            alert(`✓ Scoreboard clock synced to ${h}:${m}:${s}!`);
         }
     });
 
