@@ -911,7 +911,16 @@
                     </label>
                 </div>
 
-                <button type="button" class="btn-save-gold" id="btnSaveDisplay" disabled style="margin-top: 4px;">
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>💡 Display Hardware Layout</span>
+                </div>
+                <div class="pills-row" id="pillsLedLayout">
+                    <button type="button" class="pill-select active" data-layout="0">🎾 136 LEDs (Full)</button>
+                    <button type="button" class="pill-select" data-layout="1">⏰ 114 LEDs (+Colon)</button>
+                    <button type="button" class="pill-select" data-layout="2">🔢 112 LEDs (4 Digits)</button>
+                </div>
+
+                <button type="button" class="btn-save-gold" id="btnSaveDisplay" disabled style="margin-top: 8px;">
                     <span>💾 Save Display Settings</span>
                 </button>
             </div>
@@ -1027,6 +1036,7 @@
         tb: 1,
         brt: 180,
         idle: 300000,
+        layout: parseInt(localStorage.getItem('padel_led_layout') || '0'),
         clockColor: localStorage.getItem('padel_clock_color') || '#00E676'
     };
 
@@ -1235,6 +1245,7 @@
         const tbMatch   = text.match(/TB=(\d+)/);
         const brtMatch  = text.match(/BRT=(\d+)/);
         const idleMatch = text.match(/IDLE=(\d+)/);
+        const layMatch  = text.match(/LAY(?:OUT)?=(\d+)/);
         const colMatch  = text.match(/COL=([#0-9a-fA-F]+)/);
 
         if (gpMatch) updatePillGroupUI('toggleGp', parseInt(gpMatch[1]));
@@ -1242,6 +1253,12 @@
         if (gamesMatch) updatePillGroupUI('toggleGames', parseInt(gamesMatch[1]));
         if (tbMatch) updatePillGroupUI('toggleTb', parseInt(tbMatch[1]));
         if (idleMatch) updatePillGroupUI('pillsIdleTimeout', parseInt(idleMatch[1]), 'idle');
+        if (layMatch) {
+            const lay = parseInt(layMatch[1]);
+            appConfig.layout = lay;
+            updatePillGroupUI('pillsLedLayout', lay, 'layout');
+            try { localStorage.setItem('padel_led_layout', lay); } catch(e) {}
+        }
 
         if (brtMatch) {
             const brt = parseInt(brtMatch[1]);
@@ -1309,7 +1326,12 @@
         }
         try {
             log(`TX: ${payload}`, 'pri');
-            await watchChar.writeValue(new TextEncoder().encode(payload));
+            const data = new TextEncoder().encode(payload);
+            if (watchChar.writeValueWithResponse) {
+                await watchChar.writeValueWithResponse(data);
+            } else {
+                await watchChar.writeValue(data);
+            }
             return true;
         } catch (err) {
             log(`TX error: ${err.message}`, 'err');
@@ -1413,6 +1435,8 @@
     setupPillGroup('toggleGames', 'games');
     setupPillGroup('toggleTb', 'tb');
     setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
+    setupPillGroup('pillsLedLayout', 'layout', 'layout');
+    updatePillGroupUI('pillsLedLayout', appConfig.layout, 'layout');
 
     // -------------------------------------------------------------
     // Clock Color Selection & Live Transmission
@@ -1501,7 +1525,8 @@
     // -------------------------------------------------------------
     async function sendBleConfig() {
         const colStr = (appConfig.clockColor || '#00E676').toUpperCase();
-        const payload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+        try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
+
         if (btnSaveConfig) {
             btnSaveConfig.disabled = true;
             btnSaveConfig.textContent = 'Saving...';
@@ -1511,7 +1536,13 @@
             btnSaveDisplay.textContent = 'Saving...';
         }
 
+        // 1. Send dedicated color command first (fits safely in all packet sizes and immediately saves/renders)
+        await sendBleText(`CMD,COL,${colStr}`);
+
+        // 2. Send complete system config
+        const payload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},LAY=${appConfig.layout || 0},COL=${colStr}`;
         const success = await sendBleText(payload);
+
         if (btnSaveConfig) {
             btnSaveConfig.disabled = false;
             btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
