@@ -1090,18 +1090,30 @@
         info: document.getElementById('paneInfo')
     };
 
+    function switchTab(target) {
+        if (!tabPanes[target]) return;
+        navButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
+        Object.keys(tabPanes).forEach(k => {
+            if (tabPanes[k]) {
+                tabPanes[k].classList.toggle('active', k === target);
+            }
+        });
+    }
+
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            const target = btn.dataset.tab;
-            navButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            Object.keys(tabPanes).forEach(k => {
-                if (tabPanes[k]) {
-                    tabPanes[k].classList.toggle('active', k === target);
-                }
-            });
+            switchTab(btn.dataset.tab);
         });
+    });
+
+    // Support URL hash navigation (e.g. #display, #rules, #court, #info)
+    const initialHashTab = (window.location.hash || '').replace('#', '').toLowerCase();
+    if (initialHashTab && tabPanes[initialHashTab]) {
+        switchTab(initialHashTab);
+    }
+    window.addEventListener('hashchange', () => {
+        const hashTab = (window.location.hash || '').replace('#', '').toLowerCase();
+        if (hashTab && tabPanes[hashTab]) switchTab(hashTab);
     });
 
     function log(msg, type = '') {
