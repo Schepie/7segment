@@ -1487,9 +1487,12 @@ void parseConfigPayload(const std::string& val) {
                 cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs,
                 (int)cfgLedLayout, cfgClockR, cfgClockG, cfgClockB);
 
-  currentMode = MODE_CLOCK;
   lastActivityTime = millis();
-  renderClock();
+  if (currentMode == MODE_CLOCK) {
+    renderClock();
+  } else {
+    renderPadelScoreboard();
+  }
 
   sendConfigNotification();
 }
@@ -1549,18 +1552,23 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       }
     }
 
-    // 2. Direct Brightness Command: "CMD,BRT,...", "BRT,...", "BRT=..."
-    if (val.rfind("CMD,BRT,", 0) == 0 || val.rfind("BRT,", 0) == 0 || val.rfind("BRT=", 0) == 0) {
-      size_t pfx = (val.rfind("CMD,BRT,", 0) == 0) ? 8 : 4;
+    // 2. Direct Brightness Command: "CMD,BRT,...", "BRT,...", "BRT=...", "CFG,BRT=..."
+    if (val.rfind("CMD,BRT,", 0) == 0 || val.rfind("BRT,", 0) == 0 || val.rfind("BRT=", 0) == 0 || val.rfind("CFG,BRT=", 0) == 0) {
+      size_t pfx = 4;
+      if (val.rfind("CMD,BRT,", 0) == 0 || val.rfind("CFG,BRT=", 0) == 0) pfx = 8;
       int brt = atoi(val.substr(pfx).c_str());
       if (brt >= 10 && brt <= 255) {
         cfgBrightness = (uint8_t)brt;
         pixels.setBrightness(cfgBrightness);
-        showPixelsSafe();
         Preferences cfgPrefs;
         cfgPrefs.begin("padel_cfg", false);
         cfgPrefs.putUChar("brightness", cfgBrightness);
         cfgPrefs.end();
+        if (currentMode == MODE_CLOCK) {
+          renderClock();
+        } else {
+          renderPadelScoreboard();
+        }
       }
       sendConfigNotification();
       return;

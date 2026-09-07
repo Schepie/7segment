@@ -1408,24 +1408,44 @@
         });
     }
 
-    sliderBrightness.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
+    let brtDebounceTimer = null;
+    function setBrightness(val, immediate = false) {
+        val = Math.max(10, Math.min(255, parseInt(val) || 180));
         appConfig.brt = val;
+        sliderBrightness.value = val;
         updateBrightnessUI(val);
+
+        if (brtDebounceTimer) {
+            clearTimeout(brtDebounceTimer);
+            brtDebounceTimer = null;
+        }
+
+        const transmit = () => {
+            if (!watchChar) return;
+            // Send CFG,BRT=... for immediate compatibility with both currently installed and new firmware
+            sendBleText(`CFG,BRT=${val}`);
+        };
+
+        if (immediate) {
+            transmit();
+        } else {
+            brtDebounceTimer = setTimeout(transmit, 75);
+        }
+    }
+
+    sliderBrightness.addEventListener('input', (e) => {
+        setBrightness(e.target.value, false);
     });
 
-    sliderBrightness.addEventListener('change', () => {
-        sendBleConfig();
+    sliderBrightness.addEventListener('change', (e) => {
+        setBrightness(e.target.value, true);
     });
 
     document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
         const brt = parseInt(btn.dataset.brt);
         if (!isNaN(brt)) {
             btn.addEventListener('click', () => {
-                sliderBrightness.value = brt;
-                appConfig.brt = brt;
-                updateBrightnessUI(brt);
-                sendBleConfig();
+                setBrightness(brt, true);
             });
         }
     });
@@ -1566,14 +1586,14 @@
         // 1. Send dedicated color command first (fits safely in single MTU 23 packet)
         const colOk = await sendBleText(`CMD,COL,${colStr}`);
 
-        // 2. Send dedicated brightness command
-        await sendBleText(`CMD,BRT,${appConfig.brt}`);
+        // 2. Send dedicated brightness command (CFG,BRT= is compatible with all firmwares)
+        const brtOk = await sendBleText(`CFG,BRT=${appConfig.brt}`);
 
         // 3. Send dedicated layout command
         await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
 
-        // 4. Send match rules configuration
-        const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},IDLE=${appConfig.idle},COL=${colStr}`;
+        // 4. Send match rules configuration WITH BRT included
+        const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
         const cfgOk = await sendBleText(rulesPayload);
 
         if (btnSaveConfig) {
@@ -1584,9 +1604,10 @@
             btnSaveDisplay.disabled = false;
             btnSaveDisplay.innerHTML = '<span>💾 Save Display Settings</span>';
         }
-        if (colOk || cfgOk) {
-            log(`Config saved: ${colStr}`, 'suc');
-            alert(`✓ Rules and Display settings (Color: ${colStr}) saved to Scoreboard Flash!`);
+        if (colOk || brtOk || cfgOk) {
+            const pct = Math.round((appConfig.brt / 255) * 100);
+            log(`Config saved: BRT=${appConfig.brt} (${pct}%), COL=${colStr}`, 'suc');
+            alert(`✓ Rules and Display settings (Brightness: ${pct}%, Color: ${colStr}) saved to Scoreboard Flash!`);
         } else {
             alert('Failed to send settings. Check Bluetooth connection.');
         }
