@@ -7,8 +7,8 @@
 // --- Configuration & Preview Toggles ---
 show_holder = true;           // Render the 3D-printable battery holder
 // --- Preview & Simulation Options ---
-show_battery_preview = true;  // Show translucent Sitecom powerbank
-show_mesh_preview = true;     // Show 50x50 mm padel court wire mesh
+show_battery_preview = false;  // Show translucent Sitecom powerbank
+show_mesh_preview = false;     // Show 50x50 mm padel court wire mesh
 mesh_side = "front";          // "front" = horizontal wires facing holder; "opposite" = vertical wire facing holder
 
 // --- Powerbank Dimensions (Action Sitecom 3222798 20,000mAh) ---
@@ -40,8 +40,8 @@ hook_w = 14.0;                // Broad 14.0 mm wide hooks for superior strength 
 hook_offset_z = cradle_h - 10.0; // Top hook wire center level (75.0 mm above base)
 
 // --- VESA Mount Parameters (Optional direct scoreboard bolting) ---
-vesa_pitch = 50.0;            // 50x50 mm VESA mounting hole pattern
-m3_hole_dia = 3.4;            // M3 screw clearance diameter
+vesa_pitch = 0.0;            // 50x50 mm VESA mounting hole pattern
+m3_hole_dia = 0;            // M3 screw clearance diameter
 
 // =============================================================================
 // Helper Shapes
@@ -205,7 +205,7 @@ module padel_battery_holder() {
         translate([0, outer_d/2 - 2.0, cradle_h])
             rotate([35, 0, 0])
                 cube([outer_w + 2, 8, 8], center = true);
-
+/*
         // E. 4x VESA 50x50 mm M3 Screw Mounting Holes (through back wall)
         // Allows direct bolting to scoreboard backplate if fence mounting is not used
         for (x = [-vesa_pitch/2, vesa_pitch/2]) {
@@ -220,7 +220,7 @@ module padel_battery_holder() {
                 }
             }
         }
-        
+        */
         // F. Drainage & Ventilation Slots in bottom floor
         for (x = [-24.0, 24.0]) {
             translate([x, 0, -0.1])

@@ -1474,6 +1474,9 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       } else if (cmd == "SCORE") {
         currentMode = MODE_SCOREBOARD;
         scoreNeedsUpdate = true;
+      } else if (cmd == "REQ" || cmd == "REQ_CFG") {
+        sendConfigNotification();
+        notifyWatchScore();
       }
       return;
     }

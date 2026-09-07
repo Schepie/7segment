@@ -7,10 +7,10 @@
 include <./7segment_pogo.scad>
 
 // Ensure full display elements are hidden
-show_frontplate_black = false;
-show_frontplate_white = false;
-show_backplate        = false;
-show_pogo_hardware    = false;
+show_frontplate_black = true;
+show_frontplate_white = true;
+show_backplate        = true;
+show_pogo_hardware    = true;
 
 /* [Coupon Selection] */
 coupon_type = "both_side_by_side"; // ["backplate_pogo_tower", "frontplate_u_shape_notch", "backplate_usb_tower", "assembled_mating_test", "exploded_mating_view", "both_side_by_side", "collision_check", "clearance_check", "cutaway_view"]

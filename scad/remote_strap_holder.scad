@@ -33,7 +33,7 @@ inner_margin       = 5.5;   // Wall thickness between slot and cutout (mm)
 
 // Vertical Geometry & Curvature
 thickness          = 2.5;   // [1.5:0.1:4.0] Material thickness (mm)
-wing_angle         = 15.0;  // [0.0:1.0:45.0] Downward bend angle of wings in degrees (sideview)
+wing_angle         = 30.0;  // [0.0:1.0:45.0] Downward bend angle of wings in degrees (sideview)
 edge_radius        = 0.75;  // [0.0:0.05:1.2] 3D edge roundover radius (mm) - set to 0 for sharp edges
 
 // Corner Radii (in 2D plane)
