@@ -2,376 +2,1644 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Padel Scoreboard - 7-Segment & Games/Sets Interactive Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Padel Scoreboard - Mobile Controller</title>
+    <meta name="description" content="Mobile-first Web Bluetooth companion app for ESP32 7-segment Padel Scoreboard. Control live score, brightness, sleep timeout, RTC time sync, and match rules directly from your phone.">
+    <meta name="theme-color" content="#080c14">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Padel Score">
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/scoreboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #080c14;
+            --bg-surface: #101726;
+            --bg-card: rgba(16, 23, 38, 0.9);
+            --bg-card-border: rgba(255, 255, 255, 0.08);
+
+            --team1-blue: #00d2ff;
+            --team1-glow: rgba(0, 210, 255, 0.35);
+            --team2-red: #ff3366;
+            --team2-glow: rgba(255, 51, 102, 0.35);
+            --accent-green: #00e676;
+            --accent-green-glow: rgba(0, 230, 118, 0.3);
+            --accent-gold: #ffb300;
+            --accent-gold-glow: rgba(255, 179, 0, 0.3);
+
+            --clock-color: #00e676;
+            --clock-glow: rgba(0, 230, 118, 0.4);
+
+            --text-main: #f0f4f8;
+            --text-muted: #8899aa;
+            --text-sub: #556677;
+
+            --radius-xl: 18px;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --radius-sm: 6px;
+
+            --font-display: 'Orbitron', 'JetBrains Mono', monospace;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #16243c 0%, var(--bg-base) 85%);
+            color: var(--text-main);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* App Shell */
+        .mobile-shell {
+            width: 100%;
+            max-width: 440px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: calc(6px + var(--safe-top)) 10px calc(8px + var(--safe-bottom)) 10px;
+            gap: 8px;
+        }
+
+        /* Compact Sticky Header */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            flex-shrink: 0;
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-title {
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-ble-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.25), rgba(0, 119, 255, 0.4));
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-ble-pill:active {
+            transform: scale(0.96);
+        }
+
+        .btn-ble-pill.connected {
+            background: rgba(0, 230, 118, 0.18);
+            border-color: rgba(0, 230, 118, 0.4);
+            color: var(--accent-green);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-sub);
+        }
+
+        .btn-ble-pill.connected .status-dot {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse-dot 1.8s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+        }
+
+        /* Main Screen Container */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-pane {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            gap: 8px;
+        }
+
+        .tab-pane.active {
+            display: flex;
+        }
+
+        /* ================================================= */
+        /* TAB 1: COURT (Zero-Scroll Screen)                 */
+        /* ================================================= */
+        #paneCourt {
+            justify-content: space-between;
+        }
+
+        /* Digital Score Display */
+        .score-board {
+            background: #04070d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-xl);
+            padding: 10px 8px;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 16px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .team-pod {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .team-pod-name {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .team-pod-name.t1 { color: var(--team1-blue); }
+        .team-pod-name.t2 { color: var(--team2-red); }
+
+        .lcd-digits {
+            font-family: var(--font-display);
+            font-size: clamp(34px, 9vw, 42px);
+            font-weight: 900;
+            letter-spacing: 3px;
+            line-height: 1;
+            padding: 6px 10px;
+            border-radius: var(--radius-md);
+            background: #020408;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            min-width: 78px;
+            text-align: center;
+        }
+
+        .lcd-digits.t1 {
+            color: var(--team1-blue);
+            text-shadow: 0 0 14px var(--team1-glow);
+        }
+
+        .lcd-digits.t2 {
+            color: var(--team2-red);
+            text-shadow: 0 0 14px var(--team2-glow);
+        }
+
+        .middle-ladder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 0 8px;
+            border-left: 1px dashed rgba(255, 255, 255, 0.1);
+            border-right: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .ladder-label {
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .ladder-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 800;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .court-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* HUGE Scoring Buttons (Filling remaining viewport) */
+        .scoring-hero {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            min-height: 140px;
+        }
+
+        .btn-giant-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-radius: var(--radius-xl);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.15s ease;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+        }
+
+        .btn-giant-score:active {
+            transform: scale(0.96);
+        }
+
+        .btn-giant-score.t1 {
+            background: linear-gradient(145deg, rgba(0, 210, 255, 0.25), rgba(0, 119, 255, 0.45));
+            border-color: rgba(0, 210, 255, 0.55);
+            color: #fff;
+            box-shadow: 0 8px 30px -4px var(--team1-glow);
+        }
+
+        .btn-giant-score.t2 {
+            background: linear-gradient(145deg, rgba(255, 51, 102, 0.25), rgba(255, 0, 60, 0.45));
+            border-color: rgba(255, 51, 102, 0.55);
+            color: #fff;
+            box-shadow: 0 8px 30px -4px var(--team2-glow);
+        }
+
+        .giant-plus {
+            font-family: var(--font-display);
+            font-size: clamp(34px, 9vw, 44px);
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .giant-team-title {
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .btn-giant-score:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Quick Tool Bar */
+        .court-tools {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-tool-chip {
+            padding: 10px 4px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: var(--radius-lg);
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-tool-chip:active {
+            transform: scale(0.95);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-tool-chip:disabled {
+            opacity: 0.35;
+        }
+
+        .btn-tool-chip.danger {
+            color: var(--team2-red);
+        }
+
+        /* ================================================= */
+        /* TAB 2 & 3: DISPLAY & RULES (Scrollable cards)     */
+        /* ================================================= */
+        .scroll-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .section-header {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pills-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 6px;
+        }
+
+        .pill-select {
+            padding: 10px 4px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+
+        .pill-select:active {
+            transform: scale(0.96);
+        }
+
+        .pill-select.active {
+            background: rgba(0, 210, 255, 0.18);
+            color: var(--team1-blue);
+            border-color: rgba(0, 210, 255, 0.5);
+            box-shadow: 0 0 10px var(--team1-glow);
+        }
+
+        .pill-select.active.gp {
+            background: rgba(255, 179, 0, 0.18);
+            color: var(--accent-gold);
+            border-color: rgba(255, 179, 0, 0.5);
+            box-shadow: 0 0 10px var(--accent-gold-glow);
+        }
+
+        /* Slider */
+        .slider-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            box-shadow: 0 0 10px var(--accent-gold);
+            cursor: pointer;
+        }
+
+        /* Clock Card */
+        .clock-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+        }
+
+        .clock-num {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--clock-color, var(--accent-green));
+            text-shadow: 0 0 12px var(--clock-glow, var(--accent-green-glow));
+            transition: color 0.25s ease, text-shadow 0.25s ease;
+        }
+
+        .btn-sync-time {
+            padding: 9px 14px;
+            border-radius: var(--radius-md);
+            background: rgba(0, 230, 118, 0.18);
+            border: 1px solid rgba(0, 230, 118, 0.4);
+            color: var(--accent-green);
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* Clock Color Controls */
+        .color-swatches-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .color-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 4px;
+            border-radius: var(--radius-md);
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .color-chip:active {
+            transform: scale(0.95);
+        }
+
+        .color-chip.active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--chip-color, var(--team1-blue));
+            box-shadow: 0 0 12px var(--chip-glow, rgba(0, 210, 255, 0.3));
+        }
+
+        .color-chip-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--chip-color);
+            box-shadow: 0 0 8px var(--chip-glow);
+        }
+
+        .color-chip-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .color-chip.active .color-chip-name {
+            color: #fff;
+        }
+
+        .custom-color-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-lg);
+            padding: 9px 12px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+
+        .custom-color-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .custom-color-input-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .custom-color-input-wrap:active {
+            transform: scale(0.96);
+        }
+
+        .custom-color-input-wrap input[type="color"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+
+        .color-swatch-circle {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--clock-color, var(--accent-green));
+            box-shadow: 0 0 8px var(--clock-glow, var(--accent-green-glow));
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-save-gold {
+            padding: 14px;
+            border-radius: var(--radius-lg);
+            border: none;
+            background: linear-gradient(135deg, var(--accent-gold), #ff8800);
+            color: #1a0f00;
+            font-size: 15px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 20px -3px var(--accent-gold-glow);
+            margin-top: 4px;
+        }
+
+        .btn-save-gold:active {
+            transform: scale(0.97);
+        }
+
+        .btn-save-gold:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Bottom Fixed Navigation Bar */
+        .bottom-nav {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr 0.8fr;
+            gap: 4px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            padding: 4px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--bg-card-border);
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .bottom-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 8px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .bottom-nav-btn span.icon {
+            font-size: 18px;
+        }
+
+        .bottom-nav-btn.active {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .bottom-nav-btn.active[data-tab="court"] {
+            color: var(--team1-blue);
+        }
+
+        .bottom-nav-btn.active[data-tab="display"] {
+            color: var(--accent-gold);
+        }
+
+        .bottom-nav-btn.active[data-tab="rules"] {
+            color: var(--accent-green);
+        }
+
+        /* Log console */
+        .log-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #8899aa;
+            background: #03060a;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .log-suc { color: var(--accent-green); }
+        .log-err { color: var(--team2-red); }
+        .log-pri { color: var(--team1-blue); }
+
+        .app-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--team1-blue);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            word-break: break-all;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+    </style>
 </head>
-<body class="env-night">
+<body>
 
-    <!-- Top App Header / Live HUD -->
+<div class="mobile-shell">
+
+    <!-- Top Sleek Header -->
     <header class="app-header">
-        <div class="brand-section">
-            <div class="brand-logo">
-                <span class="logo-badge">PADEL 7-SEG</span>
-                <div>
-                    <h1 class="brand-title">Modular Scoreboard Simulator</h1>
-                    <p class="brand-sub">WS2812B NeoPixel • BLE Wear OS & Racket Clicker • Games & Sets Ladder</p>
-                </div>
-            </div>
+        <div class="brand-block">
+            <img src="favicon.png" alt="Icon" style="width: 26px; height: 26px; border-radius: 7px; box-shadow: 0 0 8px rgba(0,210,255,0.4); object-fit: cover;">
+            <div class="brand-title">Padel Score</div>
         </div>
-
-        <div class="hud-summary">
-            <div class="hud-item">
-                <span class="hud-label">Team 1 Points</span>
-                <span class="hud-val team1-col" id="hudT1Score">00</span>
-            </div>
-            <div class="hud-item">
-                <span class="hud-label">Games</span>
-                <span class="hud-val accent-col" id="hudGames">0 - 0</span>
-            </div>
-            <div class="hud-item">
-                <span class="hud-label">Team 2 Points</span>
-                <span class="hud-val team2-col" id="hudT2Score">00</span>
-            </div>
-            <div class="hud-item">
-                <span class="hud-label">Sets</span>
-                <span class="hud-val" id="hudSets">0 - 0</span>
-            </div>
-        </div>
-
         <div class="header-actions">
-            <a href="settings.html" class="btn-header" style="text-decoration: none; color: inherit;">
-                <span class="icon">⚙️</span> Settings
-            </a>
-            <a href="ota.html" class="btn-header" style="text-decoration: none; color: inherit;">
-                <span class="icon">⚡</span> BLE Flash
-            </a>
-            <button class="btn-header primary" id="btnAutoPlay">
-                <span>▶</span> Auto Demo Match
+            <button type="button" class="btn-ble-pill" id="btnBleConnect">
+                <span class="status-dot" id="bleStatusDot"></span>
+                <span id="bleStatusText">Connect</span>
             </button>
-            <button class="btn-header" id="btnSound">
-                <span class="icon">🔊</span> Sound On
-            </button>
-            <button class="btn-header" id="btnFullscreen">
-                <span>⛶</span> Fullscreen
-            </button>
+            <a href="ota.html" class="btn-tool-chip" style="padding: 5px 8px; border-radius: 8px; text-decoration: none;" title="Flash">⚡</a>
         </div>
     </header>
 
-    <!-- 1-Click Demo Scenarios Bar -->
-    <nav class="scenarios-bar">
-        <span class="scenarios-title">🎬 Demo Scenarios:</span>
-        <button class="scenario-pill highlight" data-scenario="side-swap">
-            <span>↔</span> Side-Swap Wipe
+    <!-- Main View Stage -->
+    <main class="main-stage">
+
+        <!-- ============================================ -->
+        <!-- TAB 1: COURT (Fits 100% on phone screen)    -->
+        <!-- ============================================ -->
+        <div class="tab-pane active" id="paneCourt">
+
+            <!-- Digital Scoreboard Display Mirror -->
+            <div class="score-board">
+                <div class="score-grid">
+                    <div class="team-pod">
+                        <span class="team-pod-name t1" id="labelT1">Team 1</span>
+                        <div class="lcd-digits t1" id="digitT1">00</div>
+                    </div>
+
+                    <div class="middle-ladder">
+                        <span class="ladder-label">Games</span>
+                        <div class="ladder-score" id="ladderGames">0 - 0</div>
+                        <span class="ladder-label" style="margin-top: 3px;">Sets</span>
+                        <div class="ladder-score" id="ladderSets">0 - 0</div>
+                    </div>
+
+                    <div class="team-pod">
+                        <span class="team-pod-name t2" id="labelT2">Team 2</span>
+                        <div class="lcd-digits t2" id="digitT2">00</div>
+                    </div>
+                </div>
+
+                <div class="court-banner">
+                    <span id="courtSideText">↔️ L: Team 1 (Blue) | R: Team 2 (Red)</span>
+                    <span id="tbBadge" style="color: var(--accent-gold); font-weight: 900; display: none;">🔥 TIEBREAK</span>
+                    <span id="displayModeBadge" style="font-size: 10px; font-weight: 800; color: var(--accent-green);">SCORE</span>
+                </div>
+            </div>
+
+            <!-- HUGE One-Handed Scoring Touch Buttons -->
+            <div class="scoring-hero">
+                <button type="button" class="btn-giant-score t1" id="btnPointT1" disabled>
+                    <span class="giant-plus">+1</span>
+                    <span class="giant-team-title">TEAM 1</span>
+                </button>
+                <button type="button" class="btn-giant-score t2" id="btnPointT2" disabled>
+                    <span class="giant-plus">+1</span>
+                    <span class="giant-team-title">TEAM 2</span>
+                </button>
+            </div>
+
+            <!-- Court Tool Bar -->
+            <div class="court-tools">
+                <button type="button" class="btn-tool-chip" id="btnCmdUndo" disabled>
+                    <span style="font-size: 16px;">↩️</span> Undo
+                </button>
+                <button type="button" class="btn-tool-chip" id="btnCmdSwap" disabled>
+                    <span style="font-size: 16px;">↔️</span> Swap
+                </button>
+                <button type="button" class="btn-tool-chip" id="btnCmdToggleMode" disabled>
+                    <span style="font-size: 16px;">⏱️</span> Mode
+                </button>
+                <button type="button" class="btn-tool-chip danger" id="btnCmdReset" disabled>
+                    <span style="font-size: 16px;">🔄</span> Reset
+                </button>
+            </div>
+
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB 2: DISPLAY SETTINGS                      -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneDisplay">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>☀️ LED Brightness</span>
+                    <span style="font-family: 'JetBrains Mono'; color: var(--accent-gold);" id="brightnessValBadge">70% (180)</span>
+                </div>
+
+                <div class="slider-wrap">
+                    <input type="range" id="sliderBrightness" min="20" max="255" value="180" step="5">
+                    <div class="pills-row">
+                        <button type="button" class="pill-select" data-brt="255">☀️ 100%</button>
+                        <button type="button" class="pill-select active" data-brt="180">🏸 70%</button>
+                        <button type="button" class="pill-select" data-brt="75">🌙 30%</button>
+                        <button type="button" class="pill-select" data-brt="35">🔋 15%</button>
+                    </div>
+                </div>
+
+                <div class="section-header" style="margin-top: 4px;">
+                    <span>⏱️ Inactivity Auto-Sleep</span>
+                </div>
+                <div class="pills-row" id="pillsIdleTimeout">
+                    <button type="button" class="pill-select" data-idle="60000">1 Min</button>
+                    <button type="button" class="pill-select" data-idle="180000">3 Min</button>
+                    <button type="button" class="pill-select active" data-idle="300000">5 Min</button>
+                    <button type="button" class="pill-select" data-idle="600000">10 Min</button>
+                    <button type="button" class="pill-select" data-idle="900000">15 Min</button>
+                    <button type="button" class="pill-select" data-idle="0">Never</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 4px;">
+                    <span>🕒 Phone Clock Sync (RTC)</span>
+                </div>
+                <div class="clock-card">
+                    <div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Device Time</div>
+                        <div class="clock-num" id="localTimeDisplay">--:--:--</div>
+                    </div>
+                    <button type="button" class="btn-sync-time" id="btnSyncTime" disabled>
+                        <span>⚡ Sync Clock</span>
+                    </button>
+                </div>
+
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>🎨 Clock Digit Color</span>
+                    <span style="font-family: 'JetBrains Mono'; font-weight: 800; color: var(--clock-color, var(--accent-green));" id="clockColorHexBadge">#00E676</span>
+                </div>
+
+                <div class="color-swatches-grid" id="clockColorSwatches">
+                    <button type="button" class="color-chip active" data-color="#00E676" style="--chip-color: #00e676; --chip-glow: rgba(0, 230, 118, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Green</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#00D2FF" style="--chip-color: #00d2ff; --chip-glow: rgba(0, 210, 255, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Cyan</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FFFFFF" style="--chip-color: #ffffff; --chip-glow: rgba(255, 255, 255, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">White</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FF9100" style="--chip-color: #ff9100; --chip-glow: rgba(255, 145, 0, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Amber</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FFB300" style="--chip-color: #ffb300; --chip-glow: rgba(255, 179, 0, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Gold</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#B536FF" style="--chip-color: #b536ff; --chip-glow: rgba(181, 54, 255, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Violet</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FF3366" style="--chip-color: #ff3366; --chip-glow: rgba(255, 51, 102, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Red</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FF2A8D" style="--chip-color: #ff2a8d; --chip-glow: rgba(255, 42, 141, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Pink</span>
+                    </button>
+                </div>
+
+                <div class="custom-color-card">
+                    <div class="custom-color-left">
+                        <span style="font-size: 16px;">🎨</span>
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700;">Custom RGB Color</div>
+                            <div style="font-size: 10px; color: var(--text-muted);">Choose any hex shade</div>
+                        </div>
+                    </div>
+                    <label class="custom-color-input-wrap">
+                        <span class="color-swatch-circle" id="customColorCircle"></span>
+                        <span style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 700;">Custom</span>
+                        <input type="color" id="pickerClockColor" value="#00E676" class="color-picker-native">
+                    </label>
+                </div>
+
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>💡 Display Hardware Layout</span>
+                </div>
+                <div class="pills-row" id="pillsLedLayout">
+                    <button type="button" class="pill-select active" data-layout="0">🎾 136 LEDs (Full)</button>
+                    <button type="button" class="pill-select" data-layout="1">⏰ 114 LEDs (+Colon)</button>
+                    <button type="button" class="pill-select" data-layout="2">🔢 112 LEDs (4 Digits)</button>
+                </div>
+
+                <button type="button" class="btn-save-gold" id="btnSaveDisplay" disabled style="margin-top: 8px;">
+                    <span>💾 Save Display Settings</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB 3: MATCH RULES                           -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneRules">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>⚔️ Deuce (40-40) Rule</span>
+                </div>
+                <div class="pills-row" id="toggleGp">
+                    <button type="button" class="pill-select active" data-val="0">⚔️ Advantage</button>
+                    <button type="button" class="pill-select gp" data-val="1">⚡ Golden Point</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🏆 Match Length</span>
+                </div>
+                <div class="pills-row" id="toggleSets">
+                    <button type="button" class="pill-select" data-val="1">🥇 1 Set</button>
+                    <button type="button" class="pill-select active" data-val="2">🏆 Best of 3</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🎾 Games per Set</span>
+                </div>
+                <div class="pills-row" id="toggleGames">
+                    <button type="button" class="pill-select active" data-val="6">🎾 6 Games</button>
+                    <button type="button" class="pill-select" data-val="9">🚀 9 Games</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🔥 Tiebreak at 6-6</span>
+                </div>
+                <div class="pills-row" id="toggleTb">
+                    <button type="button" class="pill-select active" data-val="1">🔥 Tiebreak ON</button>
+                    <button type="button" class="pill-select" data-val="0">🚫 Advantage</button>
+                </div>
+
+                <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled>
+                    <span>💾 Save Rules to Scoreboard</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB 4: INFO & LOG                            -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneInfo">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>📱 Zero-Server Court Setup</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                    Runs 100% in your browser. Hosted online on GitHub Pages:
+                </p>
+                <a href="https://schepie.github.io/7segment/" target="_blank" class="app-link">
+                    https://schepie.github.io/7segment/
+                </a>
+                <p style="font-size: 11px; color: var(--text-sub); line-height: 1.4;">
+                    💡 Tap menu (⋮) ➔ <strong>"Add to Home screen"</strong> to install as a full-screen app on your phone!
+                </p>
+
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>📋 BLE Event Log</span>
+                </div>
+                <div class="log-box" id="consoleBox">
+                    <div>[Ready] Tap Connect to pair with ESP32.</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Native App Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <button type="button" class="bottom-nav-btn active" data-tab="court" id="navCourt">
+            <span class="icon">🎾</span>
+            <span>Court</span>
         </button>
-        <button class="scenario-pill" data-scenario="deuce-ad">
-            <span>⚔️</span> Deuce & Ad (40-40)
+        <button type="button" class="bottom-nav-btn" data-tab="display" id="navDisplay">
+            <span class="icon">💡</span>
+            <span>Display</span>
         </button>
-        <button class="scenario-pill danger" data-scenario="golden-point">
-            <span>⚡</span> Golden Point (Punto de Oro)
+        <button type="button" class="bottom-nav-btn" data-tab="rules" id="navRules">
+            <span class="icon">⚙️</span>
+            <span>Rules</span>
         </button>
-        <button class="scenario-pill" data-scenario="tie-break">
-            <span>🔥</span> Tie-Break (6-6)
-        </button>
-        <button class="scenario-pill" data-scenario="set-point">
-            <span>🎯</span> Set Point Clinch
-        </button>
-        <button class="scenario-pill" data-scenario="match-point">
-            <span>🏆</span> Championship Match Point
-        </button>
-        <button class="scenario-pill" data-scenario="ble-flash">
-            <span>📶</span> BLE Connect 3x Flash
-        </button>
-        <button class="scenario-pill" data-scenario="rainbow-attract">
-            <span>🌈</span> Rainbow Showroom
+        <button type="button" class="bottom-nav-btn" data-tab="info" id="navInfo">
+            <span class="icon">📋</span>
+            <span>Info</span>
         </button>
     </nav>
 
-    <!-- Main Scoreboard Display Stage -->
-    <main class="main-stage">
-        <div class="board-3d-wrapper" id="board3DContainer">
-            
-            <!-- 5-Panel Docked Scoreboard Assembly (Matching CAD Model) -->
-            <div class="scoreboard-assembly" id="padelScoreboard">
-                
-                <!-- Panel 1: Digit 0 (Team 1 Tens) -->
-                <div class="module-panel digit-panel" id="digit-0">
-                    <div class="digit-svg-container">
-                        <svg class="digit-svg" viewBox="0 0 100 180">
-                            <!-- Top (t) -->
-                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
-                            <!-- Top-Left (tl) -->
-                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
-                            <!-- Top-Right (tr) -->
-                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
-                            <!-- Middle (m) -->
-                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
-                            <!-- Bottom-Left (bl) -->
-                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
-                            <!-- Bottom-Right (br) -->
-                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
-                            <!-- Bottom (b) -->
-                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
-                        </svg>
-                    </div>
-                </div>
+</div>
 
-                <!-- Panel 2: Digit 1 (Team 1 Ones) -->
-                <div class="module-panel digit-panel" id="digit-1">
-                    <div class="digit-svg-container">
-                        <svg class="digit-svg" viewBox="0 0 100 180">
-                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
-                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
-                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
-                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
-                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
-                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
-                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
-                        </svg>
-                    </div>
-                </div>
+<script>
+    // GATT Service & Characteristic UUIDs
+    const WATCH_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+    const WATCH_CHAR_UUID    = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+    const FOTA_SERVICE_UUID  = 'fb1e4001-54ae-4a28-9f74-dfccb248601d';
 
-                <!-- Panel 3: Central Games & Sets Snap Carrier Indicator Module (56mm width) -->
-                <div class="module-panel games-sets-panel" id="gamesSetsModule">
-                    <!-- Top Sets Section -->
-                    <div>
-                        <div class="ladder-section-title" id="labelSets">SETS</div>
-                        <div class="ladder-columns">
-                            <!-- Team 1 Sets Column (Left) -->
-                            <div class="ladder-col">
-                                <div class="sets-matrix">
-                                    <div class="diffuser-dot set-dot" id="set-dot-l-2" title="Team 1 Set 2"></div>
-                                    <div class="diffuser-dot set-dot" id="set-dot-l-1" title="Team 1 Set 1"></div>
-                                </div>
-                            </div>
-                            <!-- Team 2 Sets Column (Right) -->
-                            <div class="ladder-col">
-                                <div class="sets-matrix">
-                                    <div class="diffuser-dot set-dot" id="set-dot-r-2" title="Team 2 Set 2"></div>
-                                    <div class="diffuser-dot set-dot" id="set-dot-r-1" title="Team 2 Set 1"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    let bleDevice = null;
+    let watchChar = null;
 
-                    <!-- Center Laser Divider Text -->
-                    <div class="ladder-divider">
-                        <div class="ladder-section-title illuminated" id="labelGames">GAMES</div>
-                    </div>
+    let appConfig = {
+        gp: 0,
+        sets: 2,
+        games: 6,
+        tb: 1,
+        brt: 180,
+        idle: 300000,
+        layout: parseInt(localStorage.getItem('padel_led_layout') || '0'),
+        clockColor: localStorage.getItem('padel_clock_color') || '#FF2A8D'
+    };
 
-                    <!-- Bottom Games Section (9 Dots per side) -->
-                    <div class="ladder-columns">
-                        <!-- Team 1 Games Column (Left, 9 to 1 top-to-bottom or 1 to 9) -->
-                        <div class="ladder-col">
-                            <div class="games-matrix">
-                                <div class="diffuser-dot" id="game-dot-l-9"></div>
-                                <div class="diffuser-dot" id="game-dot-l-8"></div>
-                                <div class="diffuser-dot" id="game-dot-l-7"></div>
-                                <div class="diffuser-dot" id="game-dot-l-6"></div>
-                                <div class="diffuser-dot" id="game-dot-l-5"></div>
-                                <div class="diffuser-dot" id="game-dot-l-4"></div>
-                                <div class="diffuser-dot" id="game-dot-l-3"></div>
-                                <div class="diffuser-dot" id="game-dot-l-2"></div>
-                                <div class="diffuser-dot" id="game-dot-l-1"></div>
-                            </div>
-                        </div>
+    let boardState = {
+        t1Point: ' 0',
+        t2Point: ' 0',
+        t1Games: 0,
+        t2Games: 0,
+        t1Sets: 0,
+        t2Sets: 0,
+        isSwapped: false,
+        inTb: false,
+        currentMode: 'SCORE'
+    };
 
-                        <!-- Team 2 Games Column (Right) -->
-                        <div class="ladder-col">
-                            <div class="games-matrix">
-                                <div class="diffuser-dot" id="game-dot-r-9"></div>
-                                <div class="diffuser-dot" id="game-dot-r-8"></div>
-                                <div class="diffuser-dot" id="game-dot-r-7"></div>
-                                <div class="diffuser-dot" id="game-dot-r-6"></div>
-                                <div class="diffuser-dot" id="game-dot-r-5"></div>
-                                <div class="diffuser-dot" id="game-dot-r-4"></div>
-                                <div class="diffuser-dot" id="game-dot-r-3"></div>
-                                <div class="diffuser-dot" id="game-dot-r-2"></div>
-                                <div class="diffuser-dot" id="game-dot-r-1"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    // UI Elements
+    const btnBleConnect    = document.getElementById('btnBleConnect');
+    const bleStatusText    = document.getElementById('bleStatusText');
+    const displayModeBadge = document.getElementById('displayModeBadge');
 
-                <!-- Panel 4: Digit 2 (Team 2 Tens) -->
-                <div class="module-panel digit-panel" id="digit-2">
-                    <div class="digit-svg-container">
-                        <svg class="digit-svg" viewBox="0 0 100 180">
-                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
-                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
-                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
-                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
-                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
-                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
-                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
-                        </svg>
-                    </div>
-                </div>
+    const digitT1       = document.getElementById('digitT1');
+    const digitT2       = document.getElementById('digitT2');
+    const ladderGames   = document.getElementById('ladderGames');
+    const ladderSets    = document.getElementById('ladderSets');
+    const courtSideText = document.getElementById('courtSideText');
+    const tbBadge       = document.getElementById('tbBadge');
 
-                <!-- Panel 5: Digit 3 (Team 2 Ones) -->
-                <div class="module-panel digit-panel" id="digit-3">
-                    <div class="digit-svg-container">
-                        <svg class="digit-svg" viewBox="0 0 100 180">
-                            <polygon class="segment seg-t" points="20,12 80,12 68,24 32,24" />
-                            <polygon class="segment seg-tl" points="12,18 24,28 24,80 12,88" />
-                            <polygon class="segment seg-tr" points="88,18 88,88 76,80 76,28" />
-                            <polygon class="segment seg-m" points="26,90 32,84 68,84 74,90 68,96 32,96" />
-                            <polygon class="segment seg-bl" points="12,92 24,100 24,152 12,162" />
-                            <polygon class="segment seg-br" points="88,92 88,162 76,152 76,100" />
-                            <polygon class="segment seg-b" points="32,156 68,156 80,168 20,168" />
-                        </svg>
-                    </div>
-                </div>
+    const btnPointT1     = document.getElementById('btnPointT1');
+    const btnPointT2     = document.getElementById('btnPointT2');
+    const btnCmdUndo     = document.getElementById('btnCmdUndo');
+    const btnCmdSwap     = document.getElementById('btnCmdSwap');
+    const btnCmdToggleMode = document.getElementById('btnCmdToggleMode');
+    const btnCmdReset    = document.getElementById('btnCmdReset');
 
-            </div>
-        </div>
+    const sliderBrightness   = document.getElementById('sliderBrightness');
+    const brightnessValBadge = document.getElementById('brightnessValBadge');
+    const btnSyncTime        = document.getElementById('btnSyncTime');
+    const localTimeDisplay   = document.getElementById('localTimeDisplay');
+    const btnSaveConfig      = document.getElementById('btnSaveConfig');
+    const btnSaveDisplay     = document.getElementById('btnSaveDisplay');
+    const pickerClockColor   = document.getElementById('pickerClockColor');
+    const clockColorHexBadge = document.getElementById('clockColorHexBadge');
+    const customColorCircle  = document.getElementById('customColorCircle');
+    const consoleBox         = document.getElementById('consoleBox');
 
-        <!-- Interactive Companion Hardware Gadgets -->
-        <div class="companion-stage">
-            
-            <!-- 1. Galaxy Watch / Wear OS Smartwatch Emulator -->
-            <div class="gadget-card">
-                <div class="gadget-header">
-                    <span class="gadget-title">⌚ Galaxy Watch BLE Remote</span>
-                    <span class="gadget-status">Connected</span>
-                </div>
-                <div class="watch-frame">
-                    <div class="watch-top-info">
-                        <span id="watchSets">Set 1 (0-0)</span>
-                        <span class="watch-badge" id="watchSwapBadge">NORMAL</span>
-                    </div>
+    // Bottom Navigation Bar Switching
+    const navButtons = document.querySelectorAll('.bottom-nav-btn');
+    const tabPanes   = {
+        court: document.getElementById('paneCourt'),
+        display: document.getElementById('paneDisplay'),
+        rules: document.getElementById('paneRules'),
+        info: document.getElementById('paneInfo')
+    };
 
-                    <div class="watch-score-row">
-                        <button class="watch-btn-score t1" id="watchBtnT1">
-                            <span id="watchScoreT1">0</span>
-                            <span class="watch-btn-label">T1 +1</span>
-                        </button>
-                        <div style="font-size:12px;font-weight:800;color:#64748b;" id="watchGames">0-0</div>
-                        <button class="watch-btn-score t2" id="watchBtnT2">
-                            <span id="watchScoreT2">0</span>
-                            <span class="watch-btn-label">T2 +1</span>
-                        </button>
-                    </div>
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.tab;
+            navButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-                    <div class="watch-bot-actions">
-                        <button class="watch-btn-action" id="watchBtnUndo">↺ UNDO</button>
-                        <button class="watch-btn-action" id="watchBtnSwap">↔ SWAP</button>
-                    </div>
-                </div>
-            </div>
+            Object.keys(tabPanes).forEach(k => {
+                if (tabPanes[k]) {
+                    tabPanes[k].classList.toggle('active', k === target);
+                }
+            });
+        });
+    });
 
-            <!-- 2. Padel Racket BLE Clicker Button Emulator -->
-            <div class="gadget-card">
-                <div class="gadget-header">
-                    <span class="gadget-title">🎾 Padel Racket BLE Button</span>
-                    <span class="gadget-status">Active</span>
-                </div>
-                <div class="racket-device-frame">
-                    <div class="racket-handle">
-                        <div class="racket-led" id="racketLedFeedback"></div>
-                    </div>
-                    <button class="racket-button-cap" id="racketTactileButton">
-                        CLICK / HOLD
-                    </button>
-                    <p class="racket-hint">
-                        <strong>Click</strong> = +1 Point<br>
-                        <strong>Hold (1.2s)</strong> = Side Swap
-                    </p>
-                </div>
-            </div>
+    function log(msg, type = '') {
+        const d = document.createElement('div');
+        if (type) d.className = 'log-' + type;
+        const time = new Date().toLocaleTimeString();
+        d.textContent = `[${time}] ${msg}`;
+        consoleBox.appendChild(d);
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
 
-        </div>
-    </main>
+    // Live phone clock ticker
+    function updatePhoneClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        localTimeDisplay.textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updatePhoneClock, 1000);
+    updatePhoneClock();
 
-    <!-- Bottom Control Drawer & Live Stream -->
-    <footer class="bottom-controls-container">
-        
-        <!-- Live Scoring Actions -->
-        <div class="control-group">
-            <span class="control-title">🎮 Referee Scoring Controls</span>
-            <div class="btn-grid-scoring">
-                <button class="btn-score-act t1" id="btnPointT1">Team 1 (+1)</button>
-                <button class="btn-score-act t2" id="btnPointT2">Team 2 (+1)</button>
-                <button class="btn-score-act secondary" id="btnUndo">↺ Undo (U)</button>
-                <button class="btn-score-act secondary" id="btnSideSwap">↔ Swap Sides (S)</button>
-                <button class="btn-score-act secondary" id="btnReset" style="grid-column: span 2;">🔄 Reset Match (R)</button>
-            </div>
-        </div>
+    // -------------------------------------------------------------
+    // Bluetooth Connection Management
+    // -------------------------------------------------------------
+    btnBleConnect.addEventListener('click', async () => {
+        if (bleDevice && bleDevice.gatt.connected) {
+            disconnectBle();
+            return;
+        }
 
-        <!-- Event Log Box -->
-        <div class="control-group">
-            <span class="control-title">📜 BLE Telemetry & Match Stream</span>
-            <div class="event-log-box" id="eventLogStream"></div>
-        </div>
+        if (!navigator.bluetooth) {
+            alert('Web Bluetooth is only supported in Chrome/Edge on Android/PC or Bluefy on iOS.');
+            log('Web Bluetooth not supported', 'err');
+            return;
+        }
 
-        <!-- Customization Panel -->
-        <div class="control-group">
-            <span class="control-title">⚙️ Hardware Optics & View</span>
-            <div class="options-panel">
-                <div class="option-row">
-                    <span>Golden Point (No-Ad):</span>
-                    <label class="switch-label">
-                        <input type="checkbox" id="toggleGoldenPoint">
-                        <span class="switch-slider"></span>
-                    </label>
-                </div>
-                <div class="option-row">
-                    <span>LED Theme:</span>
-                    <select class="select-dark" id="themeSelect">
-                        <option value="classic">Classic (Cyan / Crimson)</option>
-                        <option value="electric">Cyber (Lime / Magenta)</option>
-                        <option value="wimbledon">Wimbledon (Green / Gold)</option>
-                        <option value="monochrome">Pro (White / Amber)</option>
-                    </select>
-                </div>
-                <div class="option-row">
-                    <span>Court Light:</span>
-                    <select class="select-dark" id="envSelect">
-                        <option value="night">Night Floodlight</option>
-                        <option value="arena">Indoor Arena</option>
-                        <option value="day">Sunny Outdoor</option>
-                    </select>
-                </div>
-                <div class="option-row">
-                    <span>3D Tilt:</span>
-                    <input type="range" class="range-dark" id="tiltRange" min="-25" max="25" value="0">
-                </div>
-                <div class="option-row">
-                    <span>Speed:</span>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="btn-header" data-speed="1" style="padding: 2px 8px; font-size: 11px;">1x</button>
-                        <button class="btn-header" data-speed="2" style="padding: 2px 8px; font-size: 11px;">2x</button>
-                        <button class="btn-header" data-speed="4" style="padding: 2px 8px; font-size: 11px;">4x</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        try {
+            log('Scanning for Padel Display...', 'pri');
+            btnBleConnect.disabled = true;
+            bleStatusText.textContent = 'Scanning';
 
-    </footer>
+            bleDevice = await navigator.bluetooth.requestDevice({
+                filters: [
+                    { namePrefix: 'Padel' },
+                    { namePrefix: 'ESP32' },
+                    { services: [WATCH_SERVICE_UUID] }
+                ],
+                optionalServices: [
+                    WATCH_SERVICE_UUID,
+                    FOTA_SERVICE_UUID
+                ]
+            });
 
-    <!-- Championship Victory Celebration Overlay -->
-    <div class="victory-overlay" id="victoryOverlay">
-        <div class="victory-card">
-            <div class="victory-trophy">🏆</div>
-            <h2 class="victory-title">MATCH FINISHED</h2>
-            <p class="victory-winner" id="victoryWinnerName">TEAM 1 WINS!</p>
-            <button class="btn-header primary" id="btnDismissVictory" style="margin-top: 12px; padding: 10px 24px;">
-                Continue / Replay
-            </button>
-        </div>
-    </div>
+            log(`Connecting to ${bleDevice.name || 'ESP32'}...`, 'pri');
+            bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-    <!-- Scripts -->
-    <script src="js/audio.js"></script>
-    <script src="js/scoreboard.js"></script>
-    <script src="js/match-engine.js"></script>
-    <script src="js/controller.js"></script>
+            const server = await bleDevice.gatt.connect();
+            log('Connected! Discovering Score Service...', 'suc');
+
+            const service = await server.getPrimaryService(WATCH_SERVICE_UUID);
+            watchChar = await service.getCharacteristic(WATCH_CHAR_UUID);
+
+            // Subscribe to notifications from ESP32
+            await watchChar.startNotifications();
+            watchChar.addEventListener('characteristicvaluechanged', onNotification);
+
+            onConnected();
+            log('Connected & synchronized with Scoreboard!', 'suc');
+
+        } catch (err) {
+            log(`Connection error: ${err.message}`, 'err');
+            onDisconnected();
+        } finally {
+            btnBleConnect.disabled = false;
+        }
+    });
+
+    function onConnected() {
+        btnBleConnect.classList.add('connected');
+        bleStatusText.textContent = 'Linked';
+
+        btnPointT1.disabled = false;
+        btnPointT2.disabled = false;
+        btnCmdUndo.disabled = false;
+        btnCmdSwap.disabled = false;
+        btnCmdToggleMode.disabled = false;
+        btnCmdReset.disabled = false;
+        btnSyncTime.disabled = false;
+        btnSaveConfig.disabled = false;
+        if (btnSaveDisplay) btnSaveDisplay.disabled = false;
+
+        // Trigger config fetch
+        watchChar.readValue().catch(() => {});
+    }
+
+    function onDisconnected() {
+        btnBleConnect.classList.remove('connected');
+        bleStatusText.textContent = 'Connect';
+
+        btnPointT1.disabled = true;
+        btnPointT2.disabled = true;
+        btnCmdUndo.disabled = true;
+        btnCmdSwap.disabled = true;
+        btnCmdToggleMode.disabled = true;
+        btnCmdReset.disabled = true;
+        btnSyncTime.disabled = true;
+        btnSaveConfig.disabled = true;
+        if (btnSaveDisplay) btnSaveDisplay.disabled = true;
+
+        watchChar = null;
+        log('Device disconnected', 'err');
+    }
+
+    function disconnectBle() {
+        if (bleDevice && bleDevice.gatt.connected) {
+            bleDevice.gatt.disconnect();
+        }
+        onDisconnected();
+    }
+
+    // -------------------------------------------------------------
+    // Inbound Notification Handler (ESP32 -> Phone)
+    // -------------------------------------------------------------
+    function onNotification(event) {
+        const text = new TextDecoder().decode(event.target.value);
+        log(`RX: ${text}`);
+
+        if (text.startsWith('CFG,')) {
+            parseConfigString(text);
+        } else {
+            parseScoreString(text);
+        }
+    }
+
+    function parseConfigString(text) {
+        const gpMatch   = text.match(/GP=(\d+)/);
+        const setsMatch = text.match(/SETS=(\d+)/);
+        const gamesMatch= text.match(/GAMES=(\d+)/);
+        const tbMatch   = text.match(/TB=(\d+)/);
+        const brtMatch  = text.match(/BRT=(\d+)/);
+        const idleMatch = text.match(/IDLE=(\d+)/);
+        const layMatch  = text.match(/LAY(?:OUT)?=(\d+)/);
+        const colMatch  = text.match(/COL=([#0-9a-fA-F]+)/);
+
+        if (gpMatch) updatePillGroupUI('toggleGp', parseInt(gpMatch[1]));
+        if (setsMatch) updatePillGroupUI('toggleSets', parseInt(setsMatch[1]));
+        if (gamesMatch) updatePillGroupUI('toggleGames', parseInt(gamesMatch[1]));
+        if (tbMatch) updatePillGroupUI('toggleTb', parseInt(tbMatch[1]));
+        if (idleMatch) updatePillGroupUI('pillsIdleTimeout', parseInt(idleMatch[1]), 'idle');
+        if (layMatch) {
+            const lay = parseInt(layMatch[1]);
+            appConfig.layout = lay;
+            updatePillGroupUI('pillsLedLayout', lay, 'layout');
+            try { localStorage.setItem('padel_led_layout', lay); } catch(e) {}
+        }
+
+        if (brtMatch) {
+            const brt = parseInt(brtMatch[1]);
+            appConfig.brt = brt;
+            sliderBrightness.value = brt;
+            updateBrightnessUI(brt);
+        }
+
+        if (colMatch) {
+            let col = colMatch[1];
+            if (!col.startsWith('#')) col = '#' + col;
+            appConfig.clockColor = col.toUpperCase();
+            setClockColorUI(appConfig.clockColor, false);
+        }
+    }
+
+    function parseScoreString(text) {
+        const parts = text.split(',');
+        if (parts.length >= 1 && parts[0].length >= 4) {
+            const ptStr = parts[0];
+            boardState.t1Point = ptStr.substring(0, 2);
+            boardState.t2Point = ptStr.substring(2, 4);
+        }
+        if (parts.length >= 2) {
+            boardState.isSwapped = (parts[1] === '1');
+        }
+        if (parts.length >= 6) {
+            boardState.t1Games = parseInt(parts[2]) || 0;
+            boardState.t2Games = parseInt(parts[3]) || 0;
+            boardState.t1Sets  = parseInt(parts[4]) || 0;
+            boardState.t2Sets  = parseInt(parts[5]) || 0;
+        }
+        if (parts.length >= 7) {
+            boardState.inTb = (parts[6] === '1');
+        }
+
+        renderMirrorUI();
+    }
+
+    function renderMirrorUI() {
+        if (!boardState.isSwapped) {
+            digitT1.textContent = boardState.t1Point;
+            digitT2.textContent = boardState.t2Point;
+            ladderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
+            ladderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
+            courtSideText.textContent = '↔️ L: Team 1 (Blue) | R: Team 2 (Red)';
+        } else {
+            digitT1.textContent = boardState.t2Point;
+            digitT2.textContent = boardState.t1Point;
+            ladderGames.textContent = `${boardState.t2Games} - ${boardState.t1Games}`;
+            ladderSets.textContent  = `${boardState.t2Sets} - ${boardState.t1Sets}`;
+            courtSideText.textContent = '↔️ L: Team 2 (Red) | R: Team 1 (Blue)';
+        }
+
+        tbBadge.style.display = boardState.inTb ? 'inline-block' : 'none';
+    }
+
+    // -------------------------------------------------------------
+    // Outbound BLE Dispatcher with Sequential Queue & Fallbacks
+    // -------------------------------------------------------------
+    let bleWriteQueue = Promise.resolve();
+    function queueBleWrite(op) {
+        bleWriteQueue = bleWriteQueue.then(() => op(), () => op());
+        return bleWriteQueue;
+    }
+
+    async function sendBleText(payload) {
+        if (!watchChar) {
+            log('Cannot send: not connected', 'err');
+            return false;
+        }
+        return queueBleWrite(async () => {
+            try {
+                log(`TX: ${payload}`, 'pri');
+                const data = new TextEncoder().encode(payload);
+                let writeSuccess = false;
+
+                if (watchChar.writeValueWithResponse) {
+                    try {
+                        await watchChar.writeValueWithResponse(data);
+                        writeSuccess = true;
+                    } catch (e) {
+                        console.warn('writeValueWithResponse failed, fallback to writeValue:', e);
+                    }
+                }
+                if (!writeSuccess && watchChar.writeValue) {
+                    try {
+                        await watchChar.writeValue(data);
+                        writeSuccess = true;
+                    } catch (e2) {
+                        console.warn('writeValue failed, fallback to writeValueWithoutResponse:', e2);
+                    }
+                }
+                if (!writeSuccess && watchChar.writeValueWithoutResponse) {
+                    await watchChar.writeValueWithoutResponse(data);
+                    writeSuccess = true;
+                }
+                // 60ms inter-packet cooldown for BLE stack stability
+                await new Promise(r => setTimeout(r, 60));
+                return writeSuccess;
+            } catch (err) {
+                log(`TX error: ${err.message}`, 'err');
+                return false;
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // Court Remote Buttons
+    // -------------------------------------------------------------
+    btnPointT1.addEventListener('click', () => sendBleText('CMD,P1'));
+    btnPointT2.addEventListener('click', () => sendBleText('CMD,P2'));
+    btnCmdUndo.addEventListener('click', () => sendBleText('CMD,UNDO'));
+    btnCmdSwap.addEventListener('click', () => sendBleText('CMD,SWAP'));
+    btnCmdReset.addEventListener('click', () => {
+        if (confirm('Reset match scores to 0-0?')) {
+            sendBleText('CMD,RESET');
+        }
+    });
+
+    btnCmdToggleMode.addEventListener('click', () => {
+        if (boardState.currentMode === 'SCORE') {
+            sendBleText('CMD,CLOCK');
+            boardState.currentMode = 'CLOCK';
+            displayModeBadge.textContent = 'CLOCK';
+            displayModeBadge.style.color = 'var(--accent-gold)';
+        } else {
+            sendBleText('CMD,SCORE');
+            boardState.currentMode = 'SCORE';
+            displayModeBadge.textContent = 'SCORE';
+            displayModeBadge.style.color = 'var(--accent-green)';
+        }
+    });
+
+    // -------------------------------------------------------------
+    // Display Brightness Controls
+    // -------------------------------------------------------------
+    function updateBrightnessUI(val) {
+        const pct = Math.round((val / 255) * 100);
+        brightnessValBadge.textContent = `${pct}% (${val})`;
+
+        document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
+            const b = parseInt(btn.dataset.brt);
+            if (!isNaN(b)) {
+                btn.classList.toggle('active', Math.abs(b - val) < 15);
+            }
+        });
+    }
+
+    let brtDebounceTimer = null;
+    function setBrightness(val, immediate = false) {
+        val = Math.max(10, Math.min(255, parseInt(val) || 180));
+        appConfig.brt = val;
+        sliderBrightness.value = val;
+        updateBrightnessUI(val);
+
+        if (brtDebounceTimer) {
+            clearTimeout(brtDebounceTimer);
+            brtDebounceTimer = null;
+        }
+
+        const transmit = () => {
+            if (!watchChar) return;
+            // Send CFG,BRT=... for immediate compatibility with both currently installed and new firmware
+            sendBleText(`CFG,BRT=${val}`);
+        };
+
+        if (immediate) {
+            transmit();
+        } else {
+            brtDebounceTimer = setTimeout(transmit, 75);
+        }
+    }
+
+    sliderBrightness.addEventListener('input', (e) => {
+        setBrightness(e.target.value, false);
+    });
+
+    sliderBrightness.addEventListener('change', (e) => {
+        setBrightness(e.target.value, true);
+    });
+
+    document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
+        const brt = parseInt(btn.dataset.brt);
+        if (!isNaN(brt)) {
+            btn.addEventListener('click', () => {
+                setBrightness(brt, true);
+            });
+        }
+    });
+
+    // -------------------------------------------------------------
+    // Pill Toggle Groups (Rules & Idle Timeout)
+    // -------------------------------------------------------------
+    function setupPillGroup(containerId, configKey, valAttr = 'val') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.querySelectorAll('.pill-select').forEach(btn => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('.pill-select').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                appConfig[configKey] = parseInt(btn.dataset[valAttr]);
+            });
+        });
+    }
+
+    function updatePillGroupUI(containerId, val, valAttr = 'val') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.querySelectorAll('.pill-select').forEach(btn => {
+            if (parseInt(btn.dataset[valAttr]) === val) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    setupPillGroup('toggleGp', 'gp');
+    setupPillGroup('toggleSets', 'sets');
+    setupPillGroup('toggleGames', 'games');
+    setupPillGroup('toggleTb', 'tb');
+    setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
+    setupPillGroup('pillsLedLayout', 'layout', 'layout');
+    updatePillGroupUI('pillsLedLayout', appConfig.layout, 'layout');
+
+    // -------------------------------------------------------------
+    // Clock Color Selection & Live Transmission
+    // -------------------------------------------------------------
+    function hexToRgb(hex) {
+        let clean = hex.replace('#', '');
+        if (clean.length === 3) {
+            clean = clean.split('').map(c => c + c).join('');
+        }
+        const num = parseInt(clean, 16) || 0;
+        return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255
+        };
+    }
+
+    function setClockColorUI(hex, notifyBle = true) {
+        if (!hex) hex = '#00E676';
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        hex = hex.toUpperCase();
+        appConfig.clockColor = hex;
+
+        const rgb = hexToRgb(hex);
+        const glow = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
+
+        document.documentElement.style.setProperty('--clock-color', hex);
+        document.documentElement.style.setProperty('--clock-glow', glow);
+
+        if (clockColorHexBadge) {
+            clockColorHexBadge.textContent = hex;
+            clockColorHexBadge.style.color = hex;
+        }
+
+        if (pickerClockColor && pickerClockColor.value.toUpperCase() !== hex) {
+            pickerClockColor.value = hex;
+        }
+
+        if (customColorCircle) {
+            customColorCircle.style.backgroundColor = hex;
+            customColorCircle.style.boxShadow = `0 0 10px ${glow}`;
+        }
+
+        // Highlight preset if it matches
+        document.querySelectorAll('#clockColorSwatches .color-chip').forEach(chip => {
+            const chipColor = (chip.dataset.color || '').toUpperCase();
+            chip.classList.toggle('active', chipColor === hex);
+        });
+
+        // Persist locally
+        try {
+            localStorage.setItem('padel_clock_color', hex);
+        } catch (e) {}
+
+        // Send live preview over BLE
+        if (notifyBle && watchChar) {
+            sendBleText(`CMD,COL,${hex}`);
+        }
+    }
+
+    // Color Swatches Handlers
+    document.querySelectorAll('#clockColorSwatches .color-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const color = chip.dataset.color;
+            if (color) {
+                setClockColorUI(color, true);
+            }
+        });
+    });
+
+    // Custom Color Picker Handlers
+    if (pickerClockColor) {
+        pickerClockColor.addEventListener('input', (e) => {
+            setClockColorUI(e.target.value, false);
+        });
+        pickerClockColor.addEventListener('change', (e) => {
+            setClockColorUI(e.target.value, true);
+        });
+    }
+
+    // Initialize Clock Color UI
+    setClockColorUI(appConfig.clockColor, false);
+
+    // -------------------------------------------------------------
+    // Send Settings & Rules to ESP32 Flash
+    // -------------------------------------------------------------
+    async function sendBleConfig() {
+        const colStr = (appConfig.clockColor || '#FF2A8D').toUpperCase();
+        try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
+
+        if (btnSaveConfig) {
+            btnSaveConfig.disabled = true;
+            btnSaveConfig.textContent = 'Saving...';
+        }
+        if (btnSaveDisplay) {
+            btnSaveDisplay.disabled = true;
+            btnSaveDisplay.textContent = 'Saving...';
+        }
+
+        // 1. Send dedicated color command first (fits safely in single MTU 23 packet)
+        const colOk = await sendBleText(`CMD,COL,${colStr}`);
+
+        // 2. Send dedicated brightness command (CFG,BRT= is compatible with all firmwares)
+        const brtOk = await sendBleText(`CFG,BRT=${appConfig.brt}`);
+
+        // 3. Send dedicated layout command
+        await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
+
+        // 4. Send match rules configuration WITH BRT included
+        const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+        const cfgOk = await sendBleText(rulesPayload);
+
+        if (btnSaveConfig) {
+            btnSaveConfig.disabled = false;
+            btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
+        }
+        if (btnSaveDisplay) {
+            btnSaveDisplay.disabled = false;
+            btnSaveDisplay.innerHTML = '<span>💾 Save Display Settings</span>';
+        }
+        if (colOk || brtOk || cfgOk) {
+            const pct = Math.round((appConfig.brt / 255) * 100);
+            log(`Config saved: BRT=${appConfig.brt} (${pct}%), COL=${colStr}`, 'suc');
+            alert(`✓ Rules and Display settings (Brightness: ${pct}%, Color: ${colStr}) saved to Scoreboard Flash!`);
+        } else {
+            alert('Failed to send settings. Check Bluetooth connection.');
+        }
+    }
+
+    btnSaveConfig.addEventListener('click', sendBleConfig);
+    if (btnSaveDisplay) {
+        btnSaveDisplay.addEventListener('click', sendBleConfig);
+    }
+
+    // -------------------------------------------------------------
+    // RTC Clock Synchronization
+    // -------------------------------------------------------------
+    btnSyncTime.addEventListener('click', async () => {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        const payload = `TIME,${h}:${m}:${s}`;
+
+        btnSyncTime.disabled = true;
+        btnSyncTime.textContent = 'Syncing...';
+
+        const success = await sendBleText(payload);
+        btnSyncTime.disabled = false;
+        btnSyncTime.innerHTML = '<span>⚡ Sync Clock</span>';
+
+        if (success) {
+            log(`RTC synchronized: ${h}:${m}:${s}`, 'suc');
+            alert(`✓ Scoreboard clock synced to ${h}:${m}:${s}!`);
+        }
+    });
+
+</script>
 </body>
 </html>

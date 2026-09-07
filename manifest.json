@@ -2,7 +2,7 @@
   "name": "Padel Scoreboard Controller",
   "short_name": "Padel Score",
   "description": "Mobile Web Bluetooth companion app for ESP32 7-segment Padel Scoreboard",
-  "start_url": "settings.html",
+  "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#080c14",
