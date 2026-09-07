@@ -171,9 +171,9 @@ DisplayMode currentMode = MODE_CLOCK; // Panel starts in Clock Mode on boot!
 uint32_t lastActivityTime = 0;
 uint8_t  cfgBrightness    = 180;             // LED brightness (0 - 255)
 uint32_t cfgIdleTimeoutMs = 5 * 60 * 1000;   // Inactivity timeout in ms (0 = Never)
-uint8_t  cfgClockR        = 0;               // Clock Digit Color: Red component
-uint8_t  cfgClockG        = 180;             // Clock Digit Color: Green component
-uint8_t  cfgClockB        = 0;               // Clock Digit Color: Blue component
+uint8_t  cfgClockR        = 255;             // Clock Digit Color: Red component (Default Pink #FF2A8D)
+uint8_t  cfgClockG        = 42;              // Clock Digit Color: Green component
+uint8_t  cfgClockB        = 141;             // Clock Digit Color: Blue component
 uint32_t cfgClockColor    = 0;               // Cached packed NeoPixel color
 uint8_t  cfgLedLayout     = 0;               // Hardware LED Layout: 0=136 (Sets&Match), 1=114 (4Dig+Colon), 2=112 (4Dig Direct)
 
@@ -1513,24 +1513,76 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
     if (val.empty()) return;
     Serial.printf("[BLE-WATCH] Received payload: '%s'\n", val.c_str());
 
-    // 1. Direct Clock Color Command: "CMD,COL,...", "CMD,COLOR,...", "COL,...", "COL=..."
-    if (val.rfind("CMD,COL,", 0) == 0 || val.rfind("CMD,COLOR,", 0) == 0 ||
-        val.rfind("COL,", 0) == 0 || val.rfind("COL=", 0) == 0) {
+    // Clean any trailing whitespace or line breaks
+    while (!val.empty() && (val.back() == '\r' || val.back() == '\n' || val.back() == ' ')) {
+      val.pop_back();
+    }
+    // Clean any leading whitespace
+    size_t startIdx = 0;
+    while (startIdx < val.size() && (val[startIdx] == ' ' || val[startIdx] == '\r' || val[startIdx] == '\n')) {
+      startIdx++;
+    }
+    if (startIdx > 0) val = val.substr(startIdx);
+    if (val.empty()) return;
+
+    // 1. Direct Clock Color Command: Any payload with "COL"
+    size_t colIdx = val.find("COL,");
+    if (colIdx == std::string::npos) colIdx = val.find("COL=");
+    if (colIdx == std::string::npos) colIdx = val.find("COLOR,");
+    if (colIdx == std::string::npos) colIdx = val.find("COLOR=");
+
+    if (colIdx != std::string::npos) {
       size_t prefixLen = 4;
-      if (val.rfind("CMD,COLOR,", 0) == 0) prefixLen = 10;
-      else if (val.rfind("CMD,COL,", 0) == 0) prefixLen = 8;
-      std::string hexStr = val.substr(prefixLen);
+      if (val.substr(colIdx, 6) == "COLOR," || val.substr(colIdx, 6) == "COLOR=") {
+        prefixLen = 6;
+      }
+      std::string hexStr = val.substr(colIdx + prefixLen);
       size_t endComma = hexStr.find(',');
       if (endComma != std::string::npos) hexStr = hexStr.substr(0, endComma);
       uint8_t r, g, b;
       if (parseHexColor(hexStr, r, g, b)) {
         applyAndSaveClockColor(r, g, b);
-        sendConfigNotification();
       }
+      if (val.rfind("CFG", 0) != 0) {
+        sendConfigNotification();
+        return;
+      }
+    }
+
+    // 2. Direct Brightness Command: "CMD,BRT,...", "BRT,...", "BRT=..."
+    if (val.rfind("CMD,BRT,", 0) == 0 || val.rfind("BRT,", 0) == 0 || val.rfind("BRT=", 0) == 0) {
+      size_t pfx = (val.rfind("CMD,BRT,", 0) == 0) ? 8 : 4;
+      int brt = atoi(val.substr(pfx).c_str());
+      if (brt >= 10 && brt <= 255) {
+        cfgBrightness = (uint8_t)brt;
+        pixels.setBrightness(cfgBrightness);
+        showPixelsSafe();
+        Preferences cfgPrefs;
+        cfgPrefs.begin("padel_cfg", false);
+        cfgPrefs.putUChar("brightness", cfgBrightness);
+        cfgPrefs.end();
+      }
+      sendConfigNotification();
       return;
     }
 
-    // 2. Configuration command: "CFG,..."
+    // 3. Direct Layout Command: "CMD,LAY,...", "LAY,...", "LAY=..."
+    if (val.rfind("CMD,LAY,", 0) == 0 || val.rfind("LAY,", 0) == 0 || val.rfind("LAY=", 0) == 0) {
+      size_t pfx = (val.rfind("CMD,LAY,", 0) == 0) ? 8 : 4;
+      int lay = atoi(val.substr(pfx).c_str());
+      if (lay >= 0 && lay <= 2) {
+        cfgLedLayout = (uint8_t)lay;
+        Preferences cfgPrefs;
+        cfgPrefs.begin("padel_cfg", false);
+        cfgPrefs.putUChar("led_layout", cfgLedLayout);
+        cfgPrefs.end();
+        if (currentMode == MODE_CLOCK) renderClock();
+      }
+      sendConfigNotification();
+      return;
+    }
+
+    // 4. Configuration command: "CFG,..."
     if (val.rfind("CFG", 0) == 0) {
       parseConfigPayload(val);
       return;
@@ -2002,7 +2054,7 @@ void setup() {
   NimBLEService* pWatchService = pServer->createService(WATCH_SERVICE_UUID);
   pWatchCharacteristic = pWatchService->createCharacteristic(
       WATCH_CHARACTERISTIC_UUID,
-      NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::NOTIFY
+      NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::NOTIFY
   );
   pWatchCharacteristic->setCallbacks(new WatchCharCallbacks());
   pWatchCharacteristic->setValue(" 0 0,0,0,0,0,0");
@@ -2054,9 +2106,9 @@ void setup() {
   cfgBrightness    = cfgPrefs.getUChar("brightness", 180);
   cfgIdleTimeoutMs = cfgPrefs.getULong("idle_timeout", 5 * 60 * 1000);
   cfgLedLayout     = cfgPrefs.getUChar("led_layout", 0);
-  cfgClockR        = cfgPrefs.getUChar("clock_r", 0);
-  cfgClockG        = cfgPrefs.getUChar("clock_g", 180);
-  cfgClockB        = cfgPrefs.getUChar("clock_b", 0);
+  cfgClockR        = cfgPrefs.getUChar("clock_r", 255); // Default Pink (#FF2A8D)
+  cfgClockG        = cfgPrefs.getUChar("clock_g", 42);
+  cfgClockB        = cfgPrefs.getUChar("clock_b", 141);
   cfgPrefs.end();
   cfgClockColor    = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
   pixels.setBrightness(cfgBrightness);

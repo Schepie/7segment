@@ -1037,7 +1037,7 @@
         brt: 180,
         idle: 300000,
         layout: parseInt(localStorage.getItem('padel_led_layout') || '0'),
-        clockColor: localStorage.getItem('padel_clock_color') || '#00E676'
+        clockColor: localStorage.getItem('padel_clock_color') || '#FF2A8D'
     };
 
     let boardState = {
@@ -1317,26 +1317,53 @@
     }
 
     // -------------------------------------------------------------
-    // Outbound BLE Dispatcher
+    // Outbound BLE Dispatcher with Sequential Queue & Fallbacks
     // -------------------------------------------------------------
+    let bleWriteQueue = Promise.resolve();
+    function queueBleWrite(op) {
+        bleWriteQueue = bleWriteQueue.then(() => op(), () => op());
+        return bleWriteQueue;
+    }
+
     async function sendBleText(payload) {
         if (!watchChar) {
             log('Cannot send: not connected', 'err');
             return false;
         }
-        try {
-            log(`TX: ${payload}`, 'pri');
-            const data = new TextEncoder().encode(payload);
-            if (watchChar.writeValueWithResponse) {
-                await watchChar.writeValueWithResponse(data);
-            } else {
-                await watchChar.writeValue(data);
+        return queueBleWrite(async () => {
+            try {
+                log(`TX: ${payload}`, 'pri');
+                const data = new TextEncoder().encode(payload);
+                let writeSuccess = false;
+
+                if (watchChar.writeValueWithResponse) {
+                    try {
+                        await watchChar.writeValueWithResponse(data);
+                        writeSuccess = true;
+                    } catch (e) {
+                        console.warn('writeValueWithResponse failed, fallback to writeValue:', e);
+                    }
+                }
+                if (!writeSuccess && watchChar.writeValue) {
+                    try {
+                        await watchChar.writeValue(data);
+                        writeSuccess = true;
+                    } catch (e2) {
+                        console.warn('writeValue failed, fallback to writeValueWithoutResponse:', e2);
+                    }
+                }
+                if (!writeSuccess && watchChar.writeValueWithoutResponse) {
+                    await watchChar.writeValueWithoutResponse(data);
+                    writeSuccess = true;
+                }
+                // 60ms inter-packet cooldown for BLE stack stability
+                await new Promise(r => setTimeout(r, 60));
+                return writeSuccess;
+            } catch (err) {
+                log(`TX error: ${err.message}`, 'err');
+                return false;
             }
-            return true;
-        } catch (err) {
-            log(`TX error: ${err.message}`, 'err');
-            return false;
-        }
+        });
     }
 
     // -------------------------------------------------------------
@@ -1524,7 +1551,7 @@
     // Send Settings & Rules to ESP32 Flash
     // -------------------------------------------------------------
     async function sendBleConfig() {
-        const colStr = (appConfig.clockColor || '#00E676').toUpperCase();
+        const colStr = (appConfig.clockColor || '#FF2A8D').toUpperCase();
         try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
 
         if (btnSaveConfig) {
@@ -1536,12 +1563,18 @@
             btnSaveDisplay.textContent = 'Saving...';
         }
 
-        // 1. Send dedicated color command first (fits safely in all packet sizes and immediately saves/renders)
-        await sendBleText(`CMD,COL,${colStr}`);
+        // 1. Send dedicated color command first (fits safely in single MTU 23 packet)
+        const colOk = await sendBleText(`CMD,COL,${colStr}`);
 
-        // 2. Send complete system config
-        const payload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},LAY=${appConfig.layout || 0},COL=${colStr}`;
-        const success = await sendBleText(payload);
+        // 2. Send dedicated brightness command
+        await sendBleText(`CMD,BRT,${appConfig.brt}`);
+
+        // 3. Send dedicated layout command
+        await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
+
+        // 4. Send match rules configuration
+        const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},IDLE=${appConfig.idle},COL=${colStr}`;
+        const cfgOk = await sendBleText(rulesPayload);
 
         if (btnSaveConfig) {
             btnSaveConfig.disabled = false;
@@ -1551,11 +1584,11 @@
             btnSaveDisplay.disabled = false;
             btnSaveDisplay.innerHTML = '<span>💾 Save Display Settings</span>';
         }
-        if (success) {
-            log('Config saved to Flash', 'suc');
-            alert('✓ Rules and Display settings saved to Scoreboard Flash!');
+        if (colOk || cfgOk) {
+            log(`Config saved: ${colStr}`, 'suc');
+            alert(`✓ Rules and Display settings (Color: ${colStr}) saved to Scoreboard Flash!`);
         } else {
-            alert('Failed to send settings. Check connection.');
+            alert('Failed to send settings. Check Bluetooth connection.');
         }
     }
 
