@@ -289,103 +289,7 @@
             transition: color 0.2s;
         }
 
-        /* Match Configuration Styles */
-        .config-card {
-            background: var(--bg-card);
-            border: 1px solid var(--bg-card-border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
 
-        .config-card-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .config-card-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .config-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-
-        @media (max-width: 520px) {
-            .config-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .config-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .config-label {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-        }
-
-        .pill-toggle {
-            display: flex;
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 3px;
-            gap: 4px;
-        }
-
-        .pill-btn {
-            flex: 1;
-            padding: 9px 6px;
-            font-size: 12px;
-            font-weight: 600;
-            border: none;
-            border-radius: 6px;
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .pill-btn:hover:not(.active) {
-            color: var(--text-main);
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .pill-btn.active {
-            background: linear-gradient(135deg, #00d2ff, #0088cc);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 210, 255, 0.35);
-        }
-
-        .pill-btn.active.gp {
-            background: linear-gradient(135deg, #ffb300, #ff8f00);
-            box-shadow: 0 2px 8px rgba(255, 179, 0, 0.35);
-        }
-
-        .config-status {
-            font-size: 12px;
-            text-align: center;
-            min-height: 18px;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
@@ -467,61 +371,6 @@
         </div>
     </div>
 
-    <!-- Match Rules & Game Mode Configuration Card -->
-    <div class="config-card" id="configCard">
-        <div class="config-card-header">
-            <span style="font-size: 24px;">⚙️</span>
-            <div>
-                <h2>Match Rules & Game Modes</h2>
-                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                    Configures scoring rules for standalone play (Xiaomi remote clicker)
-                </p>
-            </div>
-        </div>
-
-        <div class="config-grid">
-            <!-- Golden Point vs Advantage -->
-            <div class="config-group">
-                <span class="config-label">Deuce (40-40) Rule</span>
-                <div class="pill-toggle" id="toggleGp">
-                    <button type="button" class="pill-btn active" data-val="0">⚔️ Advantage</button>
-                    <button type="button" class="pill-btn gp" data-val="1">⚡ Golden Point</button>
-                </div>
-            </div>
-
-            <!-- Sets to Win -->
-            <div class="config-group">
-                <span class="config-label">Match Length</span>
-                <div class="pill-toggle" id="toggleSets">
-                    <button type="button" class="pill-btn" data-val="1">🥇 1 Set</button>
-                    <button type="button" class="pill-btn active" data-val="2">🏆 Best of 3</button>
-                </div>
-            </div>
-
-            <!-- Games per Set -->
-            <div class="config-group">
-                <span class="config-label">Games per Set</span>
-                <div class="pill-toggle" id="toggleGames">
-                    <button type="button" class="pill-btn active" data-val="6">🎾 6 Games</button>
-                    <button type="button" class="pill-btn" data-val="9">🚀 9 Games</button>
-                </div>
-            </div>
-
-            <!-- Tiebreak -->
-            <div class="config-group">
-                <span class="config-label">Tiebreak at 6-6 (or 8-8)</span>
-                <div class="pill-toggle" id="toggleTb">
-                    <button type="button" class="pill-btn active" data-val="1">🔥 Tiebreak ON</button>
-                    <button type="button" class="pill-btn" data-val="0">🚫 Advantage</button>
-                </div>
-            </div>
-        </div>
-
-        <button class="btn btn-primary" id="btnSaveConfig" disabled style="padding: 12px; font-size: 14px;">
-            <span>💾 Apply & Save Rules to Scoreboard</span>
-        </button>
-        <div class="config-status" id="cfgStatusText">Connect to ESP32 above to view & edit match rules</div>
-    </div>
 
     <div style="display: flex; justify-content: center; gap: 16px; margin-top: 10px;">
         <a href="settings.html" class="back-link">⚙️ Display & Score Settings</a>
@@ -534,29 +383,17 @@
     const FOTA_SERVICE_UUID  = 'fb1e4001-54ae-4a28-9f74-dfccb248601d';
     const FOTA_CHAR_CONTROL  = 'fb1e4002-54ae-4a28-9f74-dfccb248601d';
     const FOTA_CHAR_DATA     = 'fb1e4003-54ae-4a28-9f74-dfccb248601d';
-    const WATCH_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
-    const WATCH_CHAR_UUID    = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
     let bleDevice = null;
     let controlChar = null;
     let dataChar = null;
-    let watchChar = null;
     let selectedFile = null;
     let fileBuffer = null;
     let isFlashing = false;
 
-    let currentConfig = {
-        gp: 0,
-        sets: 2,
-        games: 6,
-        tb: 1
-    };
-
     // UI elements
     const btnConnect = document.getElementById('btnConnect');
     const deviceStatus = document.getElementById('deviceStatus');
-    const btnSaveConfig = document.getElementById('btnSaveConfig');
-    const cfgStatusText = document.getElementById('cfgStatusText');
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
     const fileLabel = document.getElementById('fileLabel');
@@ -597,8 +434,7 @@
                     { namePrefix: 'Padel' }
                 ],
                 optionalServices: [
-                    FOTA_SERVICE_UUID,
-                    '4fafc201-1fb5-459e-8fcc-c5c9c331914b'
+                    FOTA_SERVICE_UUID
                 ]
             });
 
@@ -624,20 +460,6 @@
             log('FOTA GATT characteristics ready!', 'suc');
             checkReadyToFlash();
 
-            // Also discover Match Rules & Config Service
-            try {
-                const watchService = await server.getPrimaryService(WATCH_SERVICE_UUID);
-                watchChar = await watchService.getCharacteristic(WATCH_CHAR_UUID);
-                await watchChar.startNotifications();
-                watchChar.addEventListener('characteristicvaluechanged', onWatchNotification);
-                btnSaveConfig.disabled = false;
-                cfgStatusText.textContent = 'Connected! Loading rules from scoreboard...';
-                cfgStatusText.style.color = 'var(--primary)';
-                log('Match Rules & Config service connected!', 'suc');
-            } catch (cfgErr) {
-                log(`Config service note: ${cfgErr.message}`);
-            }
-
         } catch (err) {
             log(`Connection error: ${err.message}`, 'err');
         }
@@ -650,83 +472,7 @@
         btnConnect.textContent = '⚡ Connect BLE';
         btnConnect.disabled = false;
         btnFlash.disabled = true;
-        watchChar = null;
-        btnSaveConfig.disabled = true;
-        cfgStatusText.textContent = 'Connect to ESP32 above to view & edit match rules';
-        cfgStatusText.style.color = 'var(--text-muted)';
     }
-
-    function onWatchNotification(event) {
-        const text = new TextDecoder().decode(event.target.value);
-        if (text.startsWith('CFG,')) {
-            log(`Scoreboard config: ${text}`, 'suc');
-            const gpMatch = text.match(/GP=(\d)/);
-            const setsMatch = text.match(/SETS=(\d)/);
-            const gamesMatch = text.match(/GAMES=(\d)/);
-            const tbMatch = text.match(/TB=(\d)/);
-            if (gpMatch) updateToggleUI('toggleGp', parseInt(gpMatch[1]));
-            if (setsMatch) updateToggleUI('toggleSets', parseInt(setsMatch[1]));
-            if (gamesMatch) updateToggleUI('toggleGames', parseInt(gamesMatch[1]));
-            if (tbMatch) updateToggleUI('toggleTb', parseInt(tbMatch[1]));
-            cfgStatusText.textContent = '✓ Scoreboard rules synchronized!';
-            cfgStatusText.style.color = 'var(--success)';
-        }
-    }
-
-    function setupToggleGroup(containerId, configKey) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.querySelectorAll('.pill-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                container.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentConfig[configKey] = parseInt(btn.dataset.val);
-                cfgStatusText.textContent = 'Click "Apply & Save Rules to Scoreboard" to save';
-                cfgStatusText.style.color = 'var(--warning)';
-            });
-        });
-    }
-
-    function updateToggleUI(containerId, val) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.querySelectorAll('.pill-btn').forEach(btn => {
-            if (parseInt(btn.dataset.val) === val) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        if (containerId === 'toggleGp') currentConfig.gp = val;
-        if (containerId === 'toggleSets') currentConfig.sets = val;
-        if (containerId === 'toggleGames') currentConfig.games = val;
-        if (containerId === 'toggleTb') currentConfig.tb = val;
-    }
-
-    setupToggleGroup('toggleGp', 'gp');
-    setupToggleGroup('toggleSets', 'sets');
-    setupToggleGroup('toggleGames', 'games');
-    setupToggleGroup('toggleTb', 'tb');
-
-    btnSaveConfig.addEventListener('click', async () => {
-        if (!watchChar) return;
-        const payload = `CFG,GP=${currentConfig.gp},SETS=${currentConfig.sets},GAMES=${currentConfig.games},TB=${currentConfig.tb}`;
-        try {
-            btnSaveConfig.disabled = true;
-            cfgStatusText.textContent = 'Saving rules to scoreboard flash...';
-            cfgStatusText.style.color = 'var(--primary)';
-            await watchChar.writeValue(new TextEncoder().encode(payload));
-            log(`Sent config payload: ${payload}`, 'suc');
-            cfgStatusText.textContent = '✓ Rules successfully applied & saved in Flash!';
-            cfgStatusText.style.color = 'var(--success)';
-        } catch (err) {
-            log(`Save config error: ${err.message}`, 'err');
-            cfgStatusText.textContent = `Failed: ${err.message}`;
-            cfgStatusText.style.color = 'var(--error)';
-        } finally {
-            btnSaveConfig.disabled = false;
-        }
-    });
 
     function onControlNotification(event) {
         const val = event.target.value;
