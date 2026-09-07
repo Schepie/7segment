@@ -171,6 +171,10 @@ DisplayMode currentMode = MODE_CLOCK; // Panel starts in Clock Mode on boot!
 uint32_t lastActivityTime = 0;
 uint8_t  cfgBrightness    = 180;             // LED brightness (0 - 255)
 uint32_t cfgIdleTimeoutMs = 5 * 60 * 1000;   // Inactivity timeout in ms (0 = Never)
+uint8_t  cfgClockR        = 0;               // Clock Digit Color: Red component
+uint8_t  cfgClockG        = 180;             // Clock Digit Color: Green component
+uint8_t  cfgClockB        = 0;               // Clock Digit Color: Blue component
+uint32_t cfgClockColor    = 0;               // Cached packed NeoPixel color
 
 // RTC & Clock State
 ThreeWire rtcWire(DS1302_DAT_PIN, DS1302_CLK_PIN, DS1302_RST_PIN);
@@ -775,7 +779,7 @@ void renderPadelScoreboard();
 void renderClock() {
   pixels.clear();
 
-  uint32_t clockColor = pixels.Color(0, 180, 0); // Vibrant digital green (MSB safe from WS2813 ghosting)
+  uint32_t clockColor = (cfgClockColor != 0) ? cfgClockColor : pixels.Color(cfgClockR, cfgClockG, cfgClockB);
 
   // Hours: Digits 0 & 1
   int hTens = curHour / 10;
@@ -1298,17 +1302,19 @@ void resetMatchScores() {
 
 void sendConfigNotification() {
   if (pWatchCharacteristic == nullptr) return;
-  char buf[96];
-  snprintf(buf, sizeof(buf), "CFG,GP=%d,SETS=%d,GAMES=%d,TB=%d,BRT=%d,IDLE=%lu",
+  char colHex[10];
+  snprintf(colHex, sizeof(colHex), "#%02X%02X%02X", cfgClockR, cfgClockG, cfgClockB);
+  char buf[128];
+  snprintf(buf, sizeof(buf), "CFG,GP=%d,SETS=%d,GAMES=%d,TB=%d,BRT=%d,IDLE=%lu,COL=%s",
            cfgGoldenPoint ? 1 : 0, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak ? 1 : 0,
-           cfgBrightness, (unsigned long)cfgIdleTimeoutMs);
+           cfgBrightness, (unsigned long)cfgIdleTimeoutMs, colHex);
   pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
   pWatchCharacteristic->notify();
   Serial.printf("[BLE-CFG] Notified client: '%s'\n", buf);
 }
 
 void parseConfigPayload(const std::string& val) {
-  if (val.find("GP=") != std::string::npos || val.find("BRT=") != std::string::npos || val.find("IDLE=") != std::string::npos) {
+  if (val.find("GP=") != std::string::npos || val.find("BRT=") != std::string::npos || val.find("IDLE=") != std::string::npos || val.find("COL=") != std::string::npos) {
     if (val.find("GP=1") != std::string::npos) cfgGoldenPoint = true;
     else if (val.find("GP=0") != std::string::npos) cfgGoldenPoint = false;
 
@@ -1338,6 +1344,24 @@ void parseConfigPayload(const std::string& val) {
         cfgIdleTimeoutMs = (uint32_t)idle;
       }
     }
+
+    size_t cPos = val.find("COL=");
+    if (cPos != std::string::npos) {
+      std::string hexStr = val.substr(cPos + 4);
+      size_t endComma = hexStr.find(',');
+      if (endComma != std::string::npos) hexStr = hexStr.substr(0, endComma);
+      if (!hexStr.empty() && hexStr[0] == '#') hexStr = hexStr.substr(1);
+      if (hexStr.length() >= 6) {
+        unsigned int r = 0, g = 0, b = 0;
+        if (sscanf(hexStr.c_str(), "%02x%02x%02x", &r, &g, &b) == 3) {
+          cfgClockR = (uint8_t)r;
+          cfgClockG = (uint8_t)g;
+          cfgClockB = (uint8_t)b;
+          cfgClockColor = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
+          Serial.printf("[CONFIG] Parsed clock color: #%02X%02X%02X\n", cfgClockR, cfgClockG, cfgClockB);
+        }
+      }
+    }
   } else {
     std::vector<std::string> parts;
     size_t pos = 0, nextPos;
@@ -1364,6 +1388,19 @@ void parseConfigPayload(const std::string& val) {
       long idle = atol(parts[6].c_str());
       if (idle >= 0) cfgIdleTimeoutMs = (uint32_t)idle;
     }
+    if (parts.size() >= 8) {
+      std::string hexStr = parts[7];
+      if (!hexStr.empty() && hexStr[0] == '#') hexStr = hexStr.substr(1);
+      if (hexStr.length() >= 6) {
+        unsigned int r = 0, g = 0, b = 0;
+        if (sscanf(hexStr.c_str(), "%02x%02x%02x", &r, &g, &b) == 3) {
+          cfgClockR = (uint8_t)r;
+          cfgClockG = (uint8_t)g;
+          cfgClockB = (uint8_t)b;
+          cfgClockColor = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
+        }
+      }
+    }
   }
 
   if (cfgSetsToWin < 1 || cfgSetsToWin > 3) cfgSetsToWin = 2;
@@ -1378,10 +1415,18 @@ void parseConfigPayload(const std::string& val) {
   cfgPrefs.putBool("tiebreak", cfgTiebreak);
   cfgPrefs.putUChar("brightness", cfgBrightness);
   cfgPrefs.putULong("idle_timeout", cfgIdleTimeoutMs);
+  cfgPrefs.putUChar("clock_r", cfgClockR);
+  cfgPrefs.putUChar("clock_g", cfgClockG);
+  cfgPrefs.putUChar("clock_b", cfgClockB);
   cfgPrefs.end();
 
-  Serial.printf("[CONFIG] Saved to flash: GP=%d, SetsToWin=%d, GamesPerSet=%d, Tiebreak=%d, Brightness=%d, IdleTimeout=%lu\n",
-                cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs);
+  Serial.printf("[CONFIG] Saved to flash: GP=%d, SetsToWin=%d, GamesPerSet=%d, Tiebreak=%d, Brightness=%d, IdleTimeout=%lu, ClockColor=#%02X%02X%02X\n",
+                cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs,
+                cfgClockR, cfgClockG, cfgClockB);
+
+  if (currentMode == MODE_CLOCK) {
+    renderClock();
+  }
 
   sendConfigNotification();
 }
@@ -1477,6 +1522,20 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       } else if (cmd == "REQ" || cmd == "REQ_CFG") {
         sendConfigNotification();
         notifyWatchScore();
+      } else if (cmd.rfind("COL,", 0) == 0 || cmd.rfind("COLOR,", 0) == 0) {
+        std::string hexStr = (cmd.rfind("COLOR,", 0) == 0) ? cmd.substr(6) : cmd.substr(4);
+        if (!hexStr.empty() && hexStr[0] == '#') hexStr = hexStr.substr(1);
+        if (hexStr.length() >= 6) {
+          unsigned int r = 0, g = 0, b = 0;
+          if (sscanf(hexStr.c_str(), "%02x%02x%02x", &r, &g, &b) == 3) {
+            cfgClockR = (uint8_t)r;
+            cfgClockG = (uint8_t)g;
+            cfgClockB = (uint8_t)b;
+            cfgClockColor = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
+            Serial.printf("[BLE] Live clock color updated: #%02X%02X%02X\n", cfgClockR, cfgClockG, cfgClockB);
+            if (currentMode == MODE_CLOCK) renderClock();
+          }
+        }
       }
       return;
     }
@@ -1929,10 +1988,15 @@ void setup() {
   cfgTiebreak      = cfgPrefs.getBool("tiebreak", true);
   cfgBrightness    = cfgPrefs.getUChar("brightness", 180);
   cfgIdleTimeoutMs = cfgPrefs.getULong("idle_timeout", 5 * 60 * 1000);
+  cfgClockR        = cfgPrefs.getUChar("clock_r", 0);
+  cfgClockG        = cfgPrefs.getUChar("clock_g", 180);
+  cfgClockB        = cfgPrefs.getUChar("clock_b", 0);
   cfgPrefs.end();
+  cfgClockColor    = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
   pixels.setBrightness(cfgBrightness);
-  Serial.printf("[CONFIG] Flash Rules: GP=%d, Sets=%d, Games=%d, TB=%d, Brightness=%d, Idle=%lu ms\n",
-                cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs);
+  Serial.printf("[CONFIG] Flash Rules: GP=%d, Sets=%d, Games=%d, TB=%d, Brightness=%d, Idle=%lu ms, ClockColor=#%02X%02X%02X\n",
+                cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs,
+                cfgClockR, cfgClockG, cfgClockB);
 
   NimBLEScan* pScan = NimBLEDevice::getScan();
   pScan->setAdvertisedDeviceCallbacks(new AdvertisedDeviceCallbacks(), false);

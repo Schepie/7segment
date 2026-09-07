@@ -32,6 +32,9 @@
             --accent-gold: #ffb300;
             --accent-gold-glow: rgba(255, 179, 0, 0.3);
 
+            --clock-color: #00e676;
+            --clock-glow: rgba(0, 230, 118, 0.4);
+
             --text-main: #f0f4f8;
             --text-muted: #8899aa;
             --text-sub: #556677;
@@ -489,8 +492,9 @@
             font-family: var(--font-display);
             font-size: 22px;
             font-weight: 900;
-            color: var(--accent-green);
-            text-shadow: 0 0 10px var(--accent-green-glow);
+            color: var(--clock-color, var(--accent-green));
+            text-shadow: 0 0 12px var(--clock-glow, var(--accent-green-glow));
+            transition: color 0.25s ease, text-shadow 0.25s ease;
         }
 
         .btn-sync-time {
@@ -502,6 +506,112 @@
             font-size: 12px;
             font-weight: 800;
             cursor: pointer;
+        }
+
+        /* Clock Color Controls */
+        .color-swatches-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .color-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px 4px;
+            border-radius: var(--radius-md);
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .color-chip:active {
+            transform: scale(0.95);
+        }
+
+        .color-chip.active {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--chip-color, var(--team1-blue));
+            box-shadow: 0 0 12px var(--chip-glow, rgba(0, 210, 255, 0.3));
+        }
+
+        .color-chip-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--chip-color);
+            box-shadow: 0 0 8px var(--chip-glow);
+        }
+
+        .color-chip-name {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .color-chip.active .color-chip-name {
+            color: #fff;
+        }
+
+        .custom-color-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-lg);
+            padding: 9px 12px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+
+        .custom-color-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .custom-color-input-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .custom-color-input-wrap:active {
+            transform: scale(0.96);
+        }
+
+        .custom-color-input-wrap input[type="color"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+
+        .color-swatch-circle {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--clock-color, var(--accent-green));
+            box-shadow: 0 0 8px var(--clock-glow, var(--accent-green-glow));
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
         }
 
         .btn-save-gold {
@@ -745,6 +855,65 @@
                         <span>⚡ Sync Clock</span>
                     </button>
                 </div>
+
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>🎨 Clock Digit Color</span>
+                    <span style="font-family: 'JetBrains Mono'; font-weight: 800; color: var(--clock-color, var(--accent-green));" id="clockColorHexBadge">#00E676</span>
+                </div>
+
+                <div class="color-swatches-grid" id="clockColorSwatches">
+                    <button type="button" class="color-chip active" data-color="#00E676" style="--chip-color: #00e676; --chip-glow: rgba(0, 230, 118, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Green</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#00D2FF" style="--chip-color: #00d2ff; --chip-glow: rgba(0, 210, 255, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Cyan</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FFFFFF" style="--chip-color: #ffffff; --chip-glow: rgba(255, 255, 255, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">White</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FF9100" style="--chip-color: #ff9100; --chip-glow: rgba(255, 145, 0, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Amber</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FFB300" style="--chip-color: #ffb300; --chip-glow: rgba(255, 179, 0, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Gold</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#B536FF" style="--chip-color: #b536ff; --chip-glow: rgba(181, 54, 255, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Violet</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FF3366" style="--chip-color: #ff3366; --chip-glow: rgba(255, 51, 102, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Red</span>
+                    </button>
+                    <button type="button" class="color-chip" data-color="#FF2A8D" style="--chip-color: #ff2a8d; --chip-glow: rgba(255, 42, 141, 0.4);">
+                        <span class="color-chip-dot"></span>
+                        <span class="color-chip-name">Pink</span>
+                    </button>
+                </div>
+
+                <div class="custom-color-card">
+                    <div class="custom-color-left">
+                        <span style="font-size: 16px;">🎨</span>
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700;">Custom RGB Color</div>
+                            <div style="font-size: 10px; color: var(--text-muted);">Choose any hex shade</div>
+                        </div>
+                    </div>
+                    <label class="custom-color-input-wrap">
+                        <span class="color-swatch-circle" id="customColorCircle"></span>
+                        <span style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 700;">Custom</span>
+                        <input type="color" id="pickerClockColor" value="#00E676" class="color-picker-native">
+                    </label>
+                </div>
+
+                <button type="button" class="btn-save-gold" id="btnSaveDisplay" disabled style="margin-top: 4px;">
+                    <span>💾 Save Display Settings</span>
+                </button>
             </div>
         </div>
 
@@ -857,7 +1026,8 @@
         games: 6,
         tb: 1,
         brt: 180,
-        idle: 300000
+        idle: 300000,
+        clockColor: localStorage.getItem('padel_clock_color') || '#00E676'
     };
 
     let boardState = {
@@ -896,6 +1066,10 @@
     const btnSyncTime        = document.getElementById('btnSyncTime');
     const localTimeDisplay   = document.getElementById('localTimeDisplay');
     const btnSaveConfig      = document.getElementById('btnSaveConfig');
+    const btnSaveDisplay     = document.getElementById('btnSaveDisplay');
+    const pickerClockColor   = document.getElementById('pickerClockColor');
+    const clockColorHexBadge = document.getElementById('clockColorHexBadge');
+    const customColorCircle  = document.getElementById('customColorCircle');
     const consoleBox         = document.getElementById('consoleBox');
 
     // Bottom Navigation Bar Switching
@@ -1009,6 +1183,7 @@
         btnCmdReset.disabled = false;
         btnSyncTime.disabled = false;
         btnSaveConfig.disabled = false;
+        if (btnSaveDisplay) btnSaveDisplay.disabled = false;
 
         // Trigger config fetch
         watchChar.readValue().catch(() => {});
@@ -1026,6 +1201,7 @@
         btnCmdReset.disabled = true;
         btnSyncTime.disabled = true;
         btnSaveConfig.disabled = true;
+        if (btnSaveDisplay) btnSaveDisplay.disabled = true;
 
         watchChar = null;
         log('Device disconnected', 'err');
@@ -1059,6 +1235,7 @@
         const tbMatch   = text.match(/TB=(\d+)/);
         const brtMatch  = text.match(/BRT=(\d+)/);
         const idleMatch = text.match(/IDLE=(\d+)/);
+        const colMatch  = text.match(/COL=([#0-9a-fA-F]+)/);
 
         if (gpMatch) updatePillGroupUI('toggleGp', parseInt(gpMatch[1]));
         if (setsMatch) updatePillGroupUI('toggleSets', parseInt(setsMatch[1]));
@@ -1071,6 +1248,13 @@
             appConfig.brt = brt;
             sliderBrightness.value = brt;
             updateBrightnessUI(brt);
+        }
+
+        if (colMatch) {
+            let col = colMatch[1];
+            if (!col.startsWith('#')) col = '#' + col;
+            appConfig.clockColor = col.toUpperCase();
+            setClockColorUI(appConfig.clockColor, false);
         }
     }
 
@@ -1231,16 +1415,111 @@
     setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
 
     // -------------------------------------------------------------
+    // Clock Color Selection & Live Transmission
+    // -------------------------------------------------------------
+    function hexToRgb(hex) {
+        let clean = hex.replace('#', '');
+        if (clean.length === 3) {
+            clean = clean.split('').map(c => c + c).join('');
+        }
+        const num = parseInt(clean, 16) || 0;
+        return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255
+        };
+    }
+
+    function setClockColorUI(hex, notifyBle = true) {
+        if (!hex) hex = '#00E676';
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        hex = hex.toUpperCase();
+        appConfig.clockColor = hex;
+
+        const rgb = hexToRgb(hex);
+        const glow = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
+
+        document.documentElement.style.setProperty('--clock-color', hex);
+        document.documentElement.style.setProperty('--clock-glow', glow);
+
+        if (clockColorHexBadge) {
+            clockColorHexBadge.textContent = hex;
+            clockColorHexBadge.style.color = hex;
+        }
+
+        if (pickerClockColor && pickerClockColor.value.toUpperCase() !== hex) {
+            pickerClockColor.value = hex;
+        }
+
+        if (customColorCircle) {
+            customColorCircle.style.backgroundColor = hex;
+            customColorCircle.style.boxShadow = `0 0 10px ${glow}`;
+        }
+
+        // Highlight preset if it matches
+        document.querySelectorAll('#clockColorSwatches .color-chip').forEach(chip => {
+            const chipColor = (chip.dataset.color || '').toUpperCase();
+            chip.classList.toggle('active', chipColor === hex);
+        });
+
+        // Persist locally
+        try {
+            localStorage.setItem('padel_clock_color', hex);
+        } catch (e) {}
+
+        // Send live preview over BLE
+        if (notifyBle && watchChar) {
+            sendBleText(`CMD,COL,${hex}`);
+        }
+    }
+
+    // Color Swatches Handlers
+    document.querySelectorAll('#clockColorSwatches .color-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const color = chip.dataset.color;
+            if (color) {
+                setClockColorUI(color, true);
+            }
+        });
+    });
+
+    // Custom Color Picker Handlers
+    if (pickerClockColor) {
+        pickerClockColor.addEventListener('input', (e) => {
+            setClockColorUI(e.target.value, false);
+        });
+        pickerClockColor.addEventListener('change', (e) => {
+            setClockColorUI(e.target.value, true);
+        });
+    }
+
+    // Initialize Clock Color UI
+    setClockColorUI(appConfig.clockColor, false);
+
+    // -------------------------------------------------------------
     // Send Settings & Rules to ESP32 Flash
     // -------------------------------------------------------------
     async function sendBleConfig() {
-        const payload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle}`;
-        btnSaveConfig.disabled = true;
-        btnSaveConfig.textContent = 'Saving...';
+        const colStr = (appConfig.clockColor || '#00E676').toUpperCase();
+        const payload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+        if (btnSaveConfig) {
+            btnSaveConfig.disabled = true;
+            btnSaveConfig.textContent = 'Saving...';
+        }
+        if (btnSaveDisplay) {
+            btnSaveDisplay.disabled = true;
+            btnSaveDisplay.textContent = 'Saving...';
+        }
 
         const success = await sendBleText(payload);
-        btnSaveConfig.disabled = false;
-        btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
+        if (btnSaveConfig) {
+            btnSaveConfig.disabled = false;
+            btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
+        }
+        if (btnSaveDisplay) {
+            btnSaveDisplay.disabled = false;
+            btnSaveDisplay.innerHTML = '<span>💾 Save Display Settings</span>';
+        }
         if (success) {
             log('Config saved to Flash', 'suc');
             alert('✓ Rules and Display settings saved to Scoreboard Flash!');
@@ -1250,6 +1529,9 @@
     }
 
     btnSaveConfig.addEventListener('click', sendBleConfig);
+    if (btnSaveDisplay) {
+        btnSaveDisplay.addEventListener('click', sendBleConfig);
+    }
 
     // -------------------------------------------------------------
     // RTC Clock Synchronization
