@@ -26,7 +26,7 @@ async def main():
     with open(bin_path, "rb") as f:
         firmware_data = f.read()
 
-    target_address = "E8:F6:0A:36:6B:B2"
+    target_address = "E8:F6:0A:36:6B:B6"
     target_device = None
 
     print(f"Searching for target device ({target_address} or 'Padel*')...")
@@ -118,11 +118,10 @@ async def main():
             print(f"Aborting OTA due to error: {last_error}")
             return
 
-        # 2. Determine chunk size
         # Safe chunk size for Windows BLE
-        chunk_size = min(client.mtu_size - 3, 240) if client.mtu_size > 23 else 20
+        chunk_size = min(client.mtu_size - 3, 128) if client.mtu_size > 23 else 20
         if esp_reported_mtu > 0:
-            chunk_size = min(chunk_size, esp_reported_mtu)
+            chunk_size = min(chunk_size, esp_reported_mtu, 128)
         if chunk_size < 20:
             chunk_size = 20
 
@@ -147,9 +146,8 @@ async def main():
             offset += len(chunk)
             packet_count += 1
 
-            # Pacing: brief pause every 10 packets to avoid Windows BLE buffer congestion
-            if packet_count % 10 == 0:
-                await asyncio.sleep(0.008)
+            # Pacing: 10ms pause every packet to prevent Windows BLE buffer congestion
+            await asyncio.sleep(0.01)
 
             pct = int((offset * 100) / file_size)
             if pct != last_pct_printed:
