@@ -474,15 +474,17 @@ static void initWs2813SpiDma() {
   }
 
   if (ws2813_spi == nullptr) {
-    // Configure pull-down so MOSI is never pulled high or left floating when SPI is idle
+    // Configure pull-down so MOSI is LOW (clean WS2813 reset) when SPI bus is idle
     gpio_set_pull_mode((gpio_num_t)LED_PIN, GPIO_PULLDOWN_ONLY);
     gpio_set_drive_capability((gpio_num_t)LED_PIN, GPIO_DRIVE_CAP_3);
 
-    // Each color byte expands to 4 SPI bytes (32 bits)
-    ws2813_led_bytes = TOTAL_SPI_PIXELS * 3 * 4;
-    // WS2813 requires >= 280us - 300us reset. 250 bytes * 8 * 300ns = 600us of continuous LOW!
-    ws2813_reset_bytes = 250;
-    ws2813_dma_buf_size = ws2813_led_bytes + ws2813_reset_bytes;
+    // Each color byte expands to 4 SPI bytes (32 bits). Includes 1 dummy blank pixel.
+    // NO trailing zero-bytes: encoded '0' bits still have 300ns HIGH pulses which
+    // violate the WS2813 >=280us continuous-LOW reset requirement.
+    // Instead the reset is achieved by GPIO pulldown after the SPI transaction completes.
+    ws2813_led_bytes = TOTAL_SPI_PIXELS * 3 * 4; // 137 * 12 = 1644 bytes
+    ws2813_reset_bytes = 0;                       // No encoded-zero reset padding
+    ws2813_dma_buf_size = ws2813_led_bytes;
 
     spi_bus_config_t buscfg = {};
     buscfg.mosi_io_num = LED_PIN;
@@ -490,7 +492,7 @@ static void initWs2813SpiDma() {
     buscfg.sclk_io_num = -1;
     buscfg.quadwp_io_num = -1;
     buscfg.quadhd_io_num = -1;
-    buscfg.max_transfer_sz = ws2813_dma_buf_size + 128;
+    buscfg.max_transfer_sz = ws2813_dma_buf_size + 64;
 
     esp_err_t err = spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
@@ -517,7 +519,7 @@ static void initWs2813SpiDma() {
       return;
     }
     memset(ws2813_dma_buf, 0, ws2813_dma_buf_size);
-    Serial.println("[SPI-DMA] Hardware SPI DMA WS2813 driver active on GPIO 2 (3.33MHz/300ns + 600us reset)!");
+    Serial.println("[SPI-DMA] Hardware SPI DMA WS2813 driver active on GPIO 2 (3.33MHz/300ns, pulldown reset)!");
   }
 }
 
@@ -534,31 +536,34 @@ static void showWs2813SpiDma() {
   if (rawPixels == nullptr) return;
 
   uint32_t* out32 = (uint32_t*)ws2813_dma_buf;
-  size_t numBytes = NUMPIXELS * 3;
+  size_t numBytes = NUMPIXELS * 3; // = 136 * 3 = 408 raw GRB bytes
   for (size_t i = 0; i < numBytes; i++) {
     out32[i] = spiLookup[rawPixels[i]];
   }
 
-  // Clock in 1 dummy blank pixel (24 bits = 3 color bytes = 3 uint32) to ensure the very last physical LED
-  // has all 24 bits pushed completely through its internal shift register into its latch
-  for (int i = 0; i < 3; i++) {
-    out32[numBytes + i] = spiLookup[0];
-  }
+  // Clock in 1 dummy blank pixel (24 bits = 3 color bytes) to ensure the very last physical LED
+  // has all 24 bits fully shifted through its internal shift register before the reset pulse.
+  out32[numBytes + 0] = spiLookup[0];
+  out32[numBytes + 1] = spiLookup[0];
+  out32[numBytes + 2] = spiLookup[0];
 
-  // Guarantee trailing reset bytes are strictly 0x00 on every single frame
-  memset(ws2813_dma_buf + ws2813_led_bytes, 0, ws2813_reset_bytes);
-
+  // Send ONLY the LED data (no encoded-zero reset bytes: they produce 300ns HIGH pulses
+  // which break the WS2813 continuous-LOW reset requirement).
+  // The reset is achieved by the GPIO pulldown holding MOSI LOW after SPI completes,
+  // combined with the delayMicroseconds(300) in showPixelsSafe() below.
   spi_transaction_t t = {};
-  t.length = ws2813_dma_buf_size * 8; // in bits
+  t.length = ws2813_led_bytes * 8; // bits: only LED + dummy pixel data
   t.tx_buffer = ws2813_dma_buf;
   spi_device_polling_transmit(ws2813_spi, &t);
+  // After the SPI transaction, MOSI is released. GPIO_PULLDOWN holds it LOW
+  // for the WS2813 reset. showPixelsSafe() adds >= 300us delay after this call.
 }
 #endif
 
 void showPixelsSafe() {
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
   showWs2813SpiDma();
-  delayMicroseconds(400);
+  delayMicroseconds(350); // WS2813 reset: >=280us of continuous LOW via GPIO pulldown
 #else
   pixels.show();
   delayMicroseconds(350);

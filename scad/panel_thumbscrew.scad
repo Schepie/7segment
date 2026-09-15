@@ -106,33 +106,37 @@ module thumbscrew_knob() {
 // ------------------------------------------------------------------------------
 // LOCKING CAP (Anti-Spin Drive Pin: Philips Cross PH1 or 2.0mm Hex Allen)
 // ------------------------------------------------------------------------------
+cap_flange_h = 0.8;
+cap_flange_d = knob_d - 0.8; // 10.4 mm: rests neatly on knob top rim
+cap_plug_d   = cs_d - 0.20;  // 6.0 mm: snug friction-fit into knob cavity
+cap_plug_h   = cap_h - 0.2;  // 4.8 mm: cavity insertion depth (leaves 0.2mm clearance)
+
 module locking_cap(drive = drive_type) {
-    difference() {
-        union() {
-            // Cylindrical plug that friction-fits into the knob cavity
-            cylinder(h = cap_h, d = cs_d - 0.18, $fn = 36);
-            
-            // Drive key pin (keys into screw head socket to prevent spinning)
-            if (drive == "philips") {
-                // 4-blade cross drive pin for M3 PH1 Philips recess
-                translate([0, 0, -1.2]) {
-                    cube([2.8, 0.75, 1.3], center = true);
-                    cube([0.75, 2.8, 1.3], center = true);
-                }
-            } else {
-                // 2.0 mm hexagonal drive pin for M3 DIN 7991 hex socket
-                translate([0, 0, -1.6])
-                    cylinder(h = 1.7, r = 2.05 / (2 * cos(30)), $fn = 6);
-            }
-                
-            // Top retaining flange (rests flush with top rim of knob)
-            translate([0, 0, cap_h - 0.8])
-                cylinder(h = 0.8, d = knob_d - 0.6, $fn = 36);
-        }
+    union() {
+        // 1. Retaining Flange (printed flat on build plate Z=0 for max adhesion & smooth finish)
+        cylinder(h = cap_flange_h, d = cap_flange_d, $fn = 48);
         
-        // Central 2.2 mm hole for optional screwdriver pass-through
-        translate([0, 0, -2.0])
-            cylinder(h = cap_h + 3.0, d = 2.2, $fn = 20);
+        // 2. Cylindrical Plug (press-fits into 6.2mm knob bore, overlapping into flange)
+        translate([0, 0, cap_flange_h - 0.1])
+            cylinder(h = cap_plug_h + 0.1, d = cap_plug_d, $fn = 36);
+        
+        // 3. Drive Key (Solidly fused on top of plug with 0.1mm overlap, 100% support-free)
+        translate([0, 0, cap_flange_h + cap_plug_h - 0.1]) {
+            if (drive == "philips") {
+                // Solid Philips PH1 cross drive key (tapered for self-centering engagement)
+                intersection() {
+                    union() {
+                        translate([0, 0, 0.75]) cube([3.1, 0.8, 1.7], center = true);
+                        translate([0, 0, 0.75]) cube([0.8, 3.1, 1.7], center = true);
+                    }
+                    // Taper cone matching standard PH1 recess
+                    cylinder(h = 1.6, d1 = 3.3, d2 = 2.0, $fn = 32);
+                }
+            } else if (drive == "hex") {
+                // Solid 2.0 mm hex pin for M3 DIN 7991 socket (tapered lead-in for easy fit)
+                cylinder(h = 1.6, r1 = 1.95 / (2 * cos(30)), r2 = 1.65 / (2 * cos(30)), $fn = 6);
+            }
+        }
     }
 }
 
@@ -205,10 +209,11 @@ module thumbscrew_assembled_preview() {
             color("#0284c7")
                 thumbscrew_knob();
                 
-            // Cyan Hex Locking Cap (seated flush in top of knob)
+            // Cyan Locking Cap (seated inside knob, keyed into screw head)
             color("#38bdf8")
-                translate([0, 0, base_wall + cs_depth])
-                    hex_locking_cap();
+                translate([0, 0, knob_h + cap_flange_h])
+                    rotate([180, 0, 0])
+                        locking_cap();
                     
             // Gold M3x12 Countersunk Screw (DIN 7991)
             color("#f59e0b") {
@@ -247,10 +252,11 @@ module thumbscrew_cutaway_preview() {
             // Blue Knob Body
             color("#0284c7") thumbscrew_knob();
             
-            // Cyan Hex Locking Cap
+            // Cyan Locking Cap (seated inside knob, keyed into screw head)
             color("#38bdf8")
-                translate([0, 0, base_wall + cs_depth])
-                    hex_locking_cap();
+                translate([0, 0, knob_h + cap_flange_h])
+                    rotate([180, 0, 0])
+                        locking_cap();
                     
             // Gold M3x12 DIN 7991 Countersunk Screw
             color("#f59e0b")
@@ -427,7 +433,7 @@ if (part == 1 || part == "pair") {
 } else if (part == 4 || part == "knob_only") {
     thumbscrew_knob();
 } else if (part == 5 || part == "cap_only") {
-    hex_locking_cap();
+    locking_cap();
 } else if (part == 6 || part == "preview") {
     thumbscrew_assembled_preview();
 } else if (part == 7 || part == "cutaway") {
