@@ -266,10 +266,13 @@ pio device monitor -b 115200
 ## 🖨️ 3D Printing Assets (`/scad`)
 
 All enclosure, digit, bracket, and mounting files are open-source OpenSCAD designs:
-* `7segment.scad`: Modular snap-together 7-segment digit housings with integrated diffuser slots.
-* `7segment_hinged_bracket.scad`: Heavy-duty hinged wall and court-fence brackets with locking pins.
+* `panel_thumbscrew.scad`: **Tool-free M3 thumbscrew knob system** (ergonomic knurled finger knob with anti-spin hex drive lock for M3x12 DIN 7991 countersunk screws and 3.0 mm panel heat-set inserts; 11.2 mm outer diameter engineered specifically for 12.0 mm seam bracket pitch without knob collisions; 100% support-free).
+* `display_stand.scad`: **Anti-tip desktop & tabletop stand system** (slide-in cradle feet and bolt-on M3 kickstand legs with ergonomic 8° backward viewing tilt, 118 mm anti-tip base footprint, and 8mm rubber bumpon recesses; 100% support-free 3D printing).
+* `rear_corner_foot.scad`: Outer corner leveling foot (3.0 mm) ensuring flush, wobble-free table placement across joined rear brackets.
+* `rear_joining_bracket_hinged.scad`: Heavy-duty hinged panel-to-panel joining bracket with 3D-printable snap pin (0° to 180° folding).
+* `7segment_pogo.scad`: Modular 7-segment digit housings with integrated magnetic pogo pin pockets, diffuser slots, and VESA 50x50 mounts.
 * `remote_strap_holder.scad`: Ergonomic clip for wearing the Xiaomi Shutter remote on a wristband or racket lanyard.
-* `games_sets_bracket.scad`: Middle module housing for the 24-LED column array.
+* `games_sets_pogo_snap_individual_dots.scad`: Middle module housing for the 24-LED column array.
 
 ---
 

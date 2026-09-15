@@ -17,7 +17,7 @@
 /* [Display Configuration] */
 spacer_width = 56.0;         // Width of the indicator module in mm
 col_spacing  = 22.0;         // Center-to-center distance between Team 1 and Team 2 columns (+/- 11mm)
-show_pogo_hardware = true;   // Preview 3D pogo connectors in mounting pockets
+
 
 /* [Inspection & Quality Control] */
 inspection_mode       = "assembled"; // ["assembled": Fully Assembled View, "exploded": Exploded Layer View, "frontplate_two_color": Frontplate 2-Color Preview (Black + White Text), "frontplate_black_only": Black Frontplate STL Export (with text cavities), "frontplate_text_only": White Inlay Text STL Export ('1 SETS 2' & 'GAMES'), "all_dots_only": All 22 White Dots Only, "all_white_parts": All White Parts (22 Dots + Text Inlay), "single_dot_test_coupon": Single Dot & Socket Test Fit Coupon, "tower_mating_inspection": Connector Tower & U-Collar Mating Close-Up, "frontplate_only": Frontplate Only, "backplate_only": Rear Backplate Only, "collision_check": Interference Check, "cutaway_x": Cutaway Cross-Section (X-Axis), "cutaway_y": Cutaway Cross-Section (Y-Axis)]
@@ -25,10 +25,11 @@ cutaway_depth         = 0.0;  // [-100:1:100] Offset along cut axis for cutaway 
 
 /* [Visibility & Exploded View] */
 show_frontplate_black = false; // Black structural housing & light-isolation wells
-show_frontplate_white = false; // White Snap Dots diffusers
-show_frontplate_text  = true; // White text inlay ('1 SETS 2' and 'GAMES')
-show_backplate        = true; // Rear backplate with LED channels & screw holes
-exploded_view         = true;// Set to true to view all layers exploded along Z
+show_frontplate_white = true; // White Snap Dots diffusers
+show_frontplate_text  = false; // White text inlay ('1 SETS 2' and 'GAMES')
+show_backplate        = false; // Rear backplate with LED channels & screw holes
+show_pogo_hardware    = false;   // Preview 3D pogo connectors in mounting pockets
+exploded_view         = false;// Set to true to view all layers exploded along Z
 explode_distance      = 35.0; // Distance between exploded layers in mm
 
 use <assembly_inspector.scad>
