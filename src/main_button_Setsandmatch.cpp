@@ -171,9 +171,9 @@ DisplayMode currentMode = MODE_CLOCK; // Panel starts in Clock Mode on boot!
 uint32_t lastActivityTime = 0;
 uint8_t  cfgBrightness    = 180;             // LED brightness (0 - 255)
 uint32_t cfgIdleTimeoutMs = 5 * 60 * 1000;   // Inactivity timeout in ms (0 = Never)
-uint8_t  cfgClockR        = 255;             // Clock Digit Color: Red component (Default Pink #FF2A8D)
-uint8_t  cfgClockG        = 42;              // Clock Digit Color: Green component
-uint8_t  cfgClockB        = 141;             // Clock Digit Color: Blue component
+uint8_t  cfgClockR        = 0;               // Clock Digit Color: Red component (Default Pure Green #00FF00)
+uint8_t  cfgClockG        = 255;             // Clock Digit Color: Green component
+uint8_t  cfgClockB        = 0;               // Clock Digit Color: Blue component
 uint32_t cfgClockColor    = 0;               // Cached packed NeoPixel color
 uint8_t  cfgLedLayout     = 0;               // Hardware LED Layout: 0=136 (Sets&Match), 1=114 (4Dig+Colon), 2=112 (4Dig Direct)
 
@@ -2114,9 +2114,9 @@ void setup() {
   cfgBrightness    = cfgPrefs.getUChar("brightness", 180);
   cfgIdleTimeoutMs = cfgPrefs.getULong("idle_timeout", 5 * 60 * 1000);
   cfgLedLayout     = cfgPrefs.getUChar("led_layout", 0);
-  cfgClockR        = cfgPrefs.getUChar("clock_r", 255); // Default Pink (#FF2A8D)
-  cfgClockG        = cfgPrefs.getUChar("clock_g", 42);
-  cfgClockB        = cfgPrefs.getUChar("clock_b", 141);
+  cfgClockR        = cfgPrefs.getUChar("clock_r", 0); // Default Pure Green (#00FF00)
+  cfgClockG        = cfgPrefs.getUChar("clock_g", 255);
+  cfgClockB        = cfgPrefs.getUChar("clock_b", 0);
   cfgPrefs.end();
   cfgClockColor    = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
   pixels.setBrightness(cfgBrightness);

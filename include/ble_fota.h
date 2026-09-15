@@ -3,7 +3,7 @@
 
 // ==============================================================================
 // Universal BLE FOTA (Bluetooth Low Energy Firmware Over-The-Air) Service
-// Allows flashing firmware wirelessly via Web Bluetooth from Chrome/Edge
+// Includes 4-Layer Fail-Safe Protection against Incompatible Chip Architectures
 // ==============================================================================
 
 #include <Arduino.h>
@@ -40,13 +40,23 @@ public:
   }
 
   static bool isUpdating() {
+    if (getInstance().inProgress) {
+      if (millis() - getInstance().lastDataTime > 20000) {
+        Serial.println("[FOTA-FAILSAFE] Watchdog: OTA timed out after 20s without data! Safely auto-aborting to protect device.");
+        getInstance().abortSession();
+      }
+    }
     return getInstance().inProgress;
+  }
+
+  static void abort() {
+    getInstance().abortSession();
   }
 
 private:
   BleFota() : pServer(nullptr), pControlChar(nullptr), pDataChar(nullptr),
               inProgress(false), totalSize(0), bytesWritten(0), lastPercent(-1),
-              progressCb(nullptr), statusCb(nullptr) {}
+              lastDataTime(0), progressCb(nullptr), statusCb(nullptr) {}
 
   static BleFota& getInstance() {
     static BleFota instance;
@@ -60,8 +70,18 @@ private:
   size_t totalSize;
   size_t bytesWritten;
   int lastPercent;
+  uint32_t lastDataTime;
   ProgressCallback progressCb;
   StatusCallback statusCb;
+
+  void abortSession() {
+    if (inProgress) {
+      Update.abort();
+      inProgress = false;
+      if (statusCb) statusCb(false, false);
+      Serial.println("[FOTA-FAILSAFE] Session aborted. Scoreboard returned to normal operation.");
+    }
+  }
 
   void setupService(NimBLEServer* server, const char* advName) {
     pServer = server;
@@ -95,7 +115,7 @@ private:
     pAdvertising->addServiceUUID(BLE_FOTA_SERVICE_UUID);
     pAdvertising->setScanResponse(true);
 
-    Serial.println("[FOTA] BLE FOTA GATT Service initialized successfully with MTU 517.");
+    Serial.println("[FOTA] BLE FOTA GATT Service initialized with fail-safe chip protection.");
   }
 
   static void rebootTask(void* param) {
@@ -132,6 +152,7 @@ private:
       totalSize = (size_t)(pData[1] | (pData[2] << 8) | (pData[3] << 16) | (pData[4] << 24));
       bytesWritten = 0;
       lastPercent = -1;
+      lastDataTime = millis();
 
       Serial.printf("[FOTA] Starting OTA transfer, expected size: %u bytes\n", totalSize);
 
@@ -185,14 +206,41 @@ private:
 
     } else if (cmd == FOTA_CMD_ABORT) {
       Serial.println("[FOTA] OTA aborted by client");
-      Update.abort();
-      inProgress = false;
-      if (statusCb) statusCb(false, false);
+      abortSession();
     }
   }
 
   void handleData(uint8_t* pData, size_t length) {
     if (!inProgress || length == 0) return;
+    lastDataTime = millis();
+
+    // FAIL-SAFE: Validate ESP image header and chip architecture on offset 0
+    if (bytesWritten == 0 && length >= 14) {
+      uint8_t magic = pData[0];
+      uint16_t fileChipId = (uint16_t)(pData[12] | (pData[13] << 8));
+
+      #if defined(CONFIG_IDF_TARGET_ESP32C3)
+      const uint16_t EXPECTED_CHIP = 0x0005;
+      const char* CHIP_NAME = "ESP32-C3";
+      #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+      const uint16_t EXPECTED_CHIP = 0x0009;
+      const char* CHIP_NAME = "ESP32-S3";
+      #else
+      const uint16_t EXPECTED_CHIP = 0x0000;
+      const char* CHIP_NAME = "ESP32";
+      #endif
+
+      if (magic != 0xE9 || fileChipId != EXPECTED_CHIP) {
+        Serial.printf("[FOTA-FAILSAFE] REJECTED INCOMPATIBLE FIRMWARE! Magic: 0x%02X, Chip: 0x%04X (Expected %s: 0x%04X)\n",
+                      magic, fileChipId, CHIP_NAME, EXPECTED_CHIP);
+        abortSession();
+        uint8_t resp[2] = { FOTA_RESP_ERROR, 0xEE }; // 0xEE = Incompatible Chip Architecture
+        pControlChar->setValue(resp, 2);
+        pControlChar->notify();
+        return;
+      }
+      Serial.printf("[FOTA-FAILSAFE] Firmware verified for %s (chip 0x%04X). Writing to flash...\n", CHIP_NAME, fileChipId);
+    }
 
     size_t written = Update.write(pData, length);
     if (written > 0) {

@@ -326,11 +326,11 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 6px;">
-            <button type="button" class="btn btn-secondary" id="btnPreset4Digits" style="flex: 1; font-size: 13px; padding: 10px 8px; text-align: center;">
-                ⚡ Auto-Load 4-Digit Firmware
+            <button type="button" class="btn btn-secondary" id="btnPresetSets" style="flex: 1; font-size: 12px; padding: 10px 6px; text-align: center;">
+                🏆 Sets & Match (ESP32-C3)
             </button>
-            <button type="button" class="btn btn-secondary" id="btnPresetSets" style="flex: 1; font-size: 13px; padding: 10px 8px; text-align: center;">
-                🏆 Auto-Load Sets & Match
+            <button type="button" class="btn btn-secondary" id="btnPreset4Digits" style="flex: 1; font-size: 12px; padding: 10px 6px; text-align: center;">
+                ⚡ 4-Digit (ESP32-C3)
             </button>
         </div>
 
@@ -488,6 +488,38 @@
         }
     }
 
+    function validateFirmwareBinary(buffer) {
+        if (!buffer || buffer.byteLength < 32) {
+            return { valid: false, error: 'File is too small to be a valid ESP32 firmware binary.' };
+        }
+        const bytes = new Uint8Array(buffer);
+        const magic = bytes[0];
+        const chipId = bytes[12] | (bytes[13] << 8);
+
+        if (magic !== 0xE9) {
+            return { valid: false, error: `Invalid firmware header magic (0x${magic.toString(16).toUpperCase()} != 0xE9).` };
+        }
+
+        let chipName = 'Unknown';
+        if (chipId === 0x0005) chipName = 'ESP32-C3';
+        else if (chipId === 0x0009) chipName = 'ESP32-S3';
+        else if (chipId === 0x0000) chipName = 'ESP32';
+        else if (chipId === 0x0002) chipName = 'ESP32-S2';
+        else if (chipId === 0x000C) chipName = 'ESP32-C6';
+
+        // Target board is ESP32-C3 (Chip ID 0x0005)
+        if (chipId !== 0x0005) {
+            return {
+                valid: false,
+                chipId,
+                chipName,
+                error: `⚠️ INCOMPATIBLE CHIP: This binary is compiled for ${chipName} (Chip ID 0x${chipId.toString(16).padStart(4, '0').toUpperCase()}), but your scoreboard runs an ESP32-C3! Flashing this would crash wireless BLE. Please choose an ESP32-C3 binary.`
+            };
+        }
+
+        return { valid: true, chipId, chipName };
+    }
+
     // File selection
     dropzone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', async (e) => {
@@ -504,7 +536,21 @@
     });
 
     function checkReadyToFlash() {
-        if (controlChar && dataChar && fileBuffer && !isFlashing) {
+        if (!fileBuffer) {
+            btnFlash.disabled = true;
+            return;
+        }
+
+        const check = validateFirmwareBinary(fileBuffer);
+        if (!check.valid) {
+            btnFlash.disabled = true;
+            log(check.error, 'err');
+            alert(check.error);
+            return;
+        }
+
+        log(`✓ Header verified: ${check.chipName} binary confirmed safe to flash!`, 'suc');
+        if (controlChar && dataChar && !isFlashing) {
             btnFlash.disabled = false;
         } else {
             btnFlash.disabled = true;
@@ -527,24 +573,24 @@
         }
     }
 
-    const btnPreset4Digits = document.getElementById('btnPreset4Digits');
-    if (btnPreset4Digits) {
-        btnPreset4Digits.addEventListener('click', () => {
-            loadPresetBinary('firmware_4digits.bin', '4-Digit Scoreboard (112 LEDs)');
-        });
-    }
-
     const btnPresetSets = document.getElementById('btnPresetSets');
     if (btnPresetSets) {
         btnPresetSets.addEventListener('click', () => {
-            loadPresetBinary('firmware_sets_and_match.bin', 'Sets & Match Scoreboard (136 LEDs)');
+            loadPresetBinary('firmware_sets_and_match.bin', 'Sets & Match Scoreboard (ESP32-C3)');
         });
     }
 
-    // Auto-load 4-digits firmware on load if served over HTTP
+    const btnPreset4Digits = document.getElementById('btnPreset4Digits');
+    if (btnPreset4Digits) {
+        btnPreset4Digits.addEventListener('click', () => {
+            loadPresetBinary('firmware_4digits.bin', '4-Digit Scoreboard (ESP32-C3)');
+        });
+    }
+
+    // Auto-load Sets & Match firmware on load if served over HTTP
     window.addEventListener('DOMContentLoaded', () => {
         if (window.location.protocol.startsWith('http')) {
-            loadPresetBinary('firmware_4digits.bin', '4-Digit Scoreboard (112 LEDs)');
+            loadPresetBinary('firmware_sets_and_match.bin', 'Sets & Match Scoreboard (ESP32-C3)');
         }
     });
 
@@ -612,19 +658,12 @@
                 log(`ESP32 flash partition ready! (ESP32 MTU payload: ${espReportedMtu || 'default'})`, 'suc');
             }
 
-            // Determine chunk size
-            let maxBrowserSize = dataChar.maxWriteWithoutResponseSize || 0;
-            let chunkSize = 20; // safe baseline for Windows BLE default ATT MTU 23
-
-            if (maxBrowserSize > 0) {
-                chunkSize = maxBrowserSize;
-                log(`Browser reported max write size: ${chunkSize} bytes`, 'pri');
-            } else if (espReportedMtu > 0) {
-                chunkSize = Math.min(espReportedMtu, 480);
-                log(`Using ESP32 reported MTU size: ${chunkSize} bytes`, 'pri');
-            } else {
-                log(`Using safe 20-byte chunks for maximum Windows BLE compatibility.`, 'pri');
+            // Determine safe chunk size to prevent Windows BLE buffer overrun
+            let chunkSize = 128;
+            if (espReportedMtu > 0) {
+                chunkSize = Math.min(espReportedMtu, 240);
             }
+            log(`Optimal transmission chunk size: ${chunkSize} bytes`, 'pri');
 
             progressStatus.textContent = 'Streaming firmware...';
 
@@ -636,41 +675,41 @@
                 const chunkLen = Math.min(chunkSize, totalBytes - offset);
                 const chunk = bytes.subarray(offset, offset + chunkLen);
 
-                try {
-                    if (dataChar.writeValueWithoutResponse) {
-                        await dataChar.writeValueWithoutResponse(chunk);
-                    } else {
-                        await dataChar.writeValue(chunk);
-                    }
-                } catch (writeErr) {
-                    log(`Write error at ${offset} with chunk size ${chunkSize}: ${writeErr.message}`, 'err');
-                    // Downsize chunk to 20 bytes if failed with larger chunk
-                    if (chunkSize > 20) {
-                        chunkSize = 20;
-                        log(`Downsizing chunk size to safe 20 bytes and retrying...`, 'pri');
-                        await new Promise(r => setTimeout(r, 60));
-                        continue; // retry current offset
-                    } else {
-                        // Try fallback to writeWithResponse
-                        log('Retrying with writeWithResponse...', 'pri');
-                        if (dataChar.writeValueWithResponse) {
-                            await dataChar.writeValueWithResponse(chunk);
+                let writeSuccess = false;
+                let attempts = 0;
+                while (!writeSuccess && attempts < 4) {
+                    attempts++;
+                    try {
+                        if (dataChar.writeValueWithoutResponse) {
+                            await dataChar.writeValueWithoutResponse(chunk);
                         } else {
                             await dataChar.writeValue(chunk);
                         }
+                        writeSuccess = true;
+                    } catch (writeErr) {
+                        log(`Write retry ${attempts}/3 at ${offset}: ${writeErr.message}`, 'err');
+                        await new Promise(r => setTimeout(r, 80));
+                        if (attempts >= 2 && chunkSize > 32) {
+                            chunkSize = 32;
+                            log('Downsizing chunk size to 32 bytes for recovery...', 'pri');
+                        }
                     }
+                }
+
+                if (!writeSuccess) {
+                    throw new Error(`GATT transmission failed at offset ${offset} after multiple retries.`);
                 }
 
                 offset += chunkLen;
                 packetCount++;
 
                 // Queue pacing: prevent Windows Bluetooth stack buffer overflow
-                if (packetCount % 12 === 0) {
-                    await new Promise(r => setTimeout(r, 8));
+                if (packetCount % 8 === 0) {
+                    await new Promise(r => setTimeout(r, 12));
                 }
 
-                // Update UI metrics every 2% or every 50 packets
-                if (packetCount % 20 === 0 || offset >= totalBytes) {
+                // Update UI metrics every 2% or every 20 packets
+                if (packetCount % 16 === 0 || offset >= totalBytes) {
                     const pct = Math.floor((offset / totalBytes) * 100);
                     progressBar.style.width = `${pct}%`;
                     progressPercent.textContent = `${pct}%`;
