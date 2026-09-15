@@ -107,15 +107,9 @@ private:
     );
     pDataChar->setCallbacks(new DataCallbacks(*this));
 
-    NimBLEDevice::setMTU(517);
-    pService->start();
-
-    // Advertise FOTA Service
-    NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(BLE_FOTA_SERVICE_UUID);
-    pAdvertising->setScanResponse(true);
-
-    Serial.println("[FOTA] BLE FOTA GATT Service initialized with fail-safe chip protection.");
+    bool started = pService->start();
+    Serial.printf("[FOTA] BLE FOTA GATT Service registered: %s (handle: 0x%04X)\n",
+                  started ? "SUCCESS" : "FAILED", pService->getHandle());
   }
 
   static void rebootTask(void* param) {

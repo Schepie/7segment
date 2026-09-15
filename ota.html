@@ -434,7 +434,10 @@
                     { namePrefix: 'Padel' }
                 ],
                 optionalServices: [
-                    FOTA_SERVICE_UUID
+                    FOTA_SERVICE_UUID,
+                    '4fafc201-1fb5-459e-8fcc-c5c9c331914b', // WATCH_SERVICE_UUID
+                    '00001800-0000-1000-8000-00805f9b34fb',
+                    '00001801-0000-1000-8000-00805f9b34fb'
                 ]
             });
 
@@ -442,9 +445,20 @@
             bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
             const server = await bleDevice.gatt.connect();
-            log('Connected! Discovering FOTA Service...', 'suc');
+            log('Connected! Negotiating connection & discovering services...', 'suc');
 
-            const service = await server.getPrimaryService(FOTA_SERVICE_UUID);
+            // Brief 300ms pause for MTU and GATT table negotiation on Windows
+            await new Promise(r => setTimeout(r, 300));
+
+            let service = null;
+            try {
+                service = await server.getPrimaryService(FOTA_SERVICE_UUID);
+            } catch (firstErr) {
+                log(`Initial service discovery: ${firstErr.message}. Retrying in 500ms...`, 'warn');
+                await new Promise(r => setTimeout(r, 500));
+                service = await server.getPrimaryService(FOTA_SERVICE_UUID);
+            }
+
             controlChar = await service.getCharacteristic(FOTA_CHAR_CONTROL);
             dataChar = await service.getCharacteristic(FOTA_CHAR_DATA);
 
@@ -658,10 +672,10 @@
                 log(`ESP32 flash partition ready! (ESP32 MTU payload: ${espReportedMtu || 'default'})`, 'suc');
             }
 
-            // Determine safe chunk size to prevent Windows BLE buffer overrun
+            // Determine safe chunk size: 128 bytes is the industry-standard maximum for rock-solid Web Bluetooth on Windows
             let chunkSize = 128;
             if (espReportedMtu > 0) {
-                chunkSize = Math.min(espReportedMtu, 240);
+                chunkSize = Math.min(espReportedMtu, 128);
             }
             log(`Optimal transmission chunk size: ${chunkSize} bytes`, 'pri');
 
@@ -688,7 +702,7 @@
                         writeSuccess = true;
                     } catch (writeErr) {
                         log(`Write retry ${attempts}/3 at ${offset}: ${writeErr.message}`, 'err');
-                        await new Promise(r => setTimeout(r, 80));
+                        await new Promise(r => setTimeout(r, 100));
                         if (attempts >= 2 && chunkSize > 32) {
                             chunkSize = 32;
                             log('Downsizing chunk size to 32 bytes for recovery...', 'pri');
@@ -703,10 +717,8 @@
                 offset += chunkLen;
                 packetCount++;
 
-                // Queue pacing: prevent Windows Bluetooth stack buffer overflow
-                if (packetCount % 8 === 0) {
-                    await new Promise(r => setTimeout(r, 12));
-                }
+                // Reliable pacing: 12ms between packets prevents Windows Bluetooth controller queue overflow
+                await new Promise(r => setTimeout(r, 12));
 
                 // Update UI metrics every 2% or every 20 packets
                 if (packetCount % 16 === 0 || offset >= totalBytes) {

@@ -39,6 +39,9 @@
 #include <ThreeWire.h>
 #include <RtcDS1302.h>
 #include <NimBLEDevice.h>
+#include "esp_mac.h"
+extern "C" void ble_svc_gatt_changed(uint16_t start_handle, uint16_t end_handle);
+#include <RtcDS3231.h>
 #include <Preferences.h>
 #include "ble_fota.h"
 #if defined(ESP32)
@@ -1499,14 +1502,20 @@ void parseConfigPayload(const std::string& val) {
 
 class WatchServerCallbacks : public NimBLEServerCallbacks {
   void onConnect(NimBLEServer* pServer) override {
-    Serial.println("[BLE-WATCH] Client connected!");
+    Serial.println("[BLE-WATCH] Client connected! Pausing background remote scan for stable GATT / OTA connection.");
+    NimBLEDevice::getScan()->stop();
+    // Signal Service Changed (0x2A05) to ensure Windows/Chrome/Android never use stale GATT caches
+    ble_svc_gatt_changed(0x0001, 0xffff);
     notifyWatchScore();
     sendConfigNotification();
   }
 
   void onDisconnect(NimBLEServer* pServer) override {
-    Serial.println("[BLE-WATCH] Client disconnected. Restarting advertising...");
+    Serial.println("[BLE-WATCH] Client disconnected. Restarting advertising and resuming remote scan...");
     NimBLEDevice::startAdvertising();
+    if (!connected) {
+      doScan = true;
+    }
   }
 };
 
@@ -1876,7 +1885,10 @@ class AdvertisedDeviceCallbacks : public NimBLEAdvertisedDeviceCallbacks {
     std::string devAddr = advertisedDevice->getAddress().toString();
     int rssi = advertisedDevice->getRSSI();
 
-    Serial.printf("[SCAN] %s | RSSI: %d | '%s'\n", devAddr.c_str(), rssi, devName.c_str());
+    // Only log if remote has a name or matches saved remote to keep USB UART responsive
+    if (!devName.empty() || (savedRemoteMac.length() > 0 && devAddr == savedRemoteMac.c_str())) {
+      Serial.printf("[SCAN] %s | RSSI: %d | '%s'\n", devAddr.c_str(), rssi, devName.c_str());
+    }
 
     bool isMatch = false;
 
@@ -2046,12 +2058,20 @@ void setup() {
   setStatusLed(0, 0, 50); // Blue: Booting & scanning
 
   // 1. Initialize BLE Stack as "Padel Display"
+  // Assign a fresh locally-administered base MAC to completely bypass any stale/corrupted Windows GATT cache
+  uint8_t baseMac[6];
+  if (esp_efuse_mac_get_default(baseMac) == ESP_OK) {
+    baseMac[5] = (baseMac[5] + 4) & 0xFC;
+    esp_base_mac_addr_set(baseMac);
+  }
+
   Serial.println("[BLE] Initializing NimBLE stack as 'Padel Display'...");
   NimBLEDevice::init("Padel Display");
-  NimBLEDevice::setMTU(512); // Negotiate full 512-byte ATT MTU for Web Bluetooth
-  NimBLEDevice::setSecurityAuth(true, true, true);
+  // Open security permissions so Web Bluetooth and Garmin Watch can access GATT services without pairing
+  NimBLEDevice::setSecurityAuth(false, false, false);
   NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
   NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+  Serial.printf("[BLE] Board BLE MAC: %s\n", NimBLEDevice::getAddress().toString().c_str());
   bleInitialized = true;
 
   // 2. Initialize BLE GATT Server (Watch App Service + FOTA OTA Service)
@@ -2066,7 +2086,8 @@ void setup() {
   );
   pWatchCharacteristic->setCallbacks(new WatchCharCallbacks());
   pWatchCharacteristic->setValue(" 0 0,0,0,0,0,0");
-  pWatchService->start();
+  bool wOk = pWatchService->start();
+  Serial.printf("[BLE] Watch Service registered: %s (handle: 0x%04X)\n", wOk ? "SUCCESS" : "FAILED", pWatchService->getHandle());
 
   // Create BLE FOTA Server on same server
   BleFota::init(pServer, "Padel Display");
@@ -2089,13 +2110,29 @@ void setup() {
   );
   pServer->start();
 
+  NimBLEService* sWatch = pServer->getServiceByUUID(WATCH_SERVICE_UUID);
+  NimBLEService* sFota  = pServer->getServiceByUUID(BLE_FOTA_SERVICE_UUID);
+  Serial.printf("[BLE] Server started! Watch Service: %s (0x%04X), FOTA Service: %s (0x%04X)\n",
+                sWatch ? "ONLINE" : "MISSING", sWatch ? sWatch->getHandle() : 0,
+                sFota ? "ONLINE" : "MISSING", sFota ? sFota->getHandle() : 0);
+
+  // 3. Configure BLE Advertising (Primary Adv + Scan Response within 31-byte limit)
   NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
-  pAdvertising->setName("Padel Display");
-  pAdvertising->addServiceUUID(WATCH_SERVICE_UUID);
-  pAdvertising->addServiceUUID(BLE_FOTA_SERVICE_UUID);
+  pAdvertising->stop();
+
+  NimBLEAdvertisementData advData;
+  advData.setFlags(0x06); // General Discoverable + BLE only
+  advData.setName("Padel Display");
+  pAdvertising->setAdvertisementData(advData);
+
+  NimBLEAdvertisementData scanData;
+  scanData.setCompleteServices(NimBLEUUID(BLE_FOTA_SERVICE_UUID));
+  pAdvertising->setScanResponseData(scanData);
+
   pAdvertising->setMinInterval(160); // 100ms
   pAdvertising->setMaxInterval(320); // 200ms
-  pAdvertising->start();
+  bool advOk = pAdvertising->start();
+  Serial.printf("[BLE] Advertising started: %s\n", advOk ? "SUCCESS" : "FAILED");
 
   // Initialize Preferences to remember paired remote
   prefs.begin("padel_remote", false);
@@ -2126,8 +2163,8 @@ void setup() {
 
   NimBLEScan* pScan = NimBLEDevice::getScan();
   pScan->setAdvertisedDeviceCallbacks(new AdvertisedDeviceCallbacks(), false);
-  pScan->setInterval(80); // Fast 50ms scan interval
-  pScan->setWindow(76);   // 95% duty cycle: catches fast button advertising bursts
+  pScan->setInterval(160); // 100ms scan interval
+  pScan->setWindow(100);   // 62.5% duty cycle: balances remote discovery with GATT server responsiveness
   pScan->setActiveScan(true);
   pScan->setDuplicateFilter(false); // CRITICAL: NEVER discard duplicate adverts so missed packets can retry!
 
