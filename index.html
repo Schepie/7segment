@@ -1300,7 +1300,7 @@
             <span class="update-banner-icon">🚀</span>
             <div class="update-banner-info">
                 <div class="update-banner-title">New Update Available!</div>
-                <div class="update-banner-text" id="updateBannerText">Version v1.4.1 is ready.</div>
+                <div class="update-banner-text" id="updateBannerText">A new version is ready to install.</div>
             </div>
         </div>
         <div class="update-banner-actions">
@@ -1811,7 +1811,7 @@
             <div class="scroll-card">
                 <div class="section-header">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.2</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.3</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3203,8 +3203,9 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.2';
+    const CURRENT_APP_VERSION = '1.4.3';
     let swRegistration = null;
+    let isRefreshing = false;
 
     const updateBanner        = document.getElementById('updateBanner');
     const updateBannerText    = document.getElementById('updateBannerText');
@@ -3213,6 +3214,20 @@
     const btnCheckAppUpdate   = document.getElementById('btnCheckAppUpdate');
     const btnClearAppCache    = document.getElementById('btnClearAppCache');
     const appUpdateStatusText = document.getElementById('appUpdateStatusText');
+    const appVersionBadgeEl   = document.getElementById('appVersionBadge');
+
+    if (appVersionBadgeEl) {
+        appVersionBadgeEl.textContent = `v${CURRENT_APP_VERSION}`;
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!isRefreshing) {
+                isRefreshing = true;
+                window.location.reload();
+            }
+        });
+    }
 
     function showUpdatePrompt(newVer, notes) {
         if (updateBannerText) {
@@ -3241,12 +3256,15 @@
                         alert(`New version v${data.version} is available! Tap "Update Now" on the banner to apply.`);
                     }
                     return true;
-                } else if (isManual) {
+                } else {
+                    if (updateBanner) updateBanner.style.display = 'none';
                     if (appUpdateStatusText) {
                         appUpdateStatusText.textContent = `Up to date (v${CURRENT_APP_VERSION})`;
                         appUpdateStatusText.style.color = 'var(--accent-green)';
                     }
-                    alert(`✓ You are already on the latest version (v${CURRENT_APP_VERSION}).`);
+                    if (isManual) {
+                        alert(`✓ You are already on the latest version (v${CURRENT_APP_VERSION}).`);
+                    }
                 }
             }
         } catch (err) {
@@ -3262,6 +3280,7 @@
             btnUpdateNow.textContent = 'Updating...';
         }
         try {
+            if (updateBanner) updateBanner.style.display = 'none';
             if (swRegistration && swRegistration.waiting) {
                 swRegistration.waiting.postMessage({ type: 'SKIP_WAITING', action: 'skipWaiting' });
             }
@@ -3269,12 +3288,18 @@
                 const cacheKeys = await caches.keys();
                 await Promise.all(cacheKeys.map(k => caches.delete(k)));
             }
+            if (swRegistration) {
+                await swRegistration.update().catch(() => {});
+            }
         } catch (e) {
             console.warn('Cache clearing error:', e);
         }
         setTimeout(() => {
-            window.location.reload();
-        }, 300);
+            if (!isRefreshing) {
+                isRefreshing = true;
+                window.location.reload();
+            }
+        }, 400);
     }
 
     if (btnUpdateNow) {
