@@ -181,9 +181,62 @@ bool scoreNeedsUpdate = true;
 // Mode State Machine & Inactivity Idle Timer
 enum DisplayMode {
   MODE_CLOCK,
-  MODE_SCOREBOARD
+  MODE_SCOREBOARD,
+  MODE_COUNTER
 };
 DisplayMode currentMode = MODE_CLOCK; // Panel starts in Clock Mode on boot!
+
+enum CounterSubMode {
+  CTR_SINGLE_UP   = 1, // Mode 1: 0 -> 9999 count up
+  CTR_SINGLE_DOWN = 2, // Mode 2: Target -> 0 countdown
+  CTR_DUAL_UP     = 3, // Mode 3: 2 counters (0-59s on digits, minutes on Games&Sets LEDs)
+  CTR_DUAL_DOWN   = 4  // Mode 4: 2 countdowns (MM:SS, minutes on Games&Sets LEDs)
+};
+
+struct CounterState {
+  CounterSubMode subMode = CTR_SINGLE_UP;
+  bool running1 = false;
+  bool running2 = false;
+
+  // Mode 1: 0 -> 9999
+  int32_t countUpVal = 0;
+
+  // Mode 2: Countdown from target
+  int32_t countdownTarget = 100;
+  int32_t countdownVal = 100;
+
+  // Mode 3: Dual Count-Up (0-59s + Mins)
+  int dualUpSec1 = 0, dualUpMin1 = 0;
+  int dualUpSec2 = 0, dualUpMin2 = 0;
+
+  // Mode 4: Dual Countdown (MM:SS)
+  int dualDownTargetMin1 = 5, dualDownTargetSec1 = 0;
+  int dualDownMin1 = 5, dualDownSec1 = 0;
+  int dualDownTargetMin2 = 3, dualDownTargetSec2 = 0;
+  int dualDownMin2 = 3, dualDownSec2 = 0;
+
+  // Colors
+  uint32_t color1 = 0x00B4FF; // Team 1 Blue (0, 180, 255)
+  uint32_t color2 = 0xFF0000; // Team 2 Red (255, 0, 0)
+  uint32_t colorSingle = 0x00B4FF; // Single counter color (Cyan)
+
+  // Timing
+  uint32_t lastTickMs1 = 0;
+  uint32_t lastTickMs2 = 0;
+
+  // Completion alert animation
+  bool alertActive = false;
+  uint32_t alertStartMs = 0;
+  bool finished1 = false;
+  bool finished2 = false;
+};
+CounterState counterState;
+
+void notifyCounterState();
+void renderCounterDisplay();
+void handleCounterTick();
+bool counterNeedsUpdate = true;
+uint32_t lastCounterRender = 0;
 uint32_t lastActivityTime = 0;
 uint8_t  cfgBrightness    = 180;             // LED brightness (0 - 255)
 uint32_t cfgIdleTimeoutMs = 5 * 60 * 1000;   // Inactivity timeout in ms (0 = Never)
@@ -210,6 +263,7 @@ void notifyWatchScore();
 
 // Remote interaction tracking
 enum RemoteButton { BUTTON_NONE, BUTTON_BIG, BUTTON_SMALL };
+void handleCounterRemoteButton(RemoteButton btn, bool isDoubleClick);
 volatile RemoteButton lastPressedButton = BUTTON_NONE;
 volatile uint32_t lastPressTime = 0;
 volatile bool pendingSingleClick = false;
@@ -1010,6 +1064,331 @@ void renderPadelScoreboard() {
 }
 
 // ==============================================================================
+// Digital Counter & Timer Modes (1..4)
+// ==============================================================================
+
+// Helper to draw minutes on the 24-LED Games & Sets Module
+void drawCounterMinutes(int min1, int min2, uint32_t c1, uint32_t c2) {
+  if (cfgLedLayout != 0) return; // Only layout 0 (136 LEDs) has the middle 24-LED module
+  int base = getGamesSetsBaseLed(); // LED index 56
+
+  // Left column (Counter 1, Team 1 Blue):
+  // Games LEDs: base + 0..8 (Minutes 1..9, bottom to top)
+  // Spacer gap: base + 9 (Always OFF)
+  // Sets LEDs: base + 10 (S1), base + 11 (S2)
+  if (min1 <= 11) {
+    for (int g = 0; g < 9; g++) {
+      pixels.setPixelColor(base + g, (g < min1) ? c1 : 0);
+    }
+    pixels.setPixelColor(base + 9, 0);
+    pixels.setPixelColor(base + 10, (min1 >= 10) ? c1 : 0);
+    pixels.setPixelColor(base + 11, (min1 >= 11) ? c1 : 0);
+  } else {
+    // For minutes > 11:
+    // S1 = 10-19 min, S2 = >= 20 min
+    // Games LEDs 1..9 display the units digit (min1 % 10)
+    int units = min1 % 10;
+    for (int g = 0; g < 9; g++) {
+      pixels.setPixelColor(base + g, (g < units) ? c1 : 0);
+    }
+    pixels.setPixelColor(base + 9, 0);
+    pixels.setPixelColor(base + 10, (min1 >= 10) ? c1 : 0);
+    pixels.setPixelColor(base + 11, (min1 >= 20) ? c1 : 0);
+  }
+
+  // Right column (Counter 2, Team 2 Red):
+  // Sets LEDs: base + 12 (S2), base + 13 (S1)
+  // Spacer gap: base + 14 (Always OFF)
+  // Games LEDs: base + 15..23 (Game 1 at base+23 down to Game 9 at base+15)
+  if (min2 <= 11) {
+    for (int g = 0; g < 9; g++) {
+      pixels.setPixelColor(base + 23 - g, (g < min2) ? c2 : 0);
+    }
+    pixels.setPixelColor(base + 14, 0);
+    pixels.setPixelColor(base + 13, (min2 >= 10) ? c2 : 0);
+    pixels.setPixelColor(base + 12, (min2 >= 11) ? c2 : 0);
+  } else {
+    int units = min2 % 10;
+    for (int g = 0; g < 9; g++) {
+      pixels.setPixelColor(base + 23 - g, (g < units) ? c2 : 0);
+    }
+    pixels.setPixelColor(base + 14, 0);
+    pixels.setPixelColor(base + 13, (min2 >= 10) ? c2 : 0);
+    pixels.setPixelColor(base + 12, (min2 >= 20) ? c2 : 0);
+  }
+}
+
+void renderCounterDisplay() {
+  pixels.clear();
+  uint32_t now = millis();
+
+  if (counterState.subMode == CTR_SINGLE_UP || counterState.subMode == CTR_SINGLE_DOWN) {
+    int val = (counterState.subMode == CTR_SINGLE_UP) ? counterState.countUpVal : counterState.countdownVal;
+    if (val < 0) val = 0;
+    if (val > 9999) val = 9999;
+
+    bool blinkOff = false;
+    if (counterState.subMode == CTR_SINGLE_DOWN && counterState.finished1) {
+      if (now - counterState.alertStartMs < 5000) {
+        blinkOff = ((now / 250) % 2 == 1);
+      }
+    }
+
+    if (!blinkOff) {
+      uint32_t col = counterState.colorSingle;
+      int d0 = (val >= 1000) ? ((val / 1000) % 10) : 10;
+      int d1 = (val >= 100)  ? ((val / 100) % 10)  : ((val >= 1000) ? 0 : 10);
+      int d2 = (val >= 10)   ? ((val / 10) % 10)   : ((val >= 100) ? 0 : 10);
+      int d3 = val % 10;
+
+      drawDigit(0, d0, col);
+      drawDigit(1, d1, col);
+      drawDigit(2, d2, col);
+      drawDigit(3, d3, col);
+    }
+
+    // In single counter mode, ensure middle module LEDs are off
+    if (cfgLedLayout == 0) {
+      int base = getGamesSetsBaseLed();
+      for (int i = 0; i < GAMES_SETS_LEDS; i++) {
+        pixels.setPixelColor(base + i, 0);
+      }
+    } else if (cfgLedLayout == 1) {
+      renderColon(false, 0);
+    }
+
+  } else if (counterState.subMode == CTR_DUAL_UP) {
+    // Mode 3: Dual Count-Up
+    // Left counter (Blue): Digits 0 & 1 show seconds (00..59)
+    int s1 = counterState.dualUpSec1 % 60;
+    drawDigit(0, s1 / 10, counterState.color1);
+    drawDigit(1, s1 % 10, counterState.color1);
+
+    // Right counter (Red): Digits 2 & 3 show seconds (00..59)
+    int s2 = counterState.dualUpSec2 % 60;
+    drawDigit(2, s2 / 10, counterState.color2);
+    drawDigit(3, s2 % 10, counterState.color2);
+
+    // Middle Module: minutes for both counters
+    drawCounterMinutes(counterState.dualUpMin1, counterState.dualUpMin2, counterState.color1, counterState.color2);
+
+  } else if (counterState.subMode == CTR_DUAL_DOWN) {
+    // Mode 4: Dual Countdown
+    bool blink1 = false;
+    if (counterState.finished1 && (now - counterState.alertStartMs < 5000)) {
+      blink1 = ((now / 250) % 2 == 1);
+    }
+    if (!blink1) {
+      int s1 = counterState.dualDownSec1 % 60;
+      drawDigit(0, s1 / 10, counterState.color1);
+      drawDigit(1, s1 % 10, counterState.color1);
+    }
+
+    bool blink2 = false;
+    if (counterState.finished2 && (now - counterState.alertStartMs < 5000)) {
+      blink2 = ((now / 250) % 2 == 1);
+    }
+    if (!blink2) {
+      int s2 = counterState.dualDownSec2 % 60;
+      drawDigit(2, s2 / 10, counterState.color2);
+      drawDigit(3, s2 % 10, counterState.color2);
+    }
+
+    // Middle Module: minutes for both countdowns
+    drawCounterMinutes(counterState.dualDownMin1, counterState.dualDownMin2, counterState.color1, counterState.color2);
+  }
+
+  showPixelsSafe();
+}
+
+void handleCounterTick() {
+  if (currentMode != MODE_COUNTER) return;
+  uint32_t now = millis();
+  bool stateChanged = false;
+
+  // Mode 1: 0 -> 9999
+  if (counterState.subMode == CTR_SINGLE_UP) {
+    if (counterState.running1 && (now - counterState.lastTickMs1 >= 1000)) {
+      counterState.lastTickMs1 = now;
+      if (counterState.countUpVal < 9999) {
+        counterState.countUpVal++;
+      } else {
+        counterState.countUpVal = 0;
+      }
+      stateChanged = true;
+      counterNeedsUpdate = true;
+    }
+  }
+  // Mode 2: Countdown
+  else if (counterState.subMode == CTR_SINGLE_DOWN) {
+    if (counterState.running1 && (now - counterState.lastTickMs1 >= 1000)) {
+      counterState.lastTickMs1 = now;
+      if (counterState.countdownVal > 0) {
+        counterState.countdownVal--;
+        if (counterState.countdownVal == 0) {
+          counterState.running1 = false;
+          counterState.finished1 = true;
+          counterState.alertActive = true;
+          counterState.alertStartMs = now;
+        }
+      } else {
+        counterState.running1 = false;
+        counterState.finished1 = true;
+      }
+      stateChanged = true;
+      counterNeedsUpdate = true;
+    }
+  }
+  // Mode 3: Dual Count-up
+  else if (counterState.subMode == CTR_DUAL_UP) {
+    if (counterState.running1 && (now - counterState.lastTickMs1 >= 1000)) {
+      counterState.lastTickMs1 = now;
+      counterState.dualUpSec1++;
+      if (counterState.dualUpSec1 >= 60) {
+        counterState.dualUpSec1 = 0;
+        counterState.dualUpMin1++;
+      }
+      stateChanged = true;
+      counterNeedsUpdate = true;
+    }
+    if (counterState.running2 && (now - counterState.lastTickMs2 >= 1000)) {
+      counterState.lastTickMs2 = now;
+      counterState.dualUpSec2++;
+      if (counterState.dualUpSec2 >= 60) {
+        counterState.dualUpSec2 = 0;
+        counterState.dualUpMin2++;
+      }
+      stateChanged = true;
+      counterNeedsUpdate = true;
+    }
+  }
+  // Mode 4: Dual Countdown
+  else if (counterState.subMode == CTR_DUAL_DOWN) {
+    if (counterState.running1 && (now - counterState.lastTickMs1 >= 1000)) {
+      counterState.lastTickMs1 = now;
+      if (counterState.dualDownSec1 > 0) {
+        counterState.dualDownSec1--;
+      } else if (counterState.dualDownMin1 > 0) {
+        counterState.dualDownMin1--;
+        counterState.dualDownSec1 = 59;
+      } else {
+        counterState.running1 = false;
+        counterState.finished1 = true;
+        counterState.alertActive = true;
+        counterState.alertStartMs = now;
+      }
+      stateChanged = true;
+      counterNeedsUpdate = true;
+    }
+    if (counterState.running2 && (now - counterState.lastTickMs2 >= 1000)) {
+      counterState.lastTickMs2 = now;
+      if (counterState.dualDownSec2 > 0) {
+        counterState.dualDownSec2--;
+      } else if (counterState.dualDownMin2 > 0) {
+        counterState.dualDownMin2--;
+        counterState.dualDownSec2 = 59;
+      } else {
+        counterState.running2 = false;
+        counterState.finished2 = true;
+        counterState.alertActive = true;
+        counterState.alertStartMs = now;
+      }
+      stateChanged = true;
+      counterNeedsUpdate = true;
+    }
+  }
+
+  // If alert/blink active, keep display updating
+  if ((counterState.finished1 || counterState.finished2) && (now - counterState.alertStartMs < 5000)) {
+    counterNeedsUpdate = true;
+  }
+
+  if (stateChanged) {
+    notifyCounterState();
+  }
+}
+
+void handleCounterRemoteButton(RemoteButton btn, bool isDoubleClick) {
+  lastActivityTime = millis();
+  if (counterState.subMode == CTR_SINGLE_UP || counterState.subMode == CTR_SINGLE_DOWN) {
+    if (isDoubleClick) {
+      // Double click -> Reset
+      if (counterState.subMode == CTR_SINGLE_UP) {
+        counterState.countUpVal = 0;
+        counterState.running1 = false;
+      } else {
+        counterState.countdownVal = counterState.countdownTarget;
+        counterState.running1 = false;
+        counterState.finished1 = false;
+      }
+    } else {
+      if (btn == BUTTON_BIG) {
+        // Toggle Start / Pause
+        counterState.running1 = !counterState.running1;
+        if (counterState.running1) {
+          counterState.lastTickMs1 = millis();
+          counterState.finished1 = false;
+        }
+      } else if (btn == BUTTON_SMALL) {
+        // Step count
+        if (counterState.subMode == CTR_SINGLE_UP) {
+          counterState.countUpVal++;
+          if (counterState.countUpVal > 9999) counterState.countUpVal = 0;
+        } else {
+          if (counterState.countdownVal > 0) counterState.countdownVal--;
+        }
+      }
+    }
+  } else { // Dual modes (CTR_DUAL_UP or CTR_DUAL_DOWN)
+    if (btn == BUTTON_BIG) {
+      if (isDoubleClick) {
+        // Reset Counter 1 (Left / Blue)
+        counterState.running1 = false;
+        if (counterState.subMode == CTR_DUAL_UP) {
+          counterState.dualUpSec1 = 0;
+          counterState.dualUpMin1 = 0;
+        } else {
+          counterState.dualDownMin1 = counterState.dualDownTargetMin1;
+          counterState.dualDownSec1 = counterState.dualDownTargetSec1;
+          counterState.finished1 = false;
+        }
+      } else {
+        // Toggle Start / Pause Counter 1
+        counterState.running1 = !counterState.running1;
+        if (counterState.running1) {
+          counterState.lastTickMs1 = millis();
+          counterState.finished1 = false;
+        }
+      }
+    } else if (btn == BUTTON_SMALL) {
+      if (isDoubleClick) {
+        // Reset Counter 2 (Right / Red)
+        counterState.running2 = false;
+        if (counterState.subMode == CTR_DUAL_UP) {
+          counterState.dualUpSec2 = 0;
+          counterState.dualUpMin2 = 0;
+        } else {
+          counterState.dualDownMin2 = counterState.dualDownTargetMin2;
+          counterState.dualDownSec2 = counterState.dualDownTargetSec2;
+          counterState.finished2 = false;
+        }
+      } else {
+        // Toggle Start / Pause Counter 2
+        counterState.running2 = !counterState.running2;
+        if (counterState.running2) {
+          counterState.lastTickMs2 = millis();
+          counterState.finished2 = false;
+        }
+      }
+    }
+  }
+
+  notifyCounterState();
+  renderCounterDisplay();
+  counterNeedsUpdate = false;
+}
+
+// ==============================================================================
 // Padel & Match Engine Logic & History
 // ==============================================================================
 void saveScoreState() {
@@ -1372,6 +1751,43 @@ void notifyWatchScore() {
   pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
   pWatchCharacteristic->notify();
   Serial.printf("[BLE-WATCH] Notified client: '%s'\n", buf);
+}
+
+void notifyCounterState() {
+  if (pWatchCharacteristic == nullptr) return;
+  char buf[64];
+  int run1 = 0, run2 = 0;
+  int val1 = 0, min1 = 0;
+  int val2 = 0, min2 = 0;
+
+  if (counterState.subMode == CTR_SINGLE_UP) {
+    run1 = counterState.running1 ? 1 : 0;
+    val1 = counterState.countUpVal;
+  } else if (counterState.subMode == CTR_SINGLE_DOWN) {
+    run1 = counterState.running1 ? 1 : 0;
+    val1 = counterState.countdownVal;
+    min1 = counterState.countdownTarget;
+  } else if (counterState.subMode == CTR_DUAL_UP) {
+    run1 = counterState.running1 ? 1 : 0;
+    val1 = counterState.dualUpSec1;
+    min1 = counterState.dualUpMin1;
+    run2 = counterState.running2 ? 1 : 0;
+    val2 = counterState.dualUpSec2;
+    min2 = counterState.dualUpMin2;
+  } else if (counterState.subMode == CTR_DUAL_DOWN) {
+    run1 = counterState.running1 ? 1 : 0;
+    val1 = counterState.dualDownSec1;
+    min1 = counterState.dualDownMin1;
+    run2 = counterState.running2 ? 1 : 0;
+    val2 = counterState.dualDownSec2;
+    min2 = counterState.dualDownMin2;
+  }
+
+  snprintf(buf, sizeof(buf), "CTR,%d,%d,%d,%d,%d,%d,%d",
+           (int)counterState.subMode, run1, val1, min1, run2, val2, min2);
+  pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
+  pWatchCharacteristic->notify();
+  Serial.printf("[BLE-CTR] Notified: '%s'\n", buf);
 }
 
 void setClockTime(int h, int m, int s) {
@@ -1759,15 +2175,128 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
         animateCourtSideSwap(currentCourtSwapped);
         notifyWatchScore();
         scoreNeedsUpdate = true;
+      } else if (cmd.rfind("CTR,", 0) == 0) {
+        currentMode = MODE_COUNTER;
+        std::string act = cmd.substr(4);
+        if (act.rfind("MODE,", 0) == 0) {
+          int m = atoi(act.substr(5).c_str());
+          if (m >= 1 && m <= 4) {
+            counterState.subMode = (CounterSubMode)m;
+            counterState.running1 = false;
+            counterState.running2 = false;
+            counterState.alertActive = false;
+            counterState.finished1 = false;
+            counterState.finished2 = false;
+          }
+        } else if (act == "START" || act == "START,1") {
+          counterState.running1 = true;
+          counterState.lastTickMs1 = millis();
+          counterState.finished1 = false;
+          if (act == "START" && (counterState.subMode == CTR_DUAL_UP || counterState.subMode == CTR_DUAL_DOWN)) {
+            counterState.running2 = true;
+            counterState.lastTickMs2 = millis();
+            counterState.finished2 = false;
+          }
+        } else if (act == "START,2") {
+          counterState.running2 = true;
+          counterState.lastTickMs2 = millis();
+          counterState.finished2 = false;
+        } else if (act == "PAUSE" || act == "PAUSE,1") {
+          counterState.running1 = false;
+          if (act == "PAUSE") counterState.running2 = false;
+        } else if (act == "PAUSE,2") {
+          counterState.running2 = false;
+        } else if (act == "RESET" || act == "RESET,1") {
+          counterState.running1 = false;
+          counterState.finished1 = false;
+          if (counterState.subMode == CTR_SINGLE_UP) {
+            counterState.countUpVal = 0;
+          } else if (counterState.subMode == CTR_SINGLE_DOWN) {
+            counterState.countdownVal = counterState.countdownTarget;
+          } else if (counterState.subMode == CTR_DUAL_UP) {
+            counterState.dualUpSec1 = 0;
+            counterState.dualUpMin1 = 0;
+            if (act == "RESET") {
+              counterState.running2 = false;
+              counterState.finished2 = false;
+              counterState.dualUpSec2 = 0;
+              counterState.dualUpMin2 = 0;
+            }
+          } else if (counterState.subMode == CTR_DUAL_DOWN) {
+            counterState.dualDownMin1 = counterState.dualDownTargetMin1;
+            counterState.dualDownSec1 = counterState.dualDownTargetSec1;
+            if (act == "RESET") {
+              counterState.running2 = false;
+              counterState.finished2 = false;
+              counterState.dualDownMin2 = counterState.dualDownTargetMin2;
+              counterState.dualDownSec2 = counterState.dualDownTargetSec2;
+            }
+          }
+        } else if (act == "RESET,2") {
+          counterState.running2 = false;
+          counterState.finished2 = false;
+          if (counterState.subMode == CTR_DUAL_UP) {
+            counterState.dualUpSec2 = 0;
+            counterState.dualUpMin2 = 0;
+          } else if (counterState.subMode == CTR_DUAL_DOWN) {
+            counterState.dualDownMin2 = counterState.dualDownTargetMin2;
+            counterState.dualDownSec2 = counterState.dualDownTargetSec2;
+          }
+        } else if (act.rfind("SET,", 0) == 0) {
+          int target = atoi(act.substr(4).c_str());
+          if (target >= 0 && target <= 9999) {
+            counterState.countdownTarget = target;
+            counterState.countdownVal = target;
+            counterState.finished1 = false;
+          }
+        } else if (act.rfind("SET2,", 0) == 0) {
+          int m1 = 0, s1 = 0, m2 = 0, s2 = 0;
+          if (sscanf(act.substr(5).c_str(), "%d,%d,%d,%d", &m1, &s1, &m2, &s2) >= 2) {
+            counterState.dualDownTargetMin1 = m1;
+            counterState.dualDownTargetSec1 = s1;
+            counterState.dualDownMin1 = m1;
+            counterState.dualDownSec1 = s1;
+            counterState.dualDownTargetMin2 = m2;
+            counterState.dualDownTargetSec2 = s2;
+            counterState.dualDownMin2 = m2;
+            counterState.dualDownSec2 = s2;
+            counterState.finished1 = false;
+            counterState.finished2 = false;
+          }
+        } else if (act.rfind("STEP,", 0) == 0) {
+          int step = atoi(act.substr(5).c_str());
+          if (counterState.subMode == CTR_SINGLE_UP) {
+            counterState.countUpVal += step;
+            if (counterState.countUpVal < 0) counterState.countUpVal = 0;
+            if (counterState.countUpVal > 9999) counterState.countUpVal = 9999;
+          } else if (counterState.subMode == CTR_SINGLE_DOWN) {
+            counterState.countdownVal += step;
+            if (counterState.countdownVal < 0) counterState.countdownVal = 0;
+            if (counterState.countdownVal > 9999) counterState.countdownVal = 9999;
+          }
+        }
+        notifyCounterState();
+        renderCounterDisplay();
+        return;
+      } else if (cmd == "COUNTER") {
+        currentMode = MODE_COUNTER;
+        notifyCounterState();
+        renderCounterDisplay();
+        return;
       } else if (cmd == "CLOCK") {
         currentMode = MODE_CLOCK;
         renderClock();
       } else if (cmd == "SCORE") {
         currentMode = MODE_SCOREBOARD;
         scoreNeedsUpdate = true;
+        notifyWatchScore();
       } else if (cmd == "REQ" || cmd == "REQ_CFG") {
         sendConfigNotification();
-        notifyWatchScore();
+        if (currentMode == MODE_COUNTER) {
+          notifyCounterState();
+        } else {
+          notifyWatchScore();
+        }
       }
       return;
     }
@@ -2310,6 +2839,19 @@ void loop() {
     }
   }
 
+  // If in Counter Mode, process ticks and render counter display
+  if (currentMode == MODE_COUNTER) {
+    if (counterState.running1 || counterState.running2) {
+      lastActivityTime = millis();
+    }
+    handleCounterTick();
+    if (counterNeedsUpdate || (millis() - lastCounterRender >= 80)) {
+      lastCounterRender = millis();
+      renderCounterDisplay();
+      counterNeedsUpdate = false;
+    }
+  }
+
   if (doConnect && hasTarget) {
     doConnect = false;
     if (!connectToRemote()) {
@@ -2348,29 +2890,33 @@ void loop() {
   if (pendingSingleClick && (millis() - lastPressTime >= 380)) {
     pendingSingleClick = false;
 
-    const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
-    if (lastPressedButton == BUTTON_BIG) {
-      addPadelPoint(1);
-      Serial.printf("[BUTTON] Big Button -> Team 1 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
-                    pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-      bool newSwapped = isCourtSwapped();
-      if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
-        animateCourtSideSwap(newSwapped);
-        currentCourtSwapped = newSwapped;
+    if (currentMode == MODE_COUNTER) {
+      handleCounterRemoteButton(lastPressedButton, false);
+    } else {
+      const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
+      if (lastPressedButton == BUTTON_BIG) {
+        addPadelPoint(1);
+        Serial.printf("[BUTTON] Big Button -> Team 1 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
+                      pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
+        bool newSwapped = isCourtSwapped();
+        if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
+          animateCourtSideSwap(newSwapped);
+          currentCourtSwapped = newSwapped;
+        }
+        lastActivityTime = millis();
+        scoreNeedsUpdate = true;
+      } else if (lastPressedButton == BUTTON_SMALL) {
+        addPadelPoint(2);
+        Serial.printf("[BUTTON] Small Button -> Team 2 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
+                      pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
+        bool newSwapped = isCourtSwapped();
+        if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
+          animateCourtSideSwap(newSwapped);
+          currentCourtSwapped = newSwapped;
+        }
+        lastActivityTime = millis();
+        scoreNeedsUpdate = true;
       }
-      lastActivityTime = millis();
-      scoreNeedsUpdate = true;
-    } else if (lastPressedButton == BUTTON_SMALL) {
-      addPadelPoint(2);
-      Serial.printf("[BUTTON] Small Button -> Team 2 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
-                    pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-      bool newSwapped = isCourtSwapped();
-      if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
-        animateCourtSideSwap(newSwapped);
-        currentCourtSwapped = newSwapped;
-      }
-      lastActivityTime = millis();
-      scoreNeedsUpdate = true;
     }
   }
 
@@ -2378,28 +2924,32 @@ void loop() {
   if (triggerUndoAction) {
     triggerUndoAction = false;
     lastActivityTime = millis();
-    if (undoScoreState()) {
-      const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
-      Serial.printf("[BUTTON] Double Click -> UNDO! Restored: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
-                    pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-      // Quick flash off of the Games/Sets module to confirm undo action
-      drawGamesAndSets(0, 0, 0, 0);
-      showPixelsSafe();
-      delay(80);
-
-      bool newSwapped = isCourtSwapped();
-      if (newSwapped != currentCourtSwapped) {
-        Serial.printf("[PADEL] Court side switch on Undo! (%s -> %s)\n",
-                      currentCourtSwapped ? "Swapped" : "Normal",
-                      newSwapped ? "Swapped" : "Normal");
-        animateCourtSideSwap(newSwapped);
-        currentCourtSwapped = newSwapped;
-      }
-
-      notifyWatchScore();
-      scoreNeedsUpdate = true;
+    if (currentMode == MODE_COUNTER) {
+      handleCounterRemoteButton(lastPressedButton, true);
     } else {
-      Serial.println("[BUTTON] Undo pressed, but no history available");
+      if (undoScoreState()) {
+        const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
+        Serial.printf("[BUTTON] Double Click -> UNDO! Restored: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
+                      pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
+        // Quick flash off of the Games/Sets module to confirm undo action
+        drawGamesAndSets(0, 0, 0, 0);
+        showPixelsSafe();
+        delay(80);
+
+        bool newSwapped = isCourtSwapped();
+        if (newSwapped != currentCourtSwapped) {
+          Serial.printf("[PADEL] Court side switch on Undo! (%s -> %s)\n",
+                        currentCourtSwapped ? "Swapped" : "Normal",
+                        newSwapped ? "Swapped" : "Normal");
+          animateCourtSideSwap(newSwapped);
+          currentCourtSwapped = newSwapped;
+        }
+
+        notifyWatchScore();
+        scoreNeedsUpdate = true;
+      } else {
+        Serial.println("[BUTTON] Undo pressed, but no history available");
+      }
     }
   }
 

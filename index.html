@@ -790,7 +790,7 @@
         /* Bottom Fixed Navigation Bar */
         .bottom-nav {
             display: grid;
-            grid-template-columns: 1.2fr 1fr 1fr 0.8fr;
+            grid-template-columns: repeat(5, 1fr);
             gap: 4px;
             background: var(--bg-card);
             backdrop-filter: blur(16px);
@@ -807,7 +807,7 @@
             align-items: center;
             justify-content: center;
             gap: 2px;
-            padding: 8px 4px;
+            padding: 8px 2px;
             font-size: 10px;
             font-weight: 700;
             border-radius: var(--radius-md);
@@ -832,12 +832,158 @@
             color: var(--team1-blue);
         }
 
+        .bottom-nav-btn.active[data-tab="counter"] {
+            color: #00d2ff;
+        }
+
         .bottom-nav-btn.active[data-tab="display"] {
             color: var(--accent-gold);
         }
 
         .bottom-nav-btn.active[data-tab="rules"] {
             color: var(--accent-green);
+        }
+
+        /* Counter Tab Specific Styles */
+        .counter-mirror-card {
+            background: #04070d;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-xl);
+            padding: 14px 10px;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 16px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .counter-single-digit-box {
+            font-family: var(--font-display);
+            font-size: 52px;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: var(--team1-blue);
+            text-shadow: 0 0 20px var(--team1-glow);
+            line-height: 1;
+            text-align: center;
+        }
+
+        .counter-mode-badge {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+        }
+
+        .counter-ctrl-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-ctr-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px 10px;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 800;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-ctr-action:active {
+            transform: scale(0.96);
+        }
+
+        .btn-ctr-action.start {
+            background: linear-gradient(135deg, #00e676, #00a854);
+            color: #041208;
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.35);
+        }
+
+        .btn-ctr-action.pause {
+            background: linear-gradient(135deg, #ffb300, #ff8c00);
+            color: #1a0f00;
+            box-shadow: 0 4px 16px rgba(255, 179, 0, 0.35);
+        }
+
+        .btn-ctr-action.reset {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+        }
+
+        .counter-step-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .btn-step-chip {
+            padding: 9px 4px;
+            font-size: 13px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-step-chip:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .dual-card-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .dual-timer-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 10px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .dual-timer-box.t1 {
+            border-color: rgba(0, 210, 255, 0.3);
+        }
+
+        .dual-timer-box.t2 {
+            border-color: rgba(255, 51, 102, 0.3);
+        }
+
+        .dual-timer-time {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .dual-timer-time.t1 {
+            color: var(--team1-blue);
+            text-shadow: 0 0 12px var(--team1-glow);
+        }
+
+        .dual-timer-time.t2 {
+            color: var(--team2-red);
+            text-shadow: 0 0 12px var(--team2-glow);
         }
 
         /* Log console */
@@ -958,6 +1104,167 @@
                 </button>
             </div>
 
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB: COUNTER & TIMER MODES                   -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneCounter">
+            <div class="scroll-card">
+
+                <!-- Mode Selection -->
+                <div class="section-header">
+                    <span>⏱️ Counter Mode</span>
+                    <span id="counterModeBadge" style="font-family: 'JetBrains Mono'; color: var(--team1-blue); font-size: 11px;">0 ➔ 9999</span>
+                </div>
+                <div class="pills-row" id="pillsCounterSubmode">
+                    <button type="button" class="pill-select active" data-cmode="1" id="pillCtr1">0 ➔ 9999</button>
+                    <button type="button" class="pill-select" data-cmode="2" id="pillCtr2">Countdown</button>
+                    <button type="button" class="pill-select" data-cmode="3" id="pillCtr3">2x Stopw.</button>
+                    <button type="button" class="pill-select" data-cmode="4" id="pillCtr4">2x Countd.</button>
+                </div>
+
+                <!-- Single Counter Mirror (Modes 1 & 2) -->
+                <div class="counter-mirror-card" id="cardSingleMirror">
+                    <div class="counter-mode-badge" id="lblSingleMode">COUNT UP (0 - 9999)</div>
+                    <div class="counter-single-digit-box" id="dispSingleVal">0000</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Status: <span id="lblSingleStatus" style="color: var(--accent-green); font-weight: 700;">PAUSED</span></div>
+                </div>
+
+                <!-- Dual Counter Mirror (Modes 3 & 4) -->
+                <div class="score-board" id="cardDualMirror" style="display: none;">
+                    <div class="score-grid">
+                        <div class="team-pod">
+                            <span class="team-pod-name t1">Team 1 (Blue)</span>
+                            <div class="lcd-digits t1" id="dispDualT1Sec">00</div>
+                            <div style="font-size: 11px; font-weight: 700; color: var(--team1-blue);" id="dispDualT1Min">0 min</div>
+                        </div>
+
+                        <div class="middle-ladder">
+                            <span class="ladder-label">Minutes</span>
+                            <div class="ladder-score" id="ladderCounterMins">0 - 0</div>
+                            <div style="font-size: 9px; color: var(--text-sub); text-align: center; margin-top: 2px;">G&S LEDs</div>
+                        </div>
+
+                        <div class="team-pod">
+                            <span class="team-pod-name t2">Team 2 (Red)</span>
+                            <div class="lcd-digits t2" id="dispDualT2Sec">00</div>
+                            <div style="font-size: 11px; font-weight: 700; color: var(--team2-red);" id="dispDualT2Min">0 min</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls for Modes 1 & 2 -->
+                <div id="sectionCtrSingleControls" style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="counter-ctrl-grid">
+                        <button type="button" class="btn-ctr-action start" id="btnSingleStartPause">
+                            <span id="icoSingleStart">▶</span> <span id="txtSingleStart">START</span>
+                        </button>
+                        <button type="button" class="btn-ctr-action reset" id="btnSingleReset">
+                            <span>🔄</span> <span>RESET</span>
+                        </button>
+                    </div>
+
+                    <!-- Step adjustments -->
+                    <div class="counter-step-bar">
+                        <button type="button" class="btn-step-chip" id="btnStepM10">-10</button>
+                        <button type="button" class="btn-step-chip" id="btnStepM1">-1</button>
+                        <button type="button" class="btn-step-chip" id="btnStepP1">+1</button>
+                        <button type="button" class="btn-step-chip" id="btnStepP10">+10</button>
+                    </div>
+
+                    <!-- Countdown Target Setters (Mode 2) -->
+                    <div id="sectionMode2Target" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <div class="section-header">
+                            <span>🎯 Countdown Target</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="number" id="inputCountdownTarget" min="1" max="9999" value="100" style="flex: 1; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 8px 10px; border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;">
+                            <button type="button" class="btn-tool-chip" id="btnSetTarget" style="padding: 8px 16px;">Set</button>
+                        </div>
+                        <div class="pills-row">
+                            <button type="button" class="pill-select" data-cval="30">30s</button>
+                            <button type="button" class="pill-select" data-cval="60">60s</button>
+                            <button type="button" class="pill-select active" data-cval="100">100s</button>
+                            <button type="button" class="pill-select" data-cval="300">5 Min</button>
+                            <button type="button" class="pill-select" data-cval="600">10 Min</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls for Modes 3 & 4 -->
+                <div id="sectionCtrDualControls" style="display: none; flex-direction: column; gap: 10px;">
+                    <!-- Global Start/Pause/Reset All -->
+                    <div class="counter-ctrl-grid">
+                        <button type="button" class="btn-ctr-action start" id="btnDualStartBoth">
+                            <span>▶▶</span> <span>START BOTH</span>
+                        </button>
+                        <button type="button" class="btn-ctr-action pause" id="btnDualPauseBoth">
+                            <span>⏸⏸</span> <span>PAUSE BOTH</span>
+                        </button>
+                    </div>
+
+                    <!-- Individual Timer Boxes -->
+                    <div class="dual-card-container">
+                        <!-- Timer 1 (Blue) -->
+                        <div class="dual-timer-box t1">
+                            <span style="font-size: 11px; font-weight: 800; color: var(--team1-blue); text-transform: uppercase;">Team 1 (Blue)</span>
+                            <div class="dual-timer-time t1" id="boxDualT1Time">00:00</div>
+                            <div style="display: flex; gap: 4px; width: 100%;">
+                                <button type="button" class="btn-tool-chip" id="btnT1StartPause" style="flex: 1;">▶ Start</button>
+                                <button type="button" class="btn-tool-chip" id="btnT1Reset" style="flex: 1;">🔄</button>
+                            </div>
+                        </div>
+
+                        <!-- Timer 2 (Red) -->
+                        <div class="dual-timer-box t2">
+                            <span style="font-size: 11px; font-weight: 800; color: var(--team2-red); text-transform: uppercase;">Team 2 (Red)</span>
+                            <div class="dual-timer-time t2" id="boxDualT2Time">00:00</div>
+                            <div style="display: flex; gap: 4px; width: 100%;">
+                                <button type="button" class="btn-tool-chip" id="btnT2StartPause" style="flex: 1;">▶ Start</button>
+                                <button type="button" class="btn-tool-chip" id="btnT2Reset" style="flex: 1;">🔄</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-ctr-action reset" id="btnDualResetBoth">
+                        <span>🔄</span> <span>RESET BOTH</span>
+                    </button>
+
+                    <!-- Mode 4 Target Setup -->
+                    <div id="sectionMode4Target" style="display: none; flex-direction: column; gap: 6px; margin-top: 4px;">
+                        <div class="section-header">
+                            <span>🎯 Target Setup (Min : Sec)</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                            <div style="background: rgba(0,210,255,0.06); padding: 6px; border-radius: var(--radius-md); border: 1px solid rgba(0,210,255,0.2);">
+                                <div style="font-size: 10px; color: var(--team1-blue); font-weight: 700; margin-bottom: 2px;">T1 Time (MM:SS)</div>
+                                <div style="display: flex; gap: 2px; align-items: center;">
+                                    <input type="number" id="inputT1Min" min="0" max="59" value="5" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                    <span>:</span>
+                                    <input type="number" id="inputT1Sec" min="0" max="59" value="0" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,51,102,0.06); padding: 6px; border-radius: var(--radius-md); border: 1px solid rgba(255,51,102,0.2);">
+                                <div style="font-size: 10px; color: var(--team2-red); font-weight: 700; margin-bottom: 2px;">T2 Time (MM:SS)</div>
+                                <div style="display: flex; gap: 2px; align-items: center;">
+                                    <input type="number" id="inputT2Min" min="0" max="59" value="3" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                    <span>:</span>
+                                    <input type="number" id="inputT2Sec" min="0" max="59" value="0" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-tool-chip" id="btnSetDualTarget" style="padding: 8px;">Apply Target Times</button>
+                        <div class="pills-row" id="pillsDualPresets">
+                            <button type="button" class="pill-select" data-dval="3">3 Min</button>
+                            <button type="button" class="pill-select active" data-dval="5">5 Min</button>
+                            <button type="button" class="pill-select" data-dval="10">10 Min</button>
+                            <button type="button" class="pill-select" data-dval="15">15 Min</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
         <!-- ============================================ -->
@@ -1181,6 +1488,10 @@
             <span class="icon">🎾</span>
             <span>Court</span>
         </button>
+        <button type="button" class="bottom-nav-btn" data-tab="counter" id="navCounter">
+            <span class="icon">⏱️</span>
+            <span>Counter</span>
+        </button>
         <button type="button" class="bottom-nav-btn" data-tab="display" id="navDisplay">
             <span class="icon">💡</span>
             <span>Display</span>
@@ -1269,6 +1580,7 @@
     const navButtons = document.querySelectorAll('.bottom-nav-btn');
     const tabPanes   = {
         court: document.getElementById('paneCourt'),
+        counter: document.getElementById('paneCounter'),
         display: document.getElementById('paneDisplay'),
         rules: document.getElementById('paneRules'),
         info: document.getElementById('paneInfo')
@@ -1282,6 +1594,11 @@
                 tabPanes[k].classList.toggle('active', k === target);
             }
         });
+        if (target === 'counter') {
+            sendBleText('CMD,CTR,GET');
+        } else if (target === 'court') {
+            sendBleText('CMD,SCORE');
+        }
     }
 
     navButtons.forEach(btn => {
@@ -1428,6 +1745,8 @@
 
         if (text.startsWith('CFG,')) {
             parseConfigString(text);
+        } else if (text.startsWith('CTR,')) {
+            parseCounterString(text);
         } else {
             parseScoreString(text);
         }
@@ -1937,6 +2256,342 @@
     if (btnSaveDisplay) {
         btnSaveDisplay.addEventListener('click', sendBleConfig);
     }
+
+    // -------------------------------------------------------------
+    // Digital Counter State & Controller
+    // -------------------------------------------------------------
+    let counterState = {
+        subMode: 1,
+        running1: false,
+        running2: false,
+        val1: 0,
+        min1: 0,
+        val2: 0,
+        min2: 0,
+        targetMode2: 100
+    };
+
+    // DOM Elements for Counter
+    const counterModeBadge         = document.getElementById('counterModeBadge');
+    const pillsCounterSubmode      = document.querySelectorAll('#pillsCounterSubmode .pill-select');
+    const cardSingleMirror         = document.getElementById('cardSingleMirror');
+    const cardDualMirror           = document.getElementById('cardDualMirror');
+    const lblSingleMode            = document.getElementById('lblSingleMode');
+    const dispSingleVal            = document.getElementById('dispSingleVal');
+    const lblSingleStatus          = document.getElementById('lblSingleStatus');
+    const dispDualT1Sec            = document.getElementById('dispDualT1Sec');
+    const dispDualT1Min            = document.getElementById('dispDualT1Min');
+    const dispDualT2Sec            = document.getElementById('dispDualT2Sec');
+    const dispDualT2Min            = document.getElementById('dispDualT2Min');
+    const ladderCounterMins        = document.getElementById('ladderCounterMins');
+    const sectionCtrSingleControls = document.getElementById('sectionCtrSingleControls');
+    const sectionCtrDualControls   = document.getElementById('sectionCtrDualControls');
+    const btnSingleStartPause      = document.getElementById('btnSingleStartPause');
+    const icoSingleStart           = document.getElementById('icoSingleStart');
+    const txtSingleStart           = document.getElementById('txtSingleStart');
+    const btnSingleReset           = document.getElementById('btnSingleReset');
+    const sectionMode2Target       = document.getElementById('sectionMode2Target');
+    const inputCountdownTarget     = document.getElementById('inputCountdownTarget');
+    const btnSetTarget             = document.getElementById('btnSetTarget');
+    const btnDualStartBoth         = document.getElementById('btnDualStartBoth');
+    const btnDualPauseBoth         = document.getElementById('btnDualPauseBoth');
+    const btnDualResetBoth         = document.getElementById('btnDualResetBoth');
+    const boxDualT1Time            = document.getElementById('boxDualT1Time');
+    const boxDualT2Time            = document.getElementById('boxDualT2Time');
+    const btnT1StartPause          = document.getElementById('btnT1StartPause');
+    const btnT1Reset               = document.getElementById('btnT1Reset');
+    const btnT2StartPause          = document.getElementById('btnT2StartPause');
+    const btnT2Reset               = document.getElementById('btnT2Reset');
+    const sectionMode4Target       = document.getElementById('sectionMode4Target');
+    const inputT1Min               = document.getElementById('inputT1Min');
+    const inputT1Sec               = document.getElementById('inputT1Sec');
+    const inputT2Min               = document.getElementById('inputT2Min');
+    const inputT2Sec               = document.getElementById('inputT2Sec');
+    const btnSetDualTarget         = document.getElementById('btnSetDualTarget');
+
+    function parseCounterString(text) {
+        // Format: CTR,subMode,run1,val1,min1,run2,val2,min2
+        const parts = text.split(',');
+        if (parts.length < 8) return;
+        counterState.subMode  = parseInt(parts[1]) || 1;
+        counterState.running1 = parseInt(parts[2]) === 1;
+        counterState.val1     = parseInt(parts[3]) || 0;
+        counterState.min1     = parseInt(parts[4]) || 0;
+        counterState.running2 = parseInt(parts[5]) === 1;
+        counterState.val2     = parseInt(parts[6]) || 0;
+        counterState.min2     = parseInt(parts[7]) || 0;
+
+        updateCounterUI();
+    }
+
+    function updateCounterUI() {
+        const mode = counterState.subMode;
+
+        // 1. Update Submode Pills
+        pillsCounterSubmode.forEach(pill => {
+            pill.classList.toggle('active', parseInt(pill.dataset.cmode) === mode);
+        });
+
+        // 2. Update Mode Badge & Views
+        if (mode === 1 || mode === 2) {
+            cardSingleMirror.style.display = 'flex';
+            cardDualMirror.style.display = 'none';
+            sectionCtrSingleControls.style.display = 'flex';
+            sectionCtrDualControls.style.display = 'none';
+
+            dispSingleVal.textContent = String(counterState.val1).padStart(4, '0');
+
+            if (mode === 1) {
+                counterModeBadge.textContent = 'Mode 1: 0 ➔ 9999';
+                lblSingleMode.textContent = 'COUNT UP (0 - 9999)';
+                sectionMode2Target.style.display = 'none';
+            } else {
+                counterModeBadge.textContent = 'Mode 2: Countdown';
+                lblSingleMode.textContent = 'COUNTDOWN';
+                sectionMode2Target.style.display = 'flex';
+            }
+
+            if (counterState.running1) {
+                lblSingleStatus.textContent = 'RUNNING';
+                lblSingleStatus.style.color = 'var(--accent-green)';
+                icoSingleStart.textContent = '⏸';
+                txtSingleStart.textContent = 'PAUSE';
+                btnSingleStartPause.className = 'btn-ctr-action pause';
+            } else {
+                lblSingleStatus.textContent = 'PAUSED';
+                lblSingleStatus.style.color = 'var(--accent-gold)';
+                icoSingleStart.textContent = '▶';
+                txtSingleStart.textContent = 'START';
+                btnSingleStartPause.className = 'btn-ctr-action start';
+            }
+        } else {
+            // Mode 3 or Mode 4 (Dual)
+            cardSingleMirror.style.display = 'none';
+            cardDualMirror.style.display = 'block';
+            sectionCtrSingleControls.style.display = 'none';
+            sectionCtrDualControls.style.display = 'flex';
+
+            dispDualT1Sec.textContent = String(counterState.val1).padStart(2, '0');
+            dispDualT1Min.textContent = `${counterState.min1} min`;
+            dispDualT2Sec.textContent = String(counterState.val2).padStart(2, '0');
+            dispDualT2Min.textContent = `${counterState.min2} min`;
+
+            ladderCounterMins.textContent = `${counterState.min1} - ${counterState.min2}`;
+
+            boxDualT1Time.textContent = `${String(counterState.min1).padStart(2, '0')}:${String(counterState.val1).padStart(2, '0')}`;
+            boxDualT2Time.textContent = `${String(counterState.min2).padStart(2, '0')}:${String(counterState.val2).padStart(2, '0')}`;
+
+            btnT1StartPause.textContent = counterState.running1 ? '⏸ Pause' : '▶ Start';
+            btnT2StartPause.textContent = counterState.running2 ? '⏸ Pause' : '▶ Start';
+
+            if (mode === 3) {
+                counterModeBadge.textContent = 'Mode 3: 2x Stopwatch';
+                sectionMode4Target.style.display = 'none';
+            } else {
+                counterModeBadge.textContent = 'Mode 4: 2x Countdown';
+                sectionMode4Target.style.display = 'flex';
+            }
+        }
+    }
+
+    // Submode pill clicks
+    pillsCounterSubmode.forEach(pill => {
+        pill.addEventListener('click', () => {
+            const m = parseInt(pill.dataset.cmode);
+            if (m >= 1 && m <= 4) {
+                sendBleText(`CMD,CTR,MODE,${m}`);
+                if (!watchChar) {
+                    counterState.subMode = m;
+                    updateCounterUI();
+                }
+            }
+        });
+    });
+
+    // Single Counter Actions (Modes 1 & 2)
+    btnSingleStartPause.addEventListener('click', () => {
+        if (counterState.running1) {
+            sendBleText('CMD,CTR,PAUSE');
+            if (!watchChar) {
+                counterState.running1 = false;
+                updateCounterUI();
+            }
+        } else {
+            sendBleText('CMD,CTR,START');
+            if (!watchChar) {
+                counterState.running1 = true;
+                updateCounterUI();
+            }
+        }
+    });
+
+    btnSingleReset.addEventListener('click', () => {
+        sendBleText('CMD,CTR,RESET');
+        if (!watchChar) {
+            counterState.running1 = false;
+            if (counterState.subMode === 1) counterState.val1 = 0;
+            else if (counterState.subMode === 2) counterState.val1 = counterState.targetMode2;
+            updateCounterUI();
+        }
+    });
+
+    document.getElementById('btnStepP1').addEventListener('click', () => {
+        sendBleText('CMD,CTR,STEP,1');
+        if (!watchChar) {
+            counterState.val1 = Math.min(9999, counterState.val1 + 1);
+            updateCounterUI();
+        }
+    });
+    document.getElementById('btnStepM1').addEventListener('click', () => {
+        sendBleText('CMD,CTR,STEP,-1');
+        if (!watchChar) {
+            counterState.val1 = Math.max(0, counterState.val1 - 1);
+            updateCounterUI();
+        }
+    });
+    document.getElementById('btnStepP10').addEventListener('click', () => {
+        sendBleText('CMD,CTR,STEP,10');
+        if (!watchChar) {
+            counterState.val1 = Math.min(9999, counterState.val1 + 10);
+            updateCounterUI();
+        }
+    });
+    document.getElementById('btnStepM10').addEventListener('click', () => {
+        sendBleText('CMD,CTR,STEP,-10');
+        if (!watchChar) {
+            counterState.val1 = Math.max(0, counterState.val1 - 10);
+            updateCounterUI();
+        }
+    });
+
+    // Mode 2 Target Setter
+    btnSetTarget.addEventListener('click', () => {
+        const target = parseInt(inputCountdownTarget.value) || 100;
+        sendBleText(`CMD,CTR,SET,${target}`);
+        if (!watchChar) {
+            counterState.targetMode2 = target;
+            counterState.val1 = target;
+            updateCounterUI();
+        }
+    });
+
+    document.querySelectorAll('#sectionMode2Target .pill-select').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#sectionMode2Target .pill-select').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const val = parseInt(pill.dataset.cval);
+            if (!isNaN(val)) {
+                inputCountdownTarget.value = val;
+                sendBleText(`CMD,CTR,SET,${val}`);
+                if (!watchChar) {
+                    counterState.targetMode2 = val;
+                    counterState.val1 = val;
+                    updateCounterUI();
+                }
+            }
+        });
+    });
+
+    // Dual Counter Actions (Modes 3 & 4)
+    btnDualStartBoth.addEventListener('click', () => {
+        sendBleText('CMD,CTR,START');
+        if (!watchChar) {
+            counterState.running1 = true;
+            counterState.running2 = true;
+            updateCounterUI();
+        }
+    });
+    btnDualPauseBoth.addEventListener('click', () => {
+        sendBleText('CMD,CTR,PAUSE');
+        if (!watchChar) {
+            counterState.running1 = false;
+            counterState.running2 = false;
+            updateCounterUI();
+        }
+    });
+    btnDualResetBoth.addEventListener('click', () => {
+        sendBleText('CMD,CTR,RESET');
+        if (!watchChar) {
+            counterState.running1 = false;
+            counterState.running2 = false;
+            if (counterState.subMode === 3) {
+                counterState.val1 = 0; counterState.min1 = 0;
+                counterState.val2 = 0; counterState.min2 = 0;
+            } else {
+                counterState.min1 = parseInt(inputT1Min.value) || 5;
+                counterState.val1 = parseInt(inputT1Sec.value) || 0;
+                counterState.min2 = parseInt(inputT2Min.value) || 3;
+                counterState.val2 = parseInt(inputT2Sec.value) || 0;
+            }
+            updateCounterUI();
+        }
+    });
+
+    btnT1StartPause.addEventListener('click', () => {
+        sendBleText(counterState.running1 ? 'CMD,CTR,PAUSE,1' : 'CMD,CTR,START,1');
+        if (!watchChar) {
+            counterState.running1 = !counterState.running1;
+            updateCounterUI();
+        }
+    });
+    btnT1Reset.addEventListener('click', () => {
+        sendBleText('CMD,CTR,RESET,1');
+        if (!watchChar) {
+            counterState.running1 = false;
+            if (counterState.subMode === 3) { counterState.val1 = 0; counterState.min1 = 0; }
+            else { counterState.min1 = parseInt(inputT1Min.value) || 5; counterState.val1 = parseInt(inputT1Sec.value) || 0; }
+            updateCounterUI();
+        }
+    });
+
+    btnT2StartPause.addEventListener('click', () => {
+        sendBleText(counterState.running2 ? 'CMD,CTR,PAUSE,2' : 'CMD,CTR,START,2');
+        if (!watchChar) {
+            counterState.running2 = !counterState.running2;
+            updateCounterUI();
+        }
+    });
+    btnT2Reset.addEventListener('click', () => {
+        sendBleText('CMD,CTR,RESET,2');
+        if (!watchChar) {
+            counterState.running2 = false;
+            if (counterState.subMode === 3) { counterState.val2 = 0; counterState.min2 = 0; }
+            else { counterState.min2 = parseInt(inputT2Min.value) || 3; counterState.val2 = parseInt(inputT2Sec.value) || 0; }
+            updateCounterUI();
+        }
+    });
+
+    // Mode 4 Target Setter
+    btnSetDualTarget.addEventListener('click', () => {
+        const m1 = parseInt(inputT1Min.value) || 0;
+        const s1 = parseInt(inputT1Sec.value) || 0;
+        const m2 = parseInt(inputT2Min.value) || 0;
+        const s2 = parseInt(inputT2Sec.value) || 0;
+        sendBleText(`CMD,CTR,SET2,${m1},${s1},${m2},${s2}`);
+        if (!watchChar) {
+            counterState.min1 = m1; counterState.val1 = s1;
+            counterState.min2 = m2; counterState.val2 = s2;
+            updateCounterUI();
+        }
+    });
+
+    document.querySelectorAll('#pillsDualPresets .pill-select').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('#pillsDualPresets .pill-select').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            const mins = parseInt(pill.dataset.dval) || 5;
+            inputT1Min.value = mins;
+            inputT1Sec.value = 0;
+            inputT2Min.value = mins;
+            inputT2Sec.value = 0;
+            sendBleText(`CMD,CTR,SET2,${mins},0,${mins},0`);
+            if (!watchChar) {
+                counterState.min1 = mins; counterState.val1 = 0;
+                counterState.min2 = mins; counterState.val2 = 0;
+                updateCounterUI();
+            }
+        });
+    });
 
     // -------------------------------------------------------------
     // RTC Clock Synchronization
