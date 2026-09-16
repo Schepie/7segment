@@ -2421,14 +2421,32 @@
         }
     };
 
-    function syncRulesPresetBadge() {
+    let activeRulePresetKey = null;
+
+    function syncRulesPresetBadge(preferredKey = null) {
         let matchedKey = null;
-        for (const [key, p] of Object.entries(RULE_PRESETS)) {
+
+        // 1. If preferredKey or activeRulePresetKey is set, check if that specific preset matches appConfig
+        const candidateKey = preferredKey || activeRulePresetKey;
+        if (candidateKey && RULE_PRESETS[candidateKey]) {
+            const p = RULE_PRESETS[candidateKey];
             if (p.gp === appConfig.gp && p.sets === appConfig.sets && p.games === appConfig.games && p.tb === appConfig.tb) {
-                matchedKey = key;
-                break;
+                matchedKey = candidateKey;
             }
         }
+
+        // 2. Fallback: Search all presets to see if current appConfig matches any preset
+        if (!matchedKey) {
+            for (const [key, p] of Object.entries(RULE_PRESETS)) {
+                if (p.gp === appConfig.gp && p.sets === appConfig.sets && p.games === appConfig.games && p.tb === appConfig.tb) {
+                    matchedKey = key;
+                    break;
+                }
+            }
+        }
+
+        activeRulePresetKey = matchedKey;
+
         document.querySelectorAll('.btn-rule-shortcut').forEach(b => {
             b.classList.toggle('active', b.dataset.preset === matchedKey);
         });
@@ -2448,6 +2466,8 @@
         const preset = RULE_PRESETS[presetKey];
         if (!preset) return;
 
+        activeRulePresetKey = presetKey;
+
         appConfig.gp    = preset.gp;
         appConfig.sets  = preset.sets;
         appConfig.games = preset.games;
@@ -2458,7 +2478,7 @@
         updatePillGroupUI('toggleGames', preset.games);
         updatePillGroupUI('toggleTb', preset.tb);
 
-        syncRulesPresetBadge();
+        syncRulesPresetBadge(presetKey);
         log(`Rules preset applied: ${preset.name}`, 'suc');
     }
 

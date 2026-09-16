@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
-  "buildTime": "2026-09-16T17:55:00Z",
-  "notes": "Added QR codes for app installation and official Padel game rules to Info menu."
+  "version": "1.4.3",
+  "buildTime": "2026-09-16T19:30:00Z",
+  "notes": "Fixed selection highlight for all 4 Padel rules shortcuts in the Rules menu."
 }
