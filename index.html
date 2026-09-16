@@ -1956,6 +1956,7 @@
         inTb: false,
         currentMode: 'SCORE'
     };
+    window.boardState = boardState;
 
     // UI Elements
     const btnBleConnect    = document.getElementById('btnBleConnect');
@@ -2278,6 +2279,8 @@
             tbBadge.style.display = 'none';
         }
     }
+    window.parseScoreString = parseScoreString;
+    window.renderMirrorUI = renderMirrorUI;
 
     // -------------------------------------------------------------
     // Outbound BLE Dispatcher with Sequential Queue & Fallbacks
