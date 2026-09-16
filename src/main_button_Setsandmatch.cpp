@@ -677,9 +677,9 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
       drawDigit(2, 15, colorWhite); // 'b'
       drawDigit(3, 10, colorWhite); // Blank
     } else {
-      // 'St' in white: Digit 0='S', Digit 1='t', Digit 2=Blank, Digit 3=Blank
-      drawDigit(0, 13, colorWhite); // 'S'
-      drawDigit(1, 14, colorWhite); // 't'
+      // 'tb' in white: Digit 0='t', Digit 1='b', Digit 2=Blank, Digit 3=Blank
+      drawDigit(0, 14, colorWhite); // 't'
+      drawDigit(1, 15, colorWhite); // 'b'
       drawDigit(2, 10, colorWhite); // Blank
       drawDigit(3, 10, colorWhite); // Blank
     }

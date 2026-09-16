@@ -1,5 +1,5 @@
 {
-  "version": "1.4.4",
-  "buildTime": "2026-09-16T20:20:00Z",
-  "notes": "Added white St and Stb tiebreak indicators to scoreboard, clarified 2 Sets + Super TB rules."
+  "version": "1.4.5",
+  "buildTime": "2026-09-16T20:40:00Z",
+  "notes": "Updated tiebreak indicators to tb (Tiebreak) and Stb (Super Tiebreak) in white."
 }
