@@ -1027,6 +1027,34 @@ void splashText(const char* text, uint32_t color) {
   showPixelsSafe();
 }
 
+// Like splashText but keeps the Games & Sets LEDs showing the actual match sets won.
+// Used during MATCH_PHASE_SPEL so the won sets are visible while SPEL is displayed.
+void splashTextWithSets(const char* text, uint32_t color) {
+  pixels.clear();
+  uint32_t cBlue = pixels.Color(0, 110, 160);
+  uint32_t cRed  = pixels.Color(255, 0, 0);
+  drawGamesAndSets(0, team1Sets, 0, team2Sets, false, 1.0f, cBlue, cRed);
+  int len = strlen(text);
+
+  uint8_t r = (uint8_t)((color >> 16) & 0xFF);
+  uint8_t g = (uint8_t)((color >> 8)  & 0xFF);
+  uint8_t b = (uint8_t)(color & 0xFF);
+  int sum = r + g + b;
+  if (sum > 270) {
+    float scale = 270.0f / (float)sum;
+    r = (uint8_t)(r * scale);
+    g = (uint8_t)(g * scale);
+    b = (uint8_t)(b * scale);
+    color = pixels.Color(r, g, b);
+  }
+
+  for (int i = 0; i < NUM_DIGITS; i++) {
+    char c = (i < len) ? text[i] : ' ';
+    drawChar(i, c, color);
+  }
+  showPixelsSafe();
+}
+
 void renderMatchSetScores() {
   pixels.clear();
   uint32_t cBlue = pixels.Color(0, 110, 160); // Current-balanced Cyan (sum=270, matches Red 255)
@@ -1077,7 +1105,7 @@ void renderPadelScoreboard() {
   if (matchWon) {
     if (matchWonPhase == MATCH_PHASE_SPEL) {
       uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
-      splashText("SPEL", winColor);
+      splashTextWithSets("SPEL", winColor); // Show SPEL on digits + sets on LEDs
       return;
     } else if (matchWonPhase == MATCH_PHASE_SET_SCORES) {
       renderMatchSetScores();
@@ -1498,11 +1526,20 @@ bool undoScoreState() {
 }
 
 void addPadelPoint(int team) {
-  // If match was already completed, a button click starts a brand-new match:
+  // If match was already completed:
   if (matchWon) {
     if (millis() - matchWonStartTime < 3000) {
       return; // Ignore accidental button presses within 3s of match completion
     }
+    if (matchWonPhase == MATCH_PHASE_SPEL) {
+      // First intentional press: skip directly to final score display
+      Serial.println("[PADEL] Button press during SPEL -> skipping to SET_SCORES!");
+      matchWonPhase = MATCH_PHASE_SET_SCORES;
+      renderMatchSetScores();
+      scoreNeedsUpdate = false;
+      return;
+    }
+    // Second press (in SET_SCORES phase): reset for a new match
     matchWon = false;
     matchWonPhase = MATCH_PHASE_NONE;
     team1Sets = 0;
@@ -3095,16 +3132,16 @@ void loop() {
     Serial.printf("[PADEL] Final Set 1: %d-%d | Set 2: %d-%d (Total Sets: %d)\n",
                   set1Games1, set1Games2, set2Games1, set2Games2, totalSetsPlayed);
 
-    // Initial celebratory greeting (3 pulses of SPEL)
+    // Initial celebratory greeting (3 pulses of SPEL + sets visible on LED module)
     for (int cycle = 0; cycle < 3; cycle++) {
-      splashText("SPEL", champColor);
+      splashTextWithSets("SPEL", champColor);
       delay(220);
       pixels.clear();
       showPixelsSafe();
       delay(120);
     }
-    // Hold SPEL solid on screen
-    splashText("SPEL", champColor);
+    // Hold SPEL solid on screen (with sets still visible)
+    splashTextWithSets("SPEL", champColor);
 
     notifyWatchScore();
     scoreNeedsUpdate = false;
