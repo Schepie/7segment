@@ -1,5 +1,5 @@
 {
-  "version": "1.4.6",
-  "buildTime": "2026-09-16T22:42:00Z",
-  "notes": "Tiebreak indicators (tb/Stb) now shown only once at the start of a tiebreak."
+  "version": "1.4.7",
+  "buildTime": "2026-09-16T23:00:00Z",
+  "notes": "Combined dark/light theme switcher in Info tab."
 }

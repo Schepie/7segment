@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Padel Scoreboard - Mobile Controller</title>
+    <title>Padel Scoreboard - Light Theme</title>
     <meta name="description" content="Mobile-first Web Bluetooth companion app for ESP32 7-segment Padel Scoreboard. Control live score, brightness, sleep timeout, RTC time sync, and match rules directly from your phone.">
-    <meta name="theme-color" content="#080c14">
+    <meta name="theme-color" content="#f2f2f7">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Padel Score">
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -16,32 +16,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-    <!-- Anti-flash: apply saved theme before first paint -->
-    <script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('appTheme')||'dark');}catch(e){}</script>
     <style>
-        /* ── Anti-flash: applied by inline script before first paint ── */
         :root {
-            --bg-base: #080c14;
-            --bg-surface: #101726;
-            --bg-card: rgba(16, 23, 38, 0.9);
-            --bg-card-border: rgba(255, 255, 255, 0.08);
+            /* Apple-style Light Theme */
+            --bg-base: #f2f2f7;
+            --bg-surface: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-card-border: rgba(0, 0, 0, 0.10);
 
-            --team1-blue: #00d2ff;
-            --team1-glow: rgba(0, 210, 255, 0.35);
-            --team2-red: #ff3366;
-            --team2-glow: rgba(255, 51, 102, 0.35);
-            --accent-green: #00e676;
-            --accent-green-glow: rgba(0, 230, 118, 0.3);
-            --accent-gold: #ffb300;
-            --accent-gold-glow: rgba(255, 179, 0, 0.3);
+            --team1-blue: #007aff;
+            --team1-glow: rgba(0, 122, 255, 0.25);
+            --team2-red: #ff3b30;
+            --team2-glow: rgba(255, 59, 48, 0.25);
+            --accent-green: #34c759;
+            --accent-green-glow: rgba(52, 199, 89, 0.3);
+            --accent-gold: #ff9500;
+            --accent-gold-glow: rgba(255, 149, 0, 0.3);
 
-            --clock-color: #00ff00;
-            --clock-glow: rgba(0, 255, 0, 0.4);
-            --hue-pure: #00ff00;
+            --clock-color: #34c759;
+            --clock-glow: rgba(52, 199, 89, 0.35);
+            --hue-pure: #34c759;
 
-            --text-main: #f0f4f8;
-            --text-muted: #8899aa;
-            --text-sub: #556677;
+            --text-main: #1c1c1e;
+            --text-muted: #6c6c70;
+            --text-sub: #aeaeb2;
 
             --radius-xl: 18px;
             --radius-lg: 12px;
@@ -51,164 +49,6 @@
             --font-display: 'Orbitron', 'JetBrains Mono', monospace;
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
-        }
-
-        /* ============================================================ */
-        /* LIGHT THEME OVERRIDES  (Apple-style)                         */
-        /* ============================================================ */
-        [data-theme="light"] {
-            --bg-base: #f2f2f7;
-            --bg-surface: #ffffff;
-            --bg-card: rgba(255, 255, 255, 0.88);
-            --bg-card-border: rgba(0, 0, 0, 0.10);
-            --team1-blue: #007aff;
-            --team1-glow: rgba(0, 122, 255, 0.25);
-            --team2-red: #ff3b30;
-            --team2-glow: rgba(255, 59, 48, 0.25);
-            --accent-green: #34c759;
-            --accent-green-glow: rgba(52, 199, 89, 0.3);
-            --accent-gold: #ff9500;
-            --accent-gold-glow: rgba(255, 149, 0, 0.3);
-            --clock-color: #34c759;
-            --clock-glow: rgba(52, 199, 89, 0.35);
-            --hue-pure: #34c759;
-            --text-main: #1c1c1e;
-            --text-muted: #6c6c70;
-            --text-sub: #aeaeb2;
-        }
-
-        /* Body background */
-        [data-theme="light"] body {
-            background: radial-gradient(circle at 50% 0%, #e8eaf0 0%, #f2f2f7 85%);
-        }
-
-        /* Score board & LCD digits */
-        [data-theme="light"] .score-board {
-            background: #f0f0f5 !important;
-            border-color: rgba(0, 0, 0, 0.08) !important;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.07) !important;
-        }
-        [data-theme="light"] .lcd-digits {
-            background: #e4e4ea !important;
-            border-color: rgba(0, 0, 0, 0.06) !important;
-        }
-        [data-theme="light"] .middle-ladder {
-            border-left-color: rgba(0, 0, 0, 0.10) !important;
-            border-right-color: rgba(0, 0, 0, 0.10) !important;
-        }
-        [data-theme="light"] .ladder-score {
-            color: #1c1c1e !important;
-            background: rgba(0, 0, 0, 0.07) !important;
-        }
-        [data-theme="light"] .court-banner {
-            border-top-color: rgba(0, 0, 0, 0.06) !important;
-        }
-
-        /* Buttons */
-        [data-theme="light"] .btn-giant-score {
-            box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important;
-        }
-        [data-theme="light"] .btn-tool-chip:active {
-            background: rgba(0,0,0,0.07) !important;
-        }
-
-        /* Pills */
-        [data-theme="light"] .pill-select {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.09) !important;
-        }
-        [data-theme="light"] .pill-select.active {
-            background: rgba(0, 122, 255, 0.12) !important;
-            border-color: rgba(0, 122, 255, 0.45) !important;
-        }
-
-        /* Cards / wrappers */
-        [data-theme="light"] .slider-wrap,
-        [data-theme="light"] .clock-card {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.08) !important;
-        }
-        [data-theme="light"] input[type="range"] {
-            background: rgba(0, 0, 0, 0.08) !important;
-        }
-        [data-theme="light"] .color-chip {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.08) !important;
-        }
-        [data-theme="light"] .color-chip.active .color-chip-name { color: #1c1c1e !important; }
-        [data-theme="light"] .custom-color-card {
-            background: rgba(0, 0, 0, 0.03) !important;
-            border-color: rgba(0, 0, 0, 0.08) !important;
-        }
-        [data-theme="light"] .hex-input-wrap {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.12) !important;
-        }
-        [data-theme="light"] .preview-swatch-btn {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.12) !important;
-        }
-
-        /* Rules shortcuts */
-        [data-theme="light"] .btn-rule-shortcut {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.10) !important;
-        }
-        [data-theme="light"] .btn-rule-shortcut.active {
-            background: rgba(52, 199, 89, 0.10) !important;
-        }
-        [data-theme="light"] .shortcut-pill {
-            background: rgba(0, 0, 0, 0.07) !important;
-        }
-
-        /* Counter display */
-        [data-theme="light"] .counter-mirror-card {
-            background: #f0f0f5 !important;
-            border-color: rgba(0, 0, 0, 0.08) !important;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.07) !important;
-        }
-        [data-theme="light"] .dual-timer-box {
-            background: rgba(0, 0, 0, 0.04) !important;
-        }
-        [data-theme="light"] .counter-val-btn {
-            background: rgba(0, 0, 0, 0.04) !important;
-            border-color: rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* QR Cards */
-        [data-theme="light"] .qr-card {
-            background: #ffffff !important;
-            border-color: rgba(0, 0, 0, 0.10) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
-        }
-        [data-theme="light"] .qr-image-wrapper {
-            box-shadow: 0 0 10px rgba(0,0,0,0.08) !important;
-        }
-        [data-theme="light"] .btn-qr-link {
-            background: rgba(0, 122, 255, 0.08) !important;
-            border-color: rgba(0, 122, 255, 0.25) !important;
-        }
-
-        /* Inline-styled elements overridden by ID */
-        [data-theme="light"] #btnSwitchToClockMode,
-        [data-theme="light"] #btnSwitchToScoreMode {
-            border-color: rgba(0, 0, 0, 0.15) !important;
-            color: #1c1c1e !important;
-        }
-        [data-theme="light"] #paneInfo .scroll-card > div[style*="rgba(0,0,0,0.3)"],
-        [data-theme="light"] div[style*="rgba(0,0,0,0.3)"] {
-            background: rgba(0,0,0,0.04) !important;
-        }
-        /* Serial log / inputs */
-        [data-theme="light"] #serialLog,
-        [data-theme="light"] #inputCountdownTarget,
-        [data-theme="light"] #inputT1Min,
-        [data-theme="light"] #inputT1Sec,
-        [data-theme="light"] #inputT2Min,
-        [data-theme="light"] #inputT2Sec {
-            background: #f5f5f7 !important;
-            color: #1c1c1e !important;
-            border-color: rgba(0,0,0,0.10) !important;
         }
 
         * {
@@ -221,7 +61,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: radial-gradient(circle at 50% 0%, #16243c 0%, var(--bg-base) 85%);
+            background: radial-gradient(circle at 50% 0%, #e8eaf0 0%, var(--bg-base) 85%);
             color: var(--text-main);
             height: 100vh;
             height: 100dvh;
@@ -348,11 +188,11 @@
 
         /* Digital Score Display */
         .score-board {
-            background: #04070d;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #f0f0f5;
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-xl);
             padding: 10px 8px;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -391,8 +231,8 @@
             line-height: 1;
             padding: 6px 10px;
             border-radius: var(--radius-md);
-            background: #020408;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: #e4e4ea;
+            border: 1px solid rgba(0, 0, 0, 0.06);
             min-width: 78px;
             text-align: center;
         }
@@ -413,8 +253,8 @@
             align-items: center;
             gap: 3px;
             padding: 0 8px;
-            border-left: 1px dashed rgba(255, 255, 255, 0.1);
-            border-right: 1px dashed rgba(255, 255, 255, 0.1);
+            border-left: 1px dashed rgba(0, 0, 0, 0.1);
+            border-right: 1px dashed rgba(0, 0, 0, 0.1);
         }
 
         .ladder-label {
@@ -428,8 +268,8 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
             font-weight: 800;
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
+            color: #1c1c1e;
+            background: rgba(0, 0, 0, 0.07);
             padding: 2px 6px;
             border-radius: 4px;
         }
@@ -442,7 +282,7 @@
             font-weight: 600;
             color: var(--text-muted);
             padding: 2px 6px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
         }
 
         .badge-tb-indicator {
@@ -478,10 +318,10 @@
             justify-content: center;
             gap: 4px;
             border-radius: var(--radius-xl);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.12);
             cursor: pointer;
             transition: transform 0.1s ease, filter 0.15s ease;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
             text-shadow: 0 2px 10px rgba(0,0,0,0.6);
         }
 
@@ -550,7 +390,7 @@
 
         .btn-tool-chip:active {
             transform: scale(0.95);
-            background: rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.07);
         }
 
         .btn-tool-chip:disabled {
@@ -599,8 +439,8 @@
             font-size: 12px;
             font-weight: 700;
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.09);
             color: var(--text-muted);
             cursor: pointer;
             text-align: center;
@@ -612,9 +452,9 @@
         }
 
         .pill-select.active {
-            background: rgba(0, 210, 255, 0.18);
+            background: rgba(0, 122, 255, 0.12);
             color: var(--team1-blue);
-            border-color: rgba(0, 210, 255, 0.5);
+            border-color: rgba(0, 122, 255, 0.45);
             box-shadow: 0 0 10px var(--team1-glow);
         }
 
@@ -630,8 +470,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-lg);
             padding: 12px;
         }
@@ -641,7 +481,7 @@
             width: 100%;
             height: 8px;
             border-radius: 99px;
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.08);
             outline: none;
             cursor: pointer;
         }
@@ -661,8 +501,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-lg);
             padding: 12px;
         }
@@ -703,8 +543,8 @@
             gap: 5px;
             padding: 9px 4px;
             border-radius: var(--radius-md);
-            background: rgba(0, 0, 0, 0.28);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             cursor: pointer;
             transition: all 0.18s ease;
         }
@@ -735,7 +575,7 @@
         }
 
         .color-chip.active .color-chip-name {
-            color: #fff;
+            color: #1c1c1e;
         }
 
         /* Custom In-App Color Spectrum Card */
@@ -743,8 +583,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: rgba(0, 0, 0, 0.32);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-lg);
             padding: 12px;
             margin-top: 4px;
@@ -773,8 +613,8 @@
         .hex-input-wrap {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.12);
             border-radius: var(--radius-md);
             padding: 4px 6px;
             gap: 4px;
@@ -816,8 +656,8 @@
             width: 28px;
             height: 28px;
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.12);
             cursor: pointer;
             overflow: hidden;
         }
@@ -951,8 +791,8 @@
         }
 
         .btn-rule-shortcut {
-            background: rgba(16, 23, 38, 0.7);
-            border: 1px solid var(--bg-card-border);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.10);
             border-radius: var(--radius-md);
             padding: 8px 10px;
             display: flex;
@@ -968,7 +808,7 @@
         }
 
         .btn-rule-shortcut.active {
-            background: rgba(0, 230, 118, 0.12);
+            background: rgba(52, 199, 89, 0.10);
             border-color: var(--accent-green);
             box-shadow: 0 0 12px var(--accent-green-glow);
         }
@@ -995,7 +835,7 @@
             font-weight: 800;
             padding: 2px 6px;
             border-radius: 4px;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.07);
             color: var(--text-muted);
             text-transform: uppercase;
         }
@@ -1210,11 +1050,11 @@
 
         /* Counter Tab Specific Styles */
         .counter-mirror-card {
-            background: #04070d;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #f0f0f5;
+            border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--radius-xl);
             padding: 14px 10px;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9), 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1280,7 +1120,7 @@
 
         .btn-ctr-action.reset {
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(0, 0, 0, 0.12);
             color: var(--text-main);
         }
 
@@ -1296,8 +1136,8 @@
             font-weight: 800;
             font-family: 'JetBrains Mono', monospace;
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.08);
             color: var(--text-main);
             cursor: pointer;
             text-align: center;
@@ -1305,7 +1145,7 @@
 
         .btn-step-chip:active {
             transform: scale(0.95);
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.07);
         }
 
         .dual-card-container {
@@ -1315,7 +1155,7 @@
         }
 
         .dual-timer-box {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.04);
             border: 1px solid var(--bg-card-border);
             border-radius: var(--radius-lg);
             padding: 10px 8px;
@@ -1354,9 +1194,9 @@
         .log-box {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
-            color: #8899aa;
-            background: #03060a;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            background: #f5f5f7;
+            border: 1px solid rgba(0, 0, 0, 0.06);
             border-radius: var(--radius-md);
             padding: 8px;
             max-height: 120px;
@@ -1393,8 +1233,8 @@
         }
 
         .qr-card {
-            background: rgba(8, 14, 26, 0.85);
-            border: 1px solid var(--bg-card-border);
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.10);
             border-radius: var(--radius-lg);
             padding: 10px 8px;
             display: flex;
@@ -1402,7 +1242,7 @@
             align-items: center;
             text-align: center;
             gap: 6px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             transition: all 0.2s ease;
         }
 
@@ -1424,7 +1264,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
             width: 100%;
             max-width: 124px;
             aspect-ratio: 1 / 1;
@@ -1455,8 +1295,8 @@
             text-decoration: none;
             padding: 4px 8px;
             border-radius: 6px;
-            background: rgba(0, 210, 255, 0.1);
-            border: 1px solid rgba(0, 210, 255, 0.25);
+            background: rgba(0, 122, 255, 0.08);
+            border: 1px solid rgba(0, 122, 255, 0.25);
             transition: all 0.15s ease;
             width: 100%;
             text-align: center;
@@ -1727,7 +1567,7 @@
                             <span>🎯 Countdown Target</span>
                         </div>
                         <div style="display: flex; gap: 6px;">
-                            <input type="number" id="inputCountdownTarget" min="1" max="9999" value="100" style="flex: 1; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 8px 10px; border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;">
+                            <input type="number" id="inputCountdownTarget" min="1" max="9999" value="100" style="flex: 1; background: #f5f5f7; border: 1px solid var(--bg-card-border); color: #fff; padding: 8px 10px; border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;">
                             <button type="button" class="btn-tool-chip" id="btnSetTarget" style="padding: 8px 16px;">Set</button>
                         </div>
                         <div class="pills-row">
@@ -1788,17 +1628,17 @@
                             <div style="background: rgba(0,210,255,0.06); padding: 6px; border-radius: var(--radius-md); border: 1px solid rgba(0,210,255,0.2);">
                                 <div style="font-size: 10px; color: var(--team1-blue); font-weight: 700; margin-bottom: 2px;">T1 Time (MM:SS)</div>
                                 <div style="display: flex; gap: 2px; align-items: center;">
-                                    <input type="number" id="inputT1Min" min="0" max="59" value="5" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                    <input type="number" id="inputT1Min" min="0" max="59" value="5" style="width: 48px; background: #f5f5f7; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
                                     <span>:</span>
-                                    <input type="number" id="inputT1Sec" min="0" max="59" value="0" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                    <input type="number" id="inputT1Sec" min="0" max="59" value="0" style="width: 48px; background: #f5f5f7; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
                                 </div>
                             </div>
                             <div style="background: rgba(255,51,102,0.06); padding: 6px; border-radius: var(--radius-md); border: 1px solid rgba(255,51,102,0.2);">
                                 <div style="font-size: 10px; color: var(--team2-red); font-weight: 700; margin-bottom: 2px;">T2 Time (MM:SS)</div>
                                 <div style="display: flex; gap: 2px; align-items: center;">
-                                    <input type="number" id="inputT2Min" min="0" max="59" value="3" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                    <input type="number" id="inputT2Min" min="0" max="59" value="3" style="width: 48px; background: #f5f5f7; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
                                     <span>:</span>
-                                    <input type="number" id="inputT2Sec" min="0" max="59" value="0" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
+                                    <input type="number" id="inputT2Sec" min="0" max="59" value="0" style="width: 48px; background: #f5f5f7; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
                                 </div>
                             </div>
                         </div>
@@ -1825,10 +1665,10 @@
                     <span>🕒 Scoreboard Display Mode</span>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button type="button" class="btn-tool-chip" id="btnSwitchToClockMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 255, 0, 0.4); color: var(--clock-color, #00ff00);">
+                    <button type="button" class="btn-tool-chip" id="btnSwitchToClockMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 0, 0, 0.15); color: #1c1c1e;">
                         <span>🕒 Clock Mode</span>
                     </button>
-                    <button type="button" class="btn-tool-chip" id="btnSwitchToScoreMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 210, 255, 0.4); color: var(--team1-blue);">
+                    <button type="button" class="btn-tool-chip" id="btnSwitchToScoreMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 0, 0, 0.15); color: #1c1c1e;">
                         <span>🎾 Score Mode</span>
                     </button>
                 </div>
@@ -1987,24 +1827,11 @@
         <!-- ============================================ -->
         <div class="tab-pane" id="paneInfo">
             <div class="scroll-card">
-                <!-- Theme Selector -->
                 <div class="section-header">
-                    <span>🎨 App Theme</span>
-                </div>
-                <div class="pills-row" id="pillsTheme" style="grid-template-columns: 1fr 1fr;">
-                    <button type="button" class="pill-select pill-theme active" data-theme="dark" id="pillThemeDark" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
-                        🌑 Dark
-                    </button>
-                    <button type="button" class="pill-select pill-theme" data-theme="light" id="pillThemeLight" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
-                        ☀️ Light
-                    </button>
-                </div>
-
-                <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.7</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.6</span>
                 </div>
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="background: rgba(0,0,0,0.04); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 11px; color: var(--text-muted);">PWA Auto-Update Status:</span>
                         <span style="font-size: 11px; font-weight: 700; color: var(--accent-green);" id="appUpdateStatusText">Up to date</span>
@@ -3433,7 +3260,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.7';
+    const CURRENT_APP_VERSION = '1.4.6';
     let swRegistration = null;
     let isRefreshing = false;
 
@@ -3606,37 +3433,7 @@
     // Initial background check
     setTimeout(() => checkAppVersion(false), 2000);
 
-    // -------------------------------------------------------
-    // Theme Manager (Dark / Light)
-    // -------------------------------------------------------
-    (function initTheme() {
-        const saved = localStorage.getItem('appTheme') || 'dark';
-        applyTheme(saved);
-    })();
-
-    function applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('appTheme', theme);
-        // Update theme-color meta for browser chrome
-        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-        if (metaThemeColor) {
-            metaThemeColor.content = theme === 'light' ? '#f2f2f7' : '#080c14';
-        }
-        // Update status bar style
-        const metaStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-        if (metaStatusBar) {
-            metaStatusBar.content = theme === 'light' ? 'default' : 'black-translucent';
-        }
-        // Sync pill UI
-        document.querySelectorAll('.pill-theme').forEach(p => {
-            p.classList.toggle('active', p.dataset.theme === theme);
-        });
-    }
-
-    document.querySelectorAll('.pill-theme').forEach(pill => {
-        pill.addEventListener('click', () => applyTheme(pill.dataset.theme));
-    });
-
 </script>
 </body>
 </html>
+
