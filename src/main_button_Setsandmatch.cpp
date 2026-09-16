@@ -1518,10 +1518,12 @@ void addPadelPoint(int team) {
 
     bool tbWon = false;
     int tbWinner = 0;
-    if (tiebreakPoints1 >= 7 && (tiebreakPoints1 - tiebreakPoints2 >= 2)) {
+    // Super Tiebreak in deciding 3rd set (1-1 in sets) goes to 10 points with min 2 points difference; normal tiebreak goes to 7 points:
+    int tbTarget = (cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1) ? 10 : 7;
+    if (tiebreakPoints1 >= tbTarget && (tiebreakPoints1 - tiebreakPoints2 >= 2)) {
       tbWon = true;
       tbWinner = 1;
-    } else if (tiebreakPoints2 >= 7 && (tiebreakPoints2 - tiebreakPoints1 >= 2)) {
+    } else if (tiebreakPoints2 >= tbTarget && (tiebreakPoints2 - tiebreakPoints1 >= 2)) {
       tbWon = true;
       tbWinner = 2;
     }
@@ -1689,6 +1691,14 @@ void addPadelPoint(int team) {
         betweenSets = true;
         completedSetGames1 = team1Games;
         completedSetGames2 = team2Games;
+
+        // If Super Tiebreak is enabled for deciding 3rd set (1-1 in sets):
+        if (cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1) {
+          inTiebreak = true;
+          tiebreakPoints1 = 0;
+          tiebreakPoints2 = 0;
+          Serial.println("[PADEL] 🔥 1-1 in sets reached -> ENTERING DECIDING SUPER TIEBREAK (10 pts)!");
+        }
       }
       // Reset games for the new set
       team1Games = 0;

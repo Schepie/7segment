@@ -764,6 +764,75 @@
             cursor: pointer;
         }
 
+        /* Standard Tournament & League Rules Shortcuts */
+        .rules-shortcuts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .btn-rule-shortcut {
+            background: rgba(16, 23, 38, 0.7);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-md);
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-rule-shortcut:active {
+            transform: scale(0.98);
+        }
+
+        .btn-rule-shortcut.active {
+            background: rgba(0, 230, 118, 0.12);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 12px var(--accent-green-glow);
+        }
+
+        .shortcut-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .shortcut-title {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .btn-rule-shortcut.active .shortcut-title {
+            color: var(--accent-green);
+        }
+
+        .shortcut-pill {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .btn-rule-shortcut.active .shortcut-pill {
+            background: var(--accent-green);
+            color: #000;
+        }
+
+        .shortcut-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.25;
+        }
+
         .btn-save-gold {
             padding: 14px;
             border-radius: var(--radius-lg);
@@ -1326,7 +1395,50 @@
         <!-- ============================================ -->
         <div class="tab-pane" id="paneRules">
             <div class="scroll-card">
+
                 <div class="section-header">
+                    <span>⚡ Standard Rules Shortcuts</span>
+                    <span id="rulesActivePresetBadge" style="font-family: 'JetBrains Mono'; font-size: 10px; color: var(--accent-gold); font-weight: 700;">Custom</span>
+                </div>
+                <div class="rules-shortcuts-list" id="rulesShortcuts">
+                    <!-- 1. Padel Senior Cup -->
+                    <button type="button" class="btn-rule-shortcut" data-preset="senior-cup" id="presetSeniorCup">
+                        <div class="shortcut-header">
+                            <span class="shortcut-title">🏆 1. Padel Senior Cup</span>
+                            <span class="shortcut-pill">Best of 3</span>
+                        </div>
+                        <div class="shortcut-desc">Golden Point • 6 Games • Deciding 3rd Set Super TB (10 pts)</div>
+                    </button>
+
+                    <!-- 2. Cupra Padel Tour Poulefase en eindronde -->
+                    <button type="button" class="btn-rule-shortcut" data-preset="cupra-poule" id="presetCupraPoule">
+                        <div class="shortcut-header">
+                            <span class="shortcut-title">🎾 2. Cupra Tour Poulefase & Eindronde</span>
+                            <span class="shortcut-pill">1 Set to 9</span>
+                        </div>
+                        <div class="shortcut-desc">1 Win. Set to 9 • Golden Point (Deciding point)</div>
+                    </button>
+
+                    <!-- 3. Cupra Padel Tour halve finale en finale -->
+                    <button type="button" class="btn-rule-shortcut" data-preset="cupra-finals" id="presetCupraFinals">
+                        <div class="shortcut-header">
+                            <span class="shortcut-title">🥇 3. Cupra Tour 1/2 Finale & Finale</span>
+                            <span class="shortcut-pill">Best of 3</span>
+                        </div>
+                        <div class="shortcut-desc">Best of 3 • 6 Games • Golden Point • 3rd Set Super TB</div>
+                    </button>
+
+                    <!-- 4. Dinsdag padel Basvelden -->
+                    <button type="button" class="btn-rule-shortcut" data-preset="basvelden" id="presetBasvelden">
+                        <div class="shortcut-header">
+                            <span class="shortcut-title">📅 4. Dinsdag Padel Basvelden</span>
+                            <span class="shortcut-pill">1 Set to 9</span>
+                        </div>
+                        <div class="shortcut-desc">1 Win. Set to 9 Games with regular Tiebreak</div>
+                    </button>
+                </div>
+
+                <div class="section-header" style="margin-top: 4px;">
                     <span>⚔️ Deuce (40-40) Rule</span>
                 </div>
                 <div class="pills-row" id="toggleGp">
@@ -1334,7 +1446,7 @@
                     <button type="button" class="pill-select gp" data-val="1">⚡ Golden Point</button>
                 </div>
 
-                <div class="section-header" style="margin-top: 2px;">
+                <div class="section-header" style="margin-top: 4px;">
                     <span>🏆 Match Length</span>
                 </div>
                 <div class="pills-row" id="toggleSets">
@@ -1342,7 +1454,7 @@
                     <button type="button" class="pill-select active" data-val="2">🏆 Best of 3</button>
                 </div>
 
-                <div class="section-header" style="margin-top: 2px;">
+                <div class="section-header" style="margin-top: 4px;">
                     <span>🎾 Games per Set</span>
                 </div>
                 <div class="pills-row" id="toggleGames">
@@ -1350,15 +1462,15 @@
                     <button type="button" class="pill-select" data-val="9">🚀 9 Games</button>
                 </div>
 
-                <div class="section-header" style="margin-top: 2px;">
-                    <span>🔥 Tiebreak at 6-6</span>
+                <div class="section-header" style="margin-top: 4px;">
+                    <span>🔥 Super Tiebreak</span>
                 </div>
                 <div class="pills-row" id="toggleTb">
-                    <button type="button" class="pill-select active" data-val="1">🔥 Tiebreak ON</button>
-                    <button type="button" class="pill-select" data-val="0">🚫 Advantage</button>
+                    <button type="button" class="pill-select active" data-val="1">⚡ Super TB ON</button>
+                    <button type="button" class="pill-select" data-val="0">🚫 OFF</button>
                 </div>
 
-                <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled>
+                <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled style="margin-top: 8px;">
                     <span>💾 Save Rules to Scoreboard</span>
                 </button>
             </div>
@@ -2060,10 +2172,23 @@
         const layMatch  = text.match(/LAY(?:OUT)?=(\d+)/);
         const colMatch  = text.match(/COL=([#0-9a-fA-F]+)/);
 
-        if (gpMatch) updatePillGroupUI('toggleGp', parseInt(gpMatch[1]));
-        if (setsMatch) updatePillGroupUI('toggleSets', parseInt(setsMatch[1]));
-        if (gamesMatch) updatePillGroupUI('toggleGames', parseInt(gamesMatch[1]));
-        if (tbMatch) updatePillGroupUI('toggleTb', parseInt(tbMatch[1]));
+        if (gpMatch) {
+            appConfig.gp = parseInt(gpMatch[1]);
+            updatePillGroupUI('toggleGp', appConfig.gp);
+        }
+        if (setsMatch) {
+            appConfig.sets = parseInt(setsMatch[1]);
+            updatePillGroupUI('toggleSets', appConfig.sets);
+        }
+        if (gamesMatch) {
+            appConfig.games = parseInt(gamesMatch[1]);
+            updatePillGroupUI('toggleGames', appConfig.games);
+        }
+        if (tbMatch) {
+            appConfig.tb = parseInt(tbMatch[1]);
+            updatePillGroupUI('toggleTb', appConfig.tb);
+        }
+        syncRulesPresetBadge();
         if (idleMatch) updatePillGroupUI('pillsIdleTimeout', parseInt(idleMatch[1]), 'idle');
         if (layMatch) {
             const lay = parseInt(layMatch[1]);
@@ -2263,8 +2388,86 @@
     });
 
     // -------------------------------------------------------------
-    // Pill Toggle Groups (Rules & Idle Timeout)
+    // Standard Rules Shortcuts & Pill Toggle Groups
     // -------------------------------------------------------------
+    const RULE_PRESETS = {
+        'senior-cup': {
+            name: 'Padel Senior Cup',
+            gp: 1,      // Golden Point
+            sets: 2,    // Best of 3 (2 winnende sets)
+            games: 6,   // 6 Games
+            tb: 1       // Super Tiebreak in 3rd set (10 pts)
+        },
+        'cupra-poule': {
+            name: 'Cupra Poulefase & Eindronde',
+            gp: 1,      // Golden Point
+            sets: 1,    // 1 winnende set tot 9
+            games: 9,   // 9 Games
+            tb: 0       // Super Tiebreak OFF
+        },
+        'cupra-finals': {
+            name: 'Cupra 1/2 Finale & Finale',
+            gp: 1,      // Golden Point
+            sets: 2,    // Best of 3 (2 winnende sets)
+            games: 6,   // 6 Games
+            tb: 1       // Super Tiebreak in 3rd set (10 pts)
+        },
+        'basvelden': {
+            name: 'Dinsdag Padel Basvelden',
+            gp: 1,      // Golden Point
+            sets: 1,    // 1 winnende set tot 9
+            games: 9,   // 9 Games met tiebreak
+            tb: 0       // Super Tiebreak OFF (regular set tiebreak)
+        }
+    };
+
+    function syncRulesPresetBadge() {
+        let matchedKey = null;
+        for (const [key, p] of Object.entries(RULE_PRESETS)) {
+            if (p.gp === appConfig.gp && p.sets === appConfig.sets && p.games === appConfig.games && p.tb === appConfig.tb) {
+                matchedKey = key;
+                break;
+            }
+        }
+        document.querySelectorAll('.btn-rule-shortcut').forEach(b => {
+            b.classList.toggle('active', b.dataset.preset === matchedKey);
+        });
+        const badge = document.getElementById('rulesActivePresetBadge');
+        if (badge) {
+            if (matchedKey) {
+                badge.textContent = RULE_PRESETS[matchedKey].name;
+                badge.style.color = 'var(--accent-green)';
+            } else {
+                badge.textContent = 'Custom';
+                badge.style.color = 'var(--accent-gold)';
+            }
+        }
+    }
+
+    function applyRulePreset(presetKey) {
+        const preset = RULE_PRESETS[presetKey];
+        if (!preset) return;
+
+        appConfig.gp    = preset.gp;
+        appConfig.sets  = preset.sets;
+        appConfig.games = preset.games;
+        appConfig.tb    = preset.tb;
+
+        updatePillGroupUI('toggleGp', preset.gp);
+        updatePillGroupUI('toggleSets', preset.sets);
+        updatePillGroupUI('toggleGames', preset.games);
+        updatePillGroupUI('toggleTb', preset.tb);
+
+        syncRulesPresetBadge();
+        log(`Rules preset applied: ${preset.name}`, 'suc');
+    }
+
+    document.querySelectorAll('.btn-rule-shortcut').forEach(btn => {
+        btn.addEventListener('click', () => {
+            applyRulePreset(btn.dataset.preset);
+        });
+    });
+
     function setupPillGroup(containerId, configKey, valAttr = 'val') {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -2273,6 +2476,9 @@
                 container.querySelectorAll('.pill-select').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 appConfig[configKey] = parseInt(btn.dataset[valAttr]);
+                if (['gp', 'sets', 'games', 'tb'].includes(configKey)) {
+                    syncRulesPresetBadge();
+                }
             });
         });
     }
@@ -2296,6 +2502,7 @@
     setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
     setupPillGroup('pillsLedLayout', 'layout', 'layout');
     updatePillGroupUI('pillsLedLayout', appConfig.layout, 'layout');
+    syncRulesPresetBadge();
 
     // -------------------------------------------------------------
     // Clock Color Selection & Live Transmission
