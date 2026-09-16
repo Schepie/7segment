@@ -284,6 +284,23 @@
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        .badge-tb-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid #ffffff;
+            color: #ffffff !important;
+            font-family: 'JetBrains Mono', 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 900;
+            padding: 1px 9px;
+            border-radius: 6px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+        }
+
         /* HUGE Scoring Buttons (Filling remaining viewport) */
         .scoring-hero {
             flex: 1;
@@ -1355,7 +1372,7 @@
 
                 <div class="court-banner">
                     <span id="courtSideText">↔️ L: Team 1 (Blue) | R: Team 2 (Red)</span>
-                    <span id="tbBadge" style="color: var(--accent-gold); font-weight: 900; display: none;">🔥 TIEBREAK</span>
+                    <span id="tbBadge" class="badge-tb-indicator" style="display: none;">St</span>
                     <span id="displayModeBadge" style="font-size: 10px; font-weight: 800; color: var(--accent-green);">SCORE</span>
                 </div>
             </div>
@@ -1405,9 +1422,9 @@
                     <button type="button" class="btn-rule-shortcut" data-preset="senior-cup" id="presetSeniorCup">
                         <div class="shortcut-header">
                             <span class="shortcut-title">🏆 1. Padel Senior Cup</span>
-                            <span class="shortcut-pill">Best of 3</span>
+                            <span class="shortcut-pill">2 Sets + Super TB</span>
                         </div>
-                        <div class="shortcut-desc">Golden Point • 6 Games • Deciding 3rd Set Super TB (10 pts)</div>
+                        <div class="shortcut-desc">Golden Point • 6 Games • 2 Sets met Super TB (10 pts) ipv 3de set</div>
                     </button>
 
                     <!-- 2. Cupra Padel Tour Poulefase en eindronde -->
@@ -1423,9 +1440,9 @@
                     <button type="button" class="btn-rule-shortcut" data-preset="cupra-finals" id="presetCupraFinals">
                         <div class="shortcut-header">
                             <span class="shortcut-title">🥇 3. Cupra Tour 1/2 Finale & Finale</span>
-                            <span class="shortcut-pill">Best of 3</span>
+                            <span class="shortcut-pill">2 Sets + Super TB</span>
                         </div>
-                        <div class="shortcut-desc">Best of 3 • 6 Games • Golden Point • 3rd Set Super TB</div>
+                        <div class="shortcut-desc">2 Sets • 6 Games • Golden Point • Super TB (10 pts) ipv 3de set</div>
                     </button>
 
                     <!-- 4. Dinsdag padel Basvelden -->
@@ -1451,7 +1468,7 @@
                 </div>
                 <div class="pills-row" id="toggleSets">
                     <button type="button" class="pill-select" data-val="1">🥇 1 Set</button>
-                    <button type="button" class="pill-select active" data-val="2">🏆 Best of 3</button>
+                    <button type="button" class="pill-select active" data-val="2" id="pillBestOf3">🏆 2 Sets + Super TB</button>
                 </div>
 
                 <div class="section-header" style="margin-top: 4px;">
@@ -1811,7 +1828,7 @@
             <div class="scroll-card">
                 <div class="section-header">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.3</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.4</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2187,6 +2204,7 @@
         if (tbMatch) {
             appConfig.tb = parseInt(tbMatch[1]);
             updatePillGroupUI('toggleTb', appConfig.tb);
+            updateSetsPillLabel();
         }
         syncRulesPresetBadge();
         if (idleMatch) updatePillGroupUI('pillsIdleTimeout', parseInt(idleMatch[1]), 'idle');
@@ -2229,7 +2247,9 @@
             boardState.t2Sets  = parseInt(parts[5]) || 0;
         }
         if (parts.length >= 7) {
-            boardState.inTb = (parts[6] === '1');
+            const tbVal = parseInt(parts[6]) || 0;
+            boardState.tbMode = tbVal;
+            boardState.inTb   = (tbVal > 0);
         }
 
         renderMirrorUI();
@@ -2250,7 +2270,13 @@
             courtSideText.textContent = '↔️ L: Team 2 (Red) | R: Team 1 (Blue)';
         }
 
-        tbBadge.style.display = boardState.inTb ? 'inline-block' : 'none';
+        if (boardState.inTb) {
+            const isSuperTb = (boardState.tbMode === 2) || (appConfig.tb === 1 && appConfig.sets === 2 && boardState.t1Sets === 1 && boardState.t2Sets === 1);
+            tbBadge.textContent = isSuperTb ? 'Stb' : 'St';
+            tbBadge.style.display = 'inline-flex';
+        } else {
+            tbBadge.style.display = 'none';
+        }
     }
 
     // -------------------------------------------------------------
@@ -2392,9 +2418,9 @@
     // -------------------------------------------------------------
     const RULE_PRESETS = {
         'senior-cup': {
-            name: 'Padel Senior Cup',
+            name: 'Padel Senior Cup (2 Sets + Super TB)',
             gp: 1,      // Golden Point
-            sets: 2,    // Best of 3 (2 winnende sets)
+            sets: 2,    // 2 Sets + Super TB ipv 3de set
             games: 6,   // 6 Games
             tb: 1       // Super Tiebreak in 3rd set (10 pts)
         },
@@ -2406,9 +2432,9 @@
             tb: 0       // Super Tiebreak OFF
         },
         'cupra-finals': {
-            name: 'Cupra 1/2 Finale & Finale',
+            name: 'Cupra 1/2 Finale & Finale (2 Sets + Super TB)',
             gp: 1,      // Golden Point
-            sets: 2,    // Best of 3 (2 winnende sets)
+            sets: 2,    // 2 Sets + Super TB ipv 3de set
             games: 6,   // 6 Games
             tb: 1       // Super Tiebreak in 3rd set (10 pts)
         },
@@ -2422,6 +2448,13 @@
     };
 
     let activeRulePresetKey = null;
+
+    function updateSetsPillLabel() {
+        const pill = document.getElementById('pillBestOf3');
+        if (pill) {
+            pill.innerHTML = (appConfig.tb === 1) ? '🏆 2 Sets + Super TB' : '🏆 Best of 3';
+        }
+    }
 
     function syncRulesPresetBadge(preferredKey = null) {
         let matchedKey = null;
@@ -2477,6 +2510,7 @@
         updatePillGroupUI('toggleSets', preset.sets);
         updatePillGroupUI('toggleGames', preset.games);
         updatePillGroupUI('toggleTb', preset.tb);
+        updateSetsPillLabel();
 
         syncRulesPresetBadge(presetKey);
         log(`Rules preset applied: ${preset.name}`, 'suc');
@@ -2497,6 +2531,7 @@
                 btn.classList.add('active');
                 appConfig[configKey] = parseInt(btn.dataset[valAttr]);
                 if (['gp', 'sets', 'games', 'tb'].includes(configKey)) {
+                    if (configKey === 'tb') updateSetsPillLabel();
                     syncRulesPresetBadge();
                 }
             });
@@ -2522,6 +2557,7 @@
     setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
     setupPillGroup('pillsLedLayout', 'layout', 'layout');
     updatePillGroupUI('pillsLedLayout', appConfig.layout, 'layout');
+    updateSetsPillLabel();
     syncRulesPresetBadge();
 
     // -------------------------------------------------------------
@@ -3203,7 +3239,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.3';
+    const CURRENT_APP_VERSION = '1.4.4';
     let swRegistration = null;
     let isRefreshing = false;
 

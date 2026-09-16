@@ -295,7 +295,7 @@ Adafruit_NeoPixel onboardLed(1, ONBOARD_RGB_PIN, NEO_GRB + NEO_KHZ800);
 //   [5] T  (Top)
 //   [6] TR (Top-Right)
 // ==============================================================================
-const byte numbers[14][7] = {
+const byte numbers[16][7] = {
   // BL, B, BR, M, TL, T, TR
   {   1, 1,  1, 0,  1, 1,  1 }, // 0: BL, B, BR, TL, T, TR
   {   0, 0,  1, 0,  0, 0,  1 }, // 1: BR, TR
@@ -310,7 +310,9 @@ const byte numbers[14][7] = {
   {   0, 0,  0, 0,  0, 0,  0 }, // 10: Blank
   {   1, 0,  1, 1,  1, 1,  1 }, // 11: 'A' (Advantage)
   {   1, 1,  1, 1,  0, 0,  1 }, // 12: 'd' (Advantage)
-  {   0, 1,  1, 1,  1, 1,  0 }  // 13: 'S' (Set)
+  {   0, 1,  1, 1,  1, 1,  0 }, // 13: 'S' (Set / Uppercase 'S')
+  {   1, 1,  0, 1,  1, 0,  0 }, // 14: 't' (lowercase 't')
+  {   1, 1,  1, 1,  1, 0,  0 }  // 15: 'b' (lowercase 'b')
 };
 
 // ==============================================================================
@@ -359,7 +361,7 @@ const uint8_t panel0SegmentMap[7] = { 6, 5, 4, 3, 2, 1, 0 };
 
 void drawDigit(int digitIndex, int num, uint32_t color) {
   if (digitIndex < 0 || digitIndex >= NUM_DIGITS) return;
-  if (num < 0 || num > 13) num = 10;
+  if (num < 0 || num > 15) num = 10;
 
   int baseLed = getDigitBaseLed(digitIndex);
   for (int seg = 0; seg < 7; seg++) {
@@ -649,34 +651,65 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
     return;
   }
 
-  uint32_t colorBlue = scaleColor(pixels.Color(0, 180, 255), brightnessFactor);
-  uint32_t colorRed  = scaleColor(pixels.Color(255, 0, 0),   brightnessFactor);
+  uint32_t colorBlue  = scaleColor(pixels.Color(0, 180, 255), brightnessFactor);
+  uint32_t colorRed   = scaleColor(pixels.Color(255, 0, 0),   brightnessFactor);
+  uint32_t colorWhite = scaleColor(pixels.Color(255, 255, 255), brightnessFactor);
 
-  int t1Tens, t1Ones, t2Tens, t2Ones;
-  if (betweenGames) {
-    int g1 = betweenSets ? completedSetGames1 : team1Games;
-    int g2 = betweenSets ? completedSetGames2 : team2Games;
-    t1Tens = (g1 >= 10) ? (g1 / 10) : 10; // Blank leading zero
-    t1Ones = g1 % 10;
-    t2Tens = (g2 >= 10) ? (g2 / 10) : 10;
-    t2Ones = g2 % 10;
-  } else {
-    getTeamDigits(1, t1Tens, t1Ones);
-    getTeamDigits(2, t2Tens, t2Ones);
+  bool isSuperTb = (inTiebreak && cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1);
+  bool showTbWhiteIndicator = false;
+  if (inTiebreak) {
+    if (tiebreakPoints1 == 0 && tiebreakPoints2 == 0) {
+      showTbWhiteIndicator = true;
+    } else {
+      // Periodic white St / Stb indicator (4.5s points, 1.5s indicator)
+      unsigned long tbCycle = millis() % 6000;
+      if (tbCycle >= 4500) {
+        showTbWhiteIndicator = true;
+      }
+    }
   }
 
-  if (!swapped) {
-    // Normal: Team 1 (Blue) on Left (0, 1), Team 2 (Red) on Right (2, 3)
-    drawDigit(0, t1Tens, colorBlue);
-    drawDigit(1, t1Ones, colorBlue);
-    drawDigit(2, t2Tens, colorRed);
-    drawDigit(3, t2Ones, colorRed);
+  if (showTbWhiteIndicator) {
+    if (isSuperTb) {
+      // 'Stb' in white: Digit 0='S', Digit 1='t', Digit 2='b', Digit 3=Blank
+      drawDigit(0, 13, colorWhite); // 'S'
+      drawDigit(1, 14, colorWhite); // 't'
+      drawDigit(2, 15, colorWhite); // 'b'
+      drawDigit(3, 10, colorWhite); // Blank
+    } else {
+      // 'St' in white: Digit 0='S', Digit 1='t', Digit 2=Blank, Digit 3=Blank
+      drawDigit(0, 13, colorWhite); // 'S'
+      drawDigit(1, 14, colorWhite); // 't'
+      drawDigit(2, 10, colorWhite); // Blank
+      drawDigit(3, 10, colorWhite); // Blank
+    }
   } else {
-    // Swapped: Team 2 (Red) on Left (0, 1), Team 1 (Blue) on Right (2, 3)
-    drawDigit(0, t2Tens, colorRed);
-    drawDigit(1, t2Ones, colorRed);
-    drawDigit(2, t1Tens, colorBlue);
-    drawDigit(3, t1Ones, colorBlue);
+    int t1Tens, t1Ones, t2Tens, t2Ones;
+    if (betweenGames) {
+      int g1 = betweenSets ? completedSetGames1 : team1Games;
+      int g2 = betweenSets ? completedSetGames2 : team2Games;
+      t1Tens = (g1 >= 10) ? (g1 / 10) : 10; // Blank leading zero
+      t1Ones = g1 % 10;
+      t2Tens = (g2 >= 10) ? (g2 / 10) : 10;
+      t2Ones = g2 % 10;
+    } else {
+      getTeamDigits(1, t1Tens, t1Ones);
+      getTeamDigits(2, t2Tens, t2Ones);
+    }
+
+    if (!swapped) {
+      // Normal: Team 1 (Blue) on Left (0, 1), Team 2 (Red) on Right (2, 3)
+      drawDigit(0, t1Tens, colorBlue);
+      drawDigit(1, t1Ones, colorBlue);
+      drawDigit(2, t2Tens, colorRed);
+      drawDigit(3, t2Ones, colorRed);
+    } else {
+      // Swapped: Team 2 (Red) on Left (0, 1), Team 1 (Blue) on Right (2, 3)
+      drawDigit(0, t2Tens, colorRed);
+      drawDigit(1, t2Ones, colorRed);
+      drawDigit(2, t1Tens, colorBlue);
+      drawDigit(3, t1Ones, colorBlue);
+    }
   }
 
   // Draw Games & Sets module in the middle (LEDs 56..79)
@@ -1748,15 +1781,18 @@ void notifyWatchScore() {
     formatPadelPoint(team1Point, t1T, t1O);
     formatPadelPoint(team2Point, t2T, t2O);
   }
+  bool isSuperTb = (inTiebreak && cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1);
+  int tbMode = inTiebreak ? (isSuperTb ? 2 : 1) : 0;
+
   char buf[48];
   if (!currentCourtSwapped) {
     snprintf(buf, sizeof(buf), "%c%c%c%c,0,%d,%d,%d,%d,%d",
              t1T, t1O, t2T, t2O,
-             team1Games, team2Games, team1Sets, team2Sets, inTiebreak ? 1 : 0);
+             team1Games, team2Games, team1Sets, team2Sets, tbMode);
   } else {
     snprintf(buf, sizeof(buf), "%c%c%c%c,1,%d,%d,%d,%d,%d",
              t2T, t2O, t1T, t1O,
-             team2Games, team1Games, team2Sets, team1Sets, inTiebreak ? 1 : 0);
+             team2Games, team1Games, team2Sets, team1Sets, tbMode);
   }
   pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
   pWatchCharacteristic->notify();

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.3",
-  "buildTime": "2026-09-16T19:30:00Z",
-  "notes": "Fixed selection highlight for all 4 Padel rules shortcuts in the Rules menu."
+  "version": "1.4.4",
+  "buildTime": "2026-09-16T20:20:00Z",
+  "notes": "Added white St and Stb tiebreak indicators to scoreboard, clarified 2 Sets + Super TB rules."
 }
