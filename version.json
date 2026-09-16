@@ -1,5 +1,5 @@
 {
-  "version": "1.4.5",
-  "buildTime": "2026-09-16T20:40:00Z",
-  "notes": "Updated tiebreak indicators to tb (Tiebreak) and Stb (Super Tiebreak) in white."
+  "version": "1.4.6",
+  "buildTime": "2026-09-16T22:42:00Z",
+  "notes": "Tiebreak indicators (tb/Stb) now shown only once at the start of a tiebreak."
 }

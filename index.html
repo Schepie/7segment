@@ -1828,7 +1828,7 @@
             <div class="scroll-card">
                 <div class="section-header">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.5</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.6</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1954,6 +1954,8 @@
         t2Sets: 0,
         isSwapped: false,
         inTb: false,
+        tbMode: 0,
+        tbIntro: false,
         currentMode: 'SCORE'
     };
     window.boardState = boardState;
@@ -2249,8 +2251,23 @@
         }
         if (parts.length >= 7) {
             const tbVal = parseInt(parts[6]) || 0;
+            const wasInTb = boardState.inTb;
             boardState.tbMode = tbVal;
             boardState.inTb   = (tbVal > 0);
+            if (boardState.inTb) {
+                // Show intro badge only when both tiebreak scores are 0 (start of tiebreak)
+                const tbScore1 = boardState.t1Point.trim();
+                const tbScore2 = boardState.t2Point.trim();
+                const atStart  = (tbScore1 === '0' || tbScore1 === ' 0') && (tbScore2 === '0' || tbScore2 === ' 0');
+                // Keep intro flag if already in intro, or if freshly entering tiebreak at 0-0
+                if (!wasInTb && atStart) {
+                    boardState.tbIntro = true;
+                } else if (boardState.tbIntro && !atStart) {
+                    boardState.tbIntro = false;  // First point scored, hide badge
+                }
+            } else {
+                boardState.tbIntro = false;
+            }
         }
 
         renderMirrorUI();
@@ -2271,7 +2288,7 @@
             courtSideText.textContent = '↔️ L: Team 2 (Red) | R: Team 1 (Blue)';
         }
 
-        if (boardState.inTb) {
+        if (boardState.tbIntro) {
             const isSuperTb = (boardState.tbMode === 2) || (appConfig.tb === 1 && appConfig.sets === 2 && boardState.t1Sets === 1 && boardState.t2Sets === 1);
             tbBadge.textContent = isSuperTb ? 'Stb' : 'tb';
             tbBadge.style.display = 'inline-flex';
@@ -3242,7 +3259,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.5';
+    const CURRENT_APP_VERSION = '1.4.6';
     let swRegistration = null;
     let isRefreshing = false;
 

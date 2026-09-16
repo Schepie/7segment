@@ -175,6 +175,7 @@ inline bool isCourtSwapped() {
 bool triggerGameWonAnimation  = false;
 bool triggerSetWonAnimation   = false;
 bool triggerMatchWonAnimation = false;
+bool triggerTiebreakIntroAnimation = false;
 int winningTeam = 0;
 bool triggerUndoAction = false;
 bool scoreNeedsUpdate = true;
@@ -656,18 +657,8 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
   uint32_t colorWhite = scaleColor(pixels.Color(255, 255, 255), brightnessFactor);
 
   bool isSuperTb = (inTiebreak && cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1);
-  bool showTbWhiteIndicator = false;
-  if (inTiebreak) {
-    if (tiebreakPoints1 == 0 && tiebreakPoints2 == 0) {
-      showTbWhiteIndicator = true;
-    } else {
-      // Periodic white St / Stb indicator (4.5s points, 1.5s indicator)
-      unsigned long tbCycle = millis() % 6000;
-      if (tbCycle >= 4500) {
-        showTbWhiteIndicator = true;
-      }
-    }
-  }
+  // Show tb/Stb indicator only once at the start of a tiebreak (before the first point)
+  bool showTbWhiteIndicator = inTiebreak && triggerTiebreakIntroAnimation;
 
   if (showTbWhiteIndicator) {
     if (isSuperTb) {
@@ -1542,6 +1533,8 @@ void addPadelPoint(int team) {
 
   // If currently in a Tiebreak:
   if (inTiebreak) {
+    // First point scored - hide the tb/Stb intro indicator
+    triggerTiebreakIntroAnimation = false;
     if (team == 1) {
       tiebreakPoints1++;
     } else {
@@ -1673,6 +1666,7 @@ void addPadelPoint(int team) {
       inTiebreak = true;
       tiebreakPoints1 = 0;
       tiebreakPoints2 = 0;
+      triggerTiebreakIntroAnimation = true; // Show tb indicator once at start
       betweenGames = true;
       betweenSets = false;
       triggerGameWonAnimation = true;
@@ -1730,6 +1724,7 @@ void addPadelPoint(int team) {
           inTiebreak = true;
           tiebreakPoints1 = 0;
           tiebreakPoints2 = 0;
+          triggerTiebreakIntroAnimation = true; // Show Stb indicator once at start
           Serial.println("[PADEL] 🔥 1-1 in sets reached -> ENTERING DECIDING SUPER TIEBREAK (10 pts)!");
         }
       }
