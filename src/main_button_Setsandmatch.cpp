@@ -34,6 +34,8 @@
 //   Segment 6: TR (Top-Right)    -> 24..27
 // ==============================================================================
 
+// Standard C/C++ includes
+#include <stdint.h>
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include <ThreeWire.h>
@@ -49,6 +51,10 @@ extern "C" void ble_svc_gatt_changed(uint16_t start_handle, uint16_t end_handle)
 #endif
 #include <vector>
 #include <string>
+
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
+  extern "C" void esp_brownout_disable(void);
+#endif
 
 // ==============================================================================
 // Hardware Configuration
@@ -99,6 +105,9 @@ struct ScoreState {
   int setsPlayed;
   bool inTb;
   int tb1, tb2;
+  bool betweenGames;
+  bool betweenSets;
+  int compSetG1, compSetG2;
 };
 
 #define SCORE_HISTORY_DEPTH 30
@@ -112,6 +121,10 @@ int team2Games = 0;
 int team1Sets = 0;
 int team2Sets = 0;
 bool matchWon = false;
+bool betweenGames = false;
+bool betweenSets = false;
+int completedSetGames1 = 0;
+int completedSetGames2 = 0;
 
 // Match Rules Configuration (Persisted in NVS Flash)
 bool cfgGoldenPoint = false; // false = Advantage (Ad-40), true = Punto de Oro (Deciding point)
@@ -360,17 +373,20 @@ void getTeamDigits(int team, int &tens, int &ones) {
 // ==============================================================================
 // Games & Sets Indicator Module Rendering (24 LEDs total)
 // ==============================================================================
-void drawGamesAndSets(int games1, int sets1, int games2, int sets2, bool swapped = false, float brightnessFactor = 1.0f) {
+void drawGamesAndSets(int games1, int sets1, int games2, int sets2, bool swapped = false, float brightnessFactor = 1.0f, uint32_t customColor1 = 0, uint32_t customColor2 = 0) {
   if (brightnessFactor <= 0.001f) return;
   int base = getGamesSetsBaseLed(); // LED index 56
   
+  uint32_t c1 = (customColor1 != 0) ? customColor1 : pixels.Color(0, 180, 255);
+  uint32_t c2 = (customColor2 != 0) ? customColor2 : pixels.Color(255, 0, 0);
+
   int leftGames   = !swapped ? games1 : games2;
   int leftSets    = !swapped ? sets1  : sets2;
-  uint32_t leftColor = scaleColor(!swapped ? pixels.Color(0, 180, 255) : pixels.Color(255, 0, 0), brightnessFactor);
+  uint32_t leftColor = scaleColor(!swapped ? c1 : c2, brightnessFactor);
 
   int rightGames  = !swapped ? games2 : games1;
   int rightSets   = !swapped ? sets2  : sets1;
-  uint32_t rightColor = scaleColor(!swapped ? pixels.Color(255, 0, 0) : pixels.Color(0, 180, 255), brightnessFactor);
+  uint32_t rightColor = scaleColor(!swapped ? c2 : c1, brightnessFactor);
 
   // 1. Left Column Games (9 LEDs: LEDs 1..9 -> base + 0..8, running bottom to top)
   for (int g = 0; g < 9; g++) {
@@ -570,6 +586,8 @@ void showPixelsSafe() {
 #endif
 }
 
+void renderColon(bool colonOn, uint32_t color);
+
 void renderBoardWithState(bool swapped, float brightnessFactor) {
   pixels.clear();
   if (brightnessFactor <= 0.001f) {
@@ -581,8 +599,17 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
   uint32_t colorRed  = scaleColor(pixels.Color(255, 0, 0),   brightnessFactor);
 
   int t1Tens, t1Ones, t2Tens, t2Ones;
-  getTeamDigits(1, t1Tens, t1Ones);
-  getTeamDigits(2, t2Tens, t2Ones);
+  if (betweenGames) {
+    int g1 = betweenSets ? completedSetGames1 : team1Games;
+    int g2 = betweenSets ? completedSetGames2 : team2Games;
+    t1Tens = (g1 >= 10) ? (g1 / 10) : 10; // Blank leading zero
+    t1Ones = g1 % 10;
+    t2Tens = (g2 >= 10) ? (g2 / 10) : 10;
+    t2Ones = g2 % 10;
+  } else {
+    getTeamDigits(1, t1Tens, t1Ones);
+    getTeamDigits(2, t2Tens, t2Ones);
+  }
 
   if (!swapped) {
     // Normal: Team 1 (Blue) on Left (0, 1), Team 2 (Red) on Right (2, 3)
@@ -599,7 +626,15 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
   }
 
   // Draw Games & Sets module in the middle (LEDs 56..79)
-  drawGamesAndSets(swapped, brightnessFactor);
+  if (betweenSets) {
+    drawGamesAndSets(completedSetGames1, team1Sets, completedSetGames2, team2Sets, swapped, brightnessFactor);
+  } else {
+    drawGamesAndSets(swapped, brightnessFactor);
+  }
+
+  if (betweenGames && cfgLedLayout == 1) {
+    renderColon(true, scaleColor(pixels.Color(120, 120, 120), brightnessFactor));
+  }
 
   showPixelsSafe();
 }
@@ -890,6 +925,23 @@ void splashText(const char* text, uint32_t color) {
   pixels.clear();
   drawGamesAndSets(0, 0, 0, 0);
   int len = strlen(text);
+
+  // Power budget governor for 4-digit full text splashes (e.g. "SPEL"):
+  // Lighting 72+ WS2812/WS2813 LEDs simultaneously in multi-channel colors (Cyan/White)
+  // draws >2.4A. Cap total RGB channel sum to <= 270 (matching pure Red) to maintain 
+  // rock-solid 5V power stability across all USB cables and battery packs.
+  uint8_t r = (uint8_t)((color >> 16) & 0xFF);
+  uint8_t g = (uint8_t)((color >> 8)  & 0xFF);
+  uint8_t b = (uint8_t)(color & 0xFF);
+  int sum = r + g + b;
+  if (sum > 270) {
+    float scale = 270.0f / (float)sum;
+    r = (uint8_t)(r * scale);
+    g = (uint8_t)(g * scale);
+    b = (uint8_t)(b * scale);
+    color = pixels.Color(r, g, b);
+  }
+
   for (int i = 0; i < NUM_DIGITS; i++) {
     char c = (i < len) ? text[i] : ' ';
     drawChar(i, c, color);
@@ -899,7 +951,7 @@ void splashText(const char* text, uint32_t color) {
 
 void renderMatchSetScores() {
   pixels.clear();
-  uint32_t cBlue = pixels.Color(0, 180, 255);
+  uint32_t cBlue = pixels.Color(0, 110, 160); // Current-balanced Cyan (sum=270, matches Red 255)
   uint32_t cRed  = pixels.Color(255, 0, 0);
 
   int leftS1, rightS1;
@@ -912,9 +964,14 @@ void renderMatchSetScores() {
     // Left 2 segments: Set 1
     leftS1  = set1Games1;
     rightS1 = set1Games2;
-    // Right 2 segments: Set 2
-    leftS2  = set2Games1;
-    rightS2 = set2Games2;
+    // Right 2 segments: Set 2 (blank if only 1 set was played)
+    if (totalSetsPlayed >= 2) {
+      leftS2  = set2Games1;
+      rightS2 = set2Games2;
+    } else {
+      leftS2  = 10; // Blank
+      rightS2 = 10; // Blank
+    }
   } else {
     // Left 2 segments: Set 2
     leftS1  = set2Games1;
@@ -928,12 +985,12 @@ void renderMatchSetScores() {
   drawDigit(0, leftS1 % 10, cBlue);
   drawDigit(1, rightS1 % 10, cRed);
 
-  // Middle Games & Sets module: show final sets won dots (S1, S2)
-  drawGamesAndSets(0, team1Sets, 0, team2Sets, false, 1.0f);
+  // Middle Games & Sets module: show final sets won dots (S1, S2) matching the exact same blue as the score digits
+  drawGamesAndSets(0, team1Sets, 0, team2Sets, false, 1.0f, cBlue, cRed);
 
   // Draw Set on right 2 panels (Digit 2: Team 1 games, Digit 3: Team 2 games)
-  drawDigit(2, leftS2 % 10, cBlue);
-  drawDigit(3, rightS2 % 10, cRed);
+  if (leftS2 < 10)  drawDigit(2, leftS2 % 10, cBlue); else drawDigit(2, 10, cBlue);
+  if (rightS2 < 10) drawDigit(3, rightS2 % 10, cRed);  else drawDigit(3, 10, cRed);
 
   showPixelsSafe();
 }
@@ -941,7 +998,7 @@ void renderMatchSetScores() {
 void renderPadelScoreboard() {
   if (matchWon) {
     if (matchWonPhase == MATCH_PHASE_SPEL) {
-      uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 180, 255) : pixels.Color(255, 0, 0);
+      uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
       splashText("SPEL", winColor);
       return;
     } else if (matchWonPhase == MATCH_PHASE_SET_SCORES) {
@@ -974,6 +1031,10 @@ void saveScoreState() {
     scoreHistory[historyCount].inTb = inTiebreak;
     scoreHistory[historyCount].tb1 = tiebreakPoints1;
     scoreHistory[historyCount].tb2 = tiebreakPoints2;
+    scoreHistory[historyCount].betweenGames = betweenGames;
+    scoreHistory[historyCount].betweenSets = betweenSets;
+    scoreHistory[historyCount].compSetG1 = completedSetGames1;
+    scoreHistory[historyCount].compSetG2 = completedSetGames2;
     historyCount++;
   } else {
     for (int i = 0; i < SCORE_HISTORY_DEPTH - 1; i++) {
@@ -996,6 +1057,10 @@ void saveScoreState() {
     scoreHistory[SCORE_HISTORY_DEPTH - 1].inTb = inTiebreak;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].tb1 = tiebreakPoints1;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].tb2 = tiebreakPoints2;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].betweenGames = betweenGames;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].betweenSets = betweenSets;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].compSetG1 = completedSetGames1;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].compSetG2 = completedSetGames2;
   }
 }
 
@@ -1019,6 +1084,10 @@ bool undoScoreState() {
   inTiebreak = scoreHistory[historyCount].inTb;
   tiebreakPoints1 = scoreHistory[historyCount].tb1;
   tiebreakPoints2 = scoreHistory[historyCount].tb2;
+  betweenGames = scoreHistory[historyCount].betweenGames;
+  betweenSets = scoreHistory[historyCount].betweenSets;
+  completedSetGames1 = scoreHistory[historyCount].compSetG1;
+  completedSetGames2 = scoreHistory[historyCount].compSetG2;
   if (!matchWon) {
     matchWonPhase = MATCH_PHASE_NONE;
   }
@@ -1046,10 +1115,18 @@ void addPadelPoint(int team) {
     tiebreakPoints2 = 0;
     team1Point = POINT_0;
     team2Point = POINT_0;
+    betweenGames = false;
+    betweenSets = false;
+    completedSetGames1 = 0;
+    completedSetGames2 = 0;
     saveScoreState();
   } else {
     saveScoreState();
   }
+
+  // If currently holding between games or sets, clear holding state as a new rally point is being scored:
+  betweenGames = false;
+  betweenSets = false;
 
   // If currently in a Tiebreak:
   if (inTiebreak) {
@@ -1098,6 +1175,10 @@ void addPadelPoint(int team) {
         triggerMatchWonAnimation = true;
       } else {
         triggerSetWonAnimation = true;
+        betweenGames = true;
+        betweenSets = true;
+        completedSetGames1 = team1Games;
+        completedSetGames2 = team2Games;
       }
 
       team1Games = 0;
@@ -1178,6 +1259,9 @@ void addPadelPoint(int team) {
       inTiebreak = true;
       tiebreakPoints1 = 0;
       tiebreakPoints2 = 0;
+      betweenGames = true;
+      betweenSets = false;
+      triggerGameWonAnimation = true;
       Serial.printf("[PADEL] 🔥 %d-%d Reached -> ENTERING TIEBREAK!\n", cfgGamesPerSet, cfgGamesPerSet);
       notifyWatchScore();
       return;
@@ -1222,12 +1306,18 @@ void addPadelPoint(int team) {
         triggerMatchWonAnimation = true;
       } else {
         triggerSetWonAnimation = true;
+        betweenGames = true;
+        betweenSets = true;
+        completedSetGames1 = team1Games;
+        completedSetGames2 = team2Games;
       }
       // Reset games for the new set
       team1Games = 0;
       team2Games = 0;
     } else {
       triggerGameWonAnimation = true;
+      betweenGames = true;
+      betweenSets = false;
     }
   }
 
@@ -1316,6 +1406,10 @@ void resetMatchScores() {
   team2Games = 0;
   team1Sets  = 0;
   team2Sets  = 0;
+  betweenGames = false;
+  betweenSets  = false;
+  completedSetGames1 = 0;
+  completedSetGames2 = 0;
   inTiebreak = false;
   tiebreakPoints1 = 0;
   tiebreakPoints2 = 0;
@@ -1707,6 +1801,8 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
     while (scoreStr.length() < 4) scoreStr += " ";
 
     saveScoreState();
+    betweenGames = false;
+    betweenSets = false;
     if (!watchSwapped) {
       team1Point = parsePadelPoint(scoreStr[0], scoreStr[1]);
       team2Point = parsePadelPoint(scoreStr[2], scoreStr[3]);
@@ -2046,6 +2142,7 @@ void setup() {
   Serial.println("=======================================================");
 
 #if defined(CONFIG_IDF_TARGET_ESP32C3)
+  esp_brownout_disable(); // Prevent brownout resets during peak LED currents
   pinMode(ONBOARD_LED_PIN, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
@@ -2196,7 +2293,8 @@ void loop() {
 
   // Check Inactivity Idle Timer:
   // If in Scoreboard Mode and inactivity timer expired, return to Clock Mode!
-  if (currentMode == MODE_SCOREBOARD && cfgIdleTimeoutMs > 0) {
+  // Note: While holding between games/sets or match won, keep score visible on the board!
+  if (currentMode == MODE_SCOREBOARD && cfgIdleTimeoutMs > 0 && !betweenGames && !matchWon) {
     if (millis() - lastActivityTime >= cfgIdleTimeoutMs) {
       Serial.println("[MODE] Inactivity timeout -> Automatically switching to Clock Mode");
       currentMode = MODE_CLOCK;
@@ -2400,7 +2498,7 @@ void loop() {
     lastActivityTime = millis();
     matchWonPhase = MATCH_PHASE_SPEL;
     matchWonStartTime = millis();
-    uint32_t champColor = (winningTeam == 1) ? pixels.Color(0, 180, 255) : pixels.Color(255, 0, 0);
+    uint32_t champColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
     Serial.printf("[PADEL] 🏆🏆🏆 MATCH WON by Team %d! Final Sets: %d - %d\n",
                   winningTeam, team1Sets, team2Sets);
     Serial.printf("[PADEL] Final Set 1: %d-%d | Set 2: %d-%d (Total Sets: %d)\n",

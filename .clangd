@@ -1,0 +1,35 @@
+CompileFlags:
+  Add:
+    - "-isystemC:/Users/geert/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/8.4.0"
+    - "-isystemC:/Users/geert/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/8.4.0/riscv32-esp-elf"
+    - "-isystemC:/Users/geert/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include/c++/8.4.0/backward"
+    - "-isystemC:/Users/geert/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/8.4.0/include"
+    - "-isystemC:/Users/geert/.platformio/packages/toolchain-riscv32-esp/lib/gcc/riscv32-esp-elf/8.4.0/include-fixed"
+    - "-isystemC:/Users/geert/.platformio/packages/toolchain-riscv32-esp/riscv32-esp-elf/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/cores/esp32"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/variants/esp32c3"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/newlib/platform_include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/freertos/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_common/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/esp_system/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/soc/esp32c3/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/hal/include"
+    - "-IC:/Users/geert/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/driver/include"
+    - "-DESP_PLATFORM"
+    - "-DARDUINO=10812"
+    - "-DESP32"
+  Remove:
+    - "-fstrict-volatile-bitfields"
+    - "-fno-tree-switch-conversion"
+    - "-nostartfiles"
+    - "-freorder-blocks"
+    - "-fno-jump-tables"
+    - "-m*"
+    - "-Wno-error=unused-but-set-variable"
+    - "-Wno-error=format="
+    - "-Wno-format"
+
+Diagnostics:
+  Suppress:
+    - "drv_unknown_argument"

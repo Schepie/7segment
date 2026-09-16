@@ -267,11 +267,21 @@ pio device monitor -b 115200
 
 All enclosure, digit, bracket, and mounting files are open-source OpenSCAD designs:
 * `panel_thumbscrew.scad`: **Tool-free M3 thumbscrew knob system** (ergonomic knurled finger knob with anti-spin hex drive lock for M3x12 DIN 7991 countersunk screws and 3.0 mm panel heat-set inserts; 11.2 mm outer diameter engineered specifically for 12.0 mm seam bracket pitch without knob collisions; 100% support-free).
-* `display_stand.scad`: **Anti-tip desktop & tabletop stand system** (slide-in cradle feet and bolt-on M3 kickstand legs with ergonomic 8° backward viewing tilt, 118 mm anti-tip base footprint, and 8mm rubber bumpon recesses; 100% support-free 3D printing).
+* `display_stand.scad`: **Direct-Mount Desktop Cradle Stand & Seam U-Bracket Replacement** (engineered tabletop stand system with ergonomic 8° backward viewing tilt, compact footprint, and 2x 13.0 mm anti-slip rubber pad recesses; 100% support-free 3D printing):
+  * **Direct Panel Mounting (Replaces Bottom U-Bracket):** Standardized to 28.0 mm width with 2x M3 pass-through clearance holes (12.0 mm pitch, 6.0 mm rim inset) drilled directly through the rear spine into the panel backplates' brass heat-set inserts. Because the stand grips both the front lip (11.5 mm) and bolts into the rear backplate, it acts as a rigid bottom U-channel clamping bracket across digit seams ([Digit 1 + Digit 2] or [Digit 3 + Digit 4]), permanently eliminating joint bending while serving as the tabletop foot.
+  * **Flush Fastening & Tool Access:** Features DIN 7991 countersink seats (3.2 mm flange thickness matching bracket hardware) and Ø 8.5 mm rear counterbore wells for direct hex-key and screwdriver tool access.
+  * **Bolt-on Kickstand Legs:** Alternate rear triangular kickstand legs (`part=4`, `part=5`) for ultra-minimalist prop-up display.
+  * STLs: `3d_models/display_stand_cradle_single.stl`, `3d_models/display_stand_cradle_pair.stl`.
 * `rear_corner_foot.scad`: Outer corner leveling foot (3.0 mm) ensuring flush, wobble-free table placement across joined rear brackets.
 * `rear_joining_bracket_hinged.scad`: Heavy-duty hinged panel-to-panel joining bracket with 3D-printable snap pin (0° to 180° folding).
 * `7segment_pogo.scad`: Modular 7-segment digit housings with integrated magnetic pogo pin pockets, diffuser slots, and VESA 50x50 mounts.
 * `remote_strap_holder.scad`: Ergonomic clip for wearing the Xiaomi Shutter remote on a wristband or racket lanyard.
+* `games_sets_u_bracket.scad`: **Unified 3-Panel U-Profile Bridge Bracket** (continuous 84 mm rigid bridge spanning across the central Games & Sets module and both adjacent digits; U-profile channel clamps both the front face and rear backplate across all 4 M3 corner screw positions to permanently eliminate joint flexing and bending; integrated front-lip cutout provides full clearance for the frontplate "SETS" text; 100% support-free 3D printing; fits both top and bottom rims).
+  * STLs: `3d_models/games_sets_u_bracket.stl`, `3d_models/games_sets_u_bracket_pair.stl`.
+* `panel_seam_u_bracket.scad`: **2-Panel Digit Seam U-Profile Joining Bracket & Padel Court Hook** (rigid 28 mm U-channel bracket clamping across adjacent 7-segment digit panels [Digit 1 + Digit 2] or [Digit 3 + Digit 4] on a 12.0 mm screw pitch; straight square top corners):
+  * **Standard Clean U-Bracket** (`part=1`, `part=2`, `part=3`): Clamps top or bottom seam with zero support needed.
+  * **Extended Padel Mesh Hook Version** (`part=3`, `part=4`, `part=5`): Features an integrated front-facing mounting hook (Ø 5.6 mm throat for standard Ø 4.0 - 4.2 mm steel wire) with a 16.0 mm downward retention lip and 45° lead-in mouth. Hangs the scoreboard **safely behind** the 50x50 mm wire mesh of a padel court so incoming balls hit the metal wire rather than the display panels. Prints flat on its side for 100% tensile layer-line alignment and zero support material.
+  * STLs: `3d_models/panel_seam_u_bracket.stl`, `3d_models/panel_seam_u_hook_bracket.stl`, `3d_models/panel_seam_u_hook_bracket_pair.stl`, `3d_models/panel_seam_u_bracket_set4_hook.stl`.
 * `games_sets_pogo_snap_individual_dots.scad`: Middle module housing for the 24-LED column array.
 
 ---
