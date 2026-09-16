@@ -4,12 +4,19 @@
 // Mounts to standard 50x50 mm Padel Court Steel Wire Mesh & 7-Segment VESA Mount
 // =============================================================================
 
-// --- Configuration & Preview Toggles ---
-show_holder = true;           // Render the 3D-printable battery holder
-// --- Preview & Simulation Options ---
+// --- Configuration & Part Selection ---
+/* [Mounting Configuration] */
+mount_type = "vesa";          // ["vesa": Direct VESA 50x50 Screw Mount (No Hooks), "hooks": Dual Padel Wire Mesh Gravity Hooks, "both": Mesh Hooks + VESA Screw Holes]
+front_access_holes = true;    // Add 7.0mm screwdriver pass-through holes in front wall for top screws
+screw_style = "countersunk";  // ["countersunk": M3 DIN 7991 flush 90° cone, "counterbore": M3 socket/button head flat pocket]
+
+// --- Visibility & Preview Toggles ---
+/* [Preview & Simulation Options] */
+show_holder = true;            // Render the 3D-printable battery holder
 show_battery_preview = false;  // Show translucent Sitecom powerbank
-show_mesh_preview = false;     // Show 50x50 mm padel court wire mesh
-mesh_side = "front";          // "front" = horizontal wires facing holder; "opposite" = vertical wire facing holder
+show_mesh_preview = false;     // Show 50x50 mm padel court wire mesh (when mount_type includes hooks)
+show_backplate_preview = false;// Show 7-segment digit scoreboard backplate VESA mount section
+mesh_side = "front";           // ["front": horizontal wires facing holder, "opposite": vertical wire facing holder]
 
 // --- Powerbank Dimensions (Action Sitecom 3222798 20,000mAh) ---
 batt_w = 71.0;                // Battery physical width (71.0 mm)
@@ -39,9 +46,15 @@ hook_entry_width = 8.8;       // Wide 8.8 mm flared entry mouth for easy alignme
 hook_w = 14.0;                // Broad 14.0 mm wide hooks for superior strength & stability
 hook_offset_z = cradle_h - 10.0; // Top hook wire center level (75.0 mm above base)
 
-// --- VESA Mount Parameters (Optional direct scoreboard bolting) ---
-vesa_pitch = 0.0;            // 50x50 mm VESA mounting hole pattern
-m3_hole_dia = 0;            // M3 screw clearance diameter
+// --- VESA Mount Parameters (Direct scoreboard backplate bolting) ---
+vesa_pitch = 50.0;            // 50x50 mm VESA mounting hole pattern (standard MIS-D 50)
+vesa_z_center = 50.0;         // Pattern center height (holes at Z = 25.0mm and Z = 75.0mm)
+m3_hole_dia = 3.4;            // M3 screw clearance pass-through diameter (DIN ISO 273)
+cs_dia = 6.6;                 // M3 DIN 7991 countersink head diameter (90° cone flush with inner wall)
+cs_depth = 1.6;               // Countersink cone depth (1.6 mm)
+cb_dia = 6.5;                 // Counterbore pocket diameter for socket/button head
+cb_depth = 1.8;               // Counterbore pocket depth
+access_hole_dia = 7.0;        // Tool pass-through hole diameter for screwdriver shaft/head
 
 // =============================================================================
 // Helper Shapes
@@ -139,7 +152,10 @@ module padel_lower_stabilizer(width = hook_w) {
 // Main Battery Holder Module
 // =============================================================================
 
-module padel_battery_holder() {
+module padel_battery_holder(mount = mount_type) {
+    has_hooks = (mount == "hooks" || mount == "both");
+    has_vesa = (mount == "vesa" || mount == "both");
+
     difference() {
         union() {
             // 1. Main outer cradle body
@@ -148,15 +164,17 @@ module padel_battery_holder() {
             
             // 2. Dual Top Padel Mesh Gravity Hooks (Spaced 50 mm apart on X = +/- 25 mm)
             // Allows effortless sliding down over horizontal fence wire from the top
-            for (x = [-mesh_pitch/2, mesh_pitch/2]) {
-                translate([x, -outer_d/2, hook_offset_z])
-                    padel_wire_gravity_hook(hook_w, is_top = true);
-            }
-            
-            // 3. Lower Fence Mesh Stabilizers (Exactly 50 mm below top hooks)
-            for (x = [-mesh_pitch/2, mesh_pitch/2]) {
-                translate([x, -outer_d/2, hook_offset_z - mesh_pitch])
-                    padel_lower_stabilizer(hook_w);
+            if (has_hooks) {
+                for (x = [-mesh_pitch/2, mesh_pitch/2]) {
+                    translate([x, -outer_d/2, hook_offset_z])
+                        padel_wire_gravity_hook(hook_w, is_top = true);
+                }
+                
+                // 3. Lower Fence Mesh Stabilizers (Exactly 50 mm below top hooks)
+                for (x = [-mesh_pitch/2, mesh_pitch/2]) {
+                    translate([x, -outer_d/2, hook_offset_z - mesh_pitch])
+                        padel_lower_stabilizer(hook_w);
+                }
             }
             
             // 4. Integrated USB-C Cable Clip (Right side wall)
@@ -205,22 +223,45 @@ module padel_battery_holder() {
         translate([0, outer_d/2 - 2.0, cradle_h])
             rotate([35, 0, 0])
                 cube([outer_w + 2, 8, 8], center = true);
-/*
+
         // E. 4x VESA 50x50 mm M3 Screw Mounting Holes (through back wall)
-        // Allows direct bolting to scoreboard backplate if fence mounting is not used
-        for (x = [-vesa_pitch/2, vesa_pitch/2]) {
-            for (z = [hook_offset_z - mesh_pitch, hook_offset_z]) {
-                translate([x, -outer_d/2 - 5, z]) {
-                    rotate([-90, 0, 0]) {
-                        cylinder(h = wall_t + 10, r = m3_hole_dia/2, $fn = 24);
-                        // Countersink / socket head pocket on inside
-                        translate([0, 0, wall_t + 3.0])
-                            cylinder(h = 10, r = 3.2, $fn = 24);
+        // Allows direct bolting to scoreboard backplate
+        if (has_vesa) {
+            for (x = [-vesa_pitch/2, vesa_pitch/2]) {
+                for (z = [vesa_z_center - vesa_pitch/2, vesa_z_center + vesa_pitch/2]) {
+                    translate([x, -outer_d/2 - 0.1, z]) {
+                        rotate([-90, 0, 0]) {
+                            // M3 clearance shaft hole
+                            cylinder(h = wall_t + 0.5, d = m3_hole_dia, $fn = 30);
+                            
+                            if (screw_style == "countersunk") {
+                                // 90° countersink cone flush with the inside wall (M3 DIN 7991)
+                                translate([0, 0, wall_t + 0.1 - cs_depth])
+                                    cylinder(h = cs_depth + 0.05, d1 = m3_hole_dia, d2 = cs_dia, $fn = 30);
+                                // Ensure clean aperture into internal battery cavity
+                                translate([0, 0, wall_t + 0.1])
+                                    cylinder(h = 5.0, d = cs_dia, $fn = 30);
+                            } else {
+                                // Counterbore pocket for socket/button head
+                                translate([0, 0, wall_t + 0.1 - cb_depth])
+                                    cylinder(h = cb_depth + 5.0, d = cb_dia, $fn = 30);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Optional front wall screwdriver pass-through holes for top VESA screws
+            if (front_access_holes) {
+                for (x = [-vesa_pitch/2, vesa_pitch/2]) {
+                    translate([x, outer_d/2 - wall_t - 1.0, vesa_z_center + vesa_pitch/2]) {
+                        rotate([-90, 0, 0])
+                            cylinder(h = wall_t + 2.0, d = access_hole_dia, $fn = 30);
                     }
                 }
             }
         }
-        */
+
         // F. Drainage & Ventilation Slots in bottom floor
         for (x = [-24.0, 24.0]) {
             translate([x, 0, -0.1])
@@ -309,19 +350,43 @@ module padel_mesh_grid() {
     }
 }
 
+// 7-Segment Scoreboard Backplate VESA Section Simulation
+module backplate_vesa_preview() {
+    color([0.35, 0.38, 0.42, 0.7]) {
+        translate([0, -outer_d/2 - 2.75, vesa_z_center]) {
+            difference() {
+                // 5.5mm thick panel backplate section
+                cube([86.0, 5.5, 96.0], center = true);
+                // 4x M3 Brass Heat-Set Insert Holes (4.2mm dia for M3 insert)
+                for (x = [-vesa_pitch/2, vesa_pitch/2]) {
+                    for (z = [-vesa_pitch/2, vesa_pitch/2]) {
+                        translate([x, 0, z])
+                            rotate([90, 0, 0])
+                                cylinder(h = 6.0, d = 4.2, center = true, $fn = 24);
+                    }
+                }
+            }
+        }
+    }
+}
+
 // =============================================================================
 // Scene Render
 // =============================================================================
 
 if (show_holder) {
     color("#2563eb") // Vibrant Royal Blue finish
-        padel_battery_holder();
+        padel_battery_holder(mount = mount_type);
 }
 
 if (show_battery_preview) {
     sitecom_battery_model();
 }
 
-if (show_mesh_preview) {
+if (show_mesh_preview && (mount_type == "hooks" || mount_type == "both")) {
     padel_mesh_grid();
+}
+
+if (show_backplate_preview && (mount_type == "vesa" || mount_type == "both")) {
+    backplate_vesa_preview();
 }
