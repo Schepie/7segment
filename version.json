@@ -1,5 +1,5 @@
 {
-  "version": "1.4.1",
-  "buildTime": "2026-09-16T17:15:00Z",
-  "notes": "Dedicated Clock menu, reorganized navigation tabs, multi-mode counter suite, and automatic mobile update push system."
+  "version": "1.4.2",
+  "buildTime": "2026-09-16T17:55:00Z",
+  "notes": "Added QR codes for app installation and official Padel game rules to Info menu."
 }

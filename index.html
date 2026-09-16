@@ -1136,6 +1136,89 @@
             display: block;
             text-align: center;
         }
+
+        /* QR Code Cards for App & Game Rules */
+        .qr-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .qr-card {
+            background: rgba(8, 14, 26, 0.85);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 10px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .qr-card-title {
+            font-size: 10.5px;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .qr-image-wrapper {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 14px rgba(0, 210, 255, 0.25);
+            width: 100%;
+            max-width: 124px;
+            aspect-ratio: 1 / 1;
+        }
+
+        .qr-img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            border-radius: 2px;
+        }
+
+        .qr-card-desc {
+            font-size: 9.5px;
+            color: var(--text-muted);
+            line-height: 1.25;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-qr-link {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--team1-blue);
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            transition: all 0.15s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn-qr-link:active {
+            transform: scale(0.96);
+            background: rgba(0, 210, 255, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -1616,7 +1699,7 @@
             <div class="scroll-card">
                 <div class="section-header">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.1</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.2</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1630,6 +1713,32 @@
                         <button type="button" class="btn-tool-chip" id="btnClearAppCache" style="padding: 8px; font-weight: 700; color: var(--accent-gold);">
                             🧹 Reset Cache
                         </button>
+                    </div>
+                </div>
+
+                <!-- 2 QR Codes Requested: App URL & Game Rules URL -->
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>📷 Quick Scan QR Codes</span>
+                </div>
+                <div class="qr-cards-grid">
+                    <!-- 1. URL to this app -->
+                    <div class="qr-card">
+                        <div class="qr-card-title">📱 App URL</div>
+                        <div class="qr-image-wrapper">
+                            <img src="qr_app.png" alt="Padel Scoreboard App QR Code" class="qr-img">
+                        </div>
+                        <div class="qr-card-desc">Scan to launch or install scoreboard app</div>
+                        <a href="https://schepie.github.io/7segment/" target="_blank" class="btn-qr-link">Open App ↗</a>
+                    </div>
+
+                    <!-- 2. URL to the rules of the padel game -->
+                    <div class="qr-card">
+                        <div class="qr-card-title">📖 Padel Rules</div>
+                        <div class="qr-image-wrapper">
+                            <img src="qr_rules.png" alt="Padel Game Rules QR Code" class="qr-img">
+                        </div>
+                        <div class="qr-card-desc">Official padel rules & guidelines</div>
+                        <a href="https://www.tennisenpadelvlaanderen.be/padel/spelregels-padel" target="_blank" class="btn-qr-link">View Rules ↗</a>
                     </div>
                 </div>
 
@@ -2867,7 +2976,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.1';
+    const CURRENT_APP_VERSION = '1.4.2';
     let swRegistration = null;
 
     const updateBanner        = document.getElementById('updateBanner');

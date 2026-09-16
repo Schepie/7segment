@@ -1,5 +1,5 @@
 // Padel Scoreboard PWA Service Worker
-const APP_VERSION = 'v1.4.1';
+const APP_VERSION = 'v1.4.2';
 const CACHE_NAME = `padel-scoreboard-${APP_VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -11,7 +11,9 @@ const PRECACHE_ASSETS = [
   'favicon.ico',
   'apple-touch-icon.png',
   'icon-192.png',
-  'icon-512.png'
+  'icon-512.png',
+  'qr_app.png',
+  'qr_rules.png'
 ];
 
 // Install: Cache essential app assets
