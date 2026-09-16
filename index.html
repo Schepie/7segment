@@ -790,11 +790,11 @@
         /* Bottom Fixed Navigation Bar */
         .bottom-nav {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
             background: var(--bg-card);
             backdrop-filter: blur(16px);
-            padding: 4px;
+            padding: 4px 2px;
             border-radius: var(--radius-xl);
             border: 1px solid var(--bg-card-border);
             flex-shrink: 0;
@@ -807,8 +807,8 @@
             align-items: center;
             justify-content: center;
             gap: 2px;
-            padding: 8px 2px;
-            font-size: 10px;
+            padding: 6px 1px;
+            font-size: 9.5px;
             font-weight: 700;
             border-radius: var(--radius-md);
             border: none;
@@ -819,7 +819,7 @@
         }
 
         .bottom-nav-btn span.icon {
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .bottom-nav-btn.active {
@@ -832,16 +832,133 @@
             color: var(--team1-blue);
         }
 
+        .bottom-nav-btn.active[data-tab="rules"] {
+            color: var(--accent-green);
+        }
+
         .bottom-nav-btn.active[data-tab="counter"] {
             color: #00d2ff;
+        }
+
+        .bottom-nav-btn.active[data-tab="clock"] {
+            color: var(--clock-color, #00ff00);
         }
 
         .bottom-nav-btn.active[data-tab="display"] {
             color: var(--accent-gold);
         }
 
-        .bottom-nav-btn.active[data-tab="rules"] {
-            color: var(--accent-green);
+        .bottom-nav-btn.active[data-tab="info"] {
+            color: #b0c4de;
+        }
+
+        /* Floating Update Push Banner */
+        .update-banner {
+            position: absolute;
+            top: calc(8px + var(--safe-top));
+            left: 12px;
+            right: 12px;
+            max-width: 416px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(16, 32, 54, 0.96), rgba(8, 18, 32, 0.98));
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 210, 255, 0.25);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            z-index: 9999;
+            animation: slideDownUpdate 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideDownUpdate {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .update-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .update-banner-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            animation: pulseRocket 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseRocket {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px) rotate(5deg); }
+        }
+
+        .update-banner-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .update-banner-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.01em;
+        }
+
+        .update-banner-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .update-banner-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-update-now {
+            background: linear-gradient(135deg, #00d2ff, #0077ff);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 119, 255, 0.4);
+            transition: all 0.15s ease;
+        }
+
+        .btn-update-now:active {
+            transform: scale(0.95);
+        }
+
+        .btn-update-dismiss {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Counter Tab Specific Styles */
@@ -1025,6 +1142,21 @@
 
 <div class="mobile-shell">
 
+    <!-- Floating PWA Update Notification Banner -->
+    <div class="update-banner" id="updateBanner" style="display: none;">
+        <div class="update-banner-left">
+            <span class="update-banner-icon">🚀</span>
+            <div class="update-banner-info">
+                <div class="update-banner-title">New Update Available!</div>
+                <div class="update-banner-text" id="updateBannerText">Version v1.4.1 is ready.</div>
+            </div>
+        </div>
+        <div class="update-banner-actions">
+            <button type="button" class="btn-update-now" id="btnUpdateNow">Update Now</button>
+            <button type="button" class="btn-update-dismiss" id="btnUpdateDismiss">✕</button>
+        </div>
+    </div>
+
     <!-- Top Sleek Header -->
     <header class="app-header">
         <div class="brand-block">
@@ -1107,7 +1239,50 @@
         </div>
 
         <!-- ============================================ -->
-        <!-- TAB: COUNTER & TIMER MODES                   -->
+        <!-- TAB 2: MATCH RULES                           -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneRules">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>⚔️ Deuce (40-40) Rule</span>
+                </div>
+                <div class="pills-row" id="toggleGp">
+                    <button type="button" class="pill-select active" data-val="0">⚔️ Advantage</button>
+                    <button type="button" class="pill-select gp" data-val="1">⚡ Golden Point</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🏆 Match Length</span>
+                </div>
+                <div class="pills-row" id="toggleSets">
+                    <button type="button" class="pill-select" data-val="1">🥇 1 Set</button>
+                    <button type="button" class="pill-select active" data-val="2">🏆 Best of 3</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🎾 Games per Set</span>
+                </div>
+                <div class="pills-row" id="toggleGames">
+                    <button type="button" class="pill-select active" data-val="6">🎾 6 Games</button>
+                    <button type="button" class="pill-select" data-val="9">🚀 9 Games</button>
+                </div>
+
+                <div class="section-header" style="margin-top: 2px;">
+                    <span>🔥 Tiebreak at 6-6</span>
+                </div>
+                <div class="pills-row" id="toggleTb">
+                    <button type="button" class="pill-select active" data-val="1">🔥 Tiebreak ON</button>
+                    <button type="button" class="pill-select" data-val="0">🚫 Advantage</button>
+                </div>
+
+                <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled>
+                    <span>💾 Save Rules to Scoreboard</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB 3: COUNTER & TIMER MODES                 -->
         <!-- ============================================ -->
         <div class="tab-pane" id="paneCounter">
             <div class="scroll-card">
@@ -1268,38 +1443,24 @@
         </div>
 
         <!-- ============================================ -->
-        <!-- TAB 2: DISPLAY SETTINGS                      -->
+        <!-- TAB 4: CLOCK & RTC SETTINGS                  -->
         <!-- ============================================ -->
-        <div class="tab-pane" id="paneDisplay">
+        <div class="tab-pane" id="paneClock">
             <div class="scroll-card">
+
                 <div class="section-header">
-                    <span>☀️ LED Brightness</span>
-                    <span style="font-family: 'JetBrains Mono'; color: var(--accent-gold);" id="brightnessValBadge">70% (180)</span>
+                    <span>🕒 Scoreboard Display Mode</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" class="btn-tool-chip" id="btnSwitchToClockMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 255, 0, 0.4); color: var(--clock-color, #00ff00);">
+                        <span>🕒 Clock Mode</span>
+                    </button>
+                    <button type="button" class="btn-tool-chip" id="btnSwitchToScoreMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 210, 255, 0.4); color: var(--team1-blue);">
+                        <span>🎾 Score Mode</span>
+                    </button>
                 </div>
 
-                <div class="slider-wrap">
-                    <input type="range" id="sliderBrightness" min="20" max="255" value="180" step="5">
-                    <div class="pills-row">
-                        <button type="button" class="pill-select" data-brt="255">☀️ 100%</button>
-                        <button type="button" class="pill-select active" data-brt="180">🏸 70%</button>
-                        <button type="button" class="pill-select" data-brt="75">🌙 30%</button>
-                        <button type="button" class="pill-select" data-brt="35">🔋 15%</button>
-                    </div>
-                </div>
-
-                <div class="section-header" style="margin-top: 4px;">
-                    <span>⏱️ Inactivity Auto-Sleep</span>
-                </div>
-                <div class="pills-row" id="pillsIdleTimeout">
-                    <button type="button" class="pill-select" data-idle="60000">1 Min</button>
-                    <button type="button" class="pill-select" data-idle="180000">3 Min</button>
-                    <button type="button" class="pill-select active" data-idle="300000">5 Min</button>
-                    <button type="button" class="pill-select" data-idle="600000">10 Min</button>
-                    <button type="button" class="pill-select" data-idle="900000">15 Min</button>
-                    <button type="button" class="pill-select" data-idle="0">Never</button>
-                </div>
-
-                <div class="section-header" style="margin-top: 4px;">
+                <div class="section-header" style="margin-top: 6px;">
                     <span>🕒 Phone Clock Sync (RTC)</span>
                 </div>
                 <div class="clock-card">
@@ -1395,6 +1556,44 @@
                     </div>
                 </div>
 
+                <button type="button" class="btn-save-gold" id="btnSaveClock" disabled style="margin-top: 8px;">
+                    <span>💾 Save Clock Settings</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- TAB 5: DISPLAY SETTINGS                      -->
+        <!-- ============================================ -->
+        <div class="tab-pane" id="paneDisplay">
+            <div class="scroll-card">
+                <div class="section-header">
+                    <span>☀️ LED Brightness</span>
+                    <span style="font-family: 'JetBrains Mono'; color: var(--accent-gold);" id="brightnessValBadge">70% (180)</span>
+                </div>
+
+                <div class="slider-wrap">
+                    <input type="range" id="sliderBrightness" min="20" max="255" value="180" step="5">
+                    <div class="pills-row">
+                        <button type="button" class="pill-select" data-brt="255">☀️ 100%</button>
+                        <button type="button" class="pill-select active" data-brt="180">🏸 70%</button>
+                        <button type="button" class="pill-select" data-brt="75">🌙 30%</button>
+                        <button type="button" class="pill-select" data-brt="35">🔋 15%</button>
+                    </div>
+                </div>
+
+                <div class="section-header" style="margin-top: 4px;">
+                    <span>⏱️ Inactivity Auto-Sleep</span>
+                </div>
+                <div class="pills-row" id="pillsIdleTimeout">
+                    <button type="button" class="pill-select" data-idle="60000">1 Min</button>
+                    <button type="button" class="pill-select" data-idle="180000">3 Min</button>
+                    <button type="button" class="pill-select active" data-idle="300000">5 Min</button>
+                    <button type="button" class="pill-select" data-idle="600000">10 Min</button>
+                    <button type="button" class="pill-select" data-idle="900000">15 Min</button>
+                    <button type="button" class="pill-select" data-idle="0">Never</button>
+                </div>
+
                 <div class="section-header" style="margin-top: 6px;">
                     <span>💡 Display Hardware Layout</span>
                 </div>
@@ -1411,54 +1610,30 @@
         </div>
 
         <!-- ============================================ -->
-        <!-- TAB 3: MATCH RULES                           -->
-        <!-- ============================================ -->
-        <div class="tab-pane" id="paneRules">
-            <div class="scroll-card">
-                <div class="section-header">
-                    <span>⚔️ Deuce (40-40) Rule</span>
-                </div>
-                <div class="pills-row" id="toggleGp">
-                    <button type="button" class="pill-select active" data-val="0">⚔️ Advantage</button>
-                    <button type="button" class="pill-select gp" data-val="1">⚡ Golden Point</button>
-                </div>
-
-                <div class="section-header" style="margin-top: 2px;">
-                    <span>🏆 Match Length</span>
-                </div>
-                <div class="pills-row" id="toggleSets">
-                    <button type="button" class="pill-select" data-val="1">🥇 1 Set</button>
-                    <button type="button" class="pill-select active" data-val="2">🏆 Best of 3</button>
-                </div>
-
-                <div class="section-header" style="margin-top: 2px;">
-                    <span>🎾 Games per Set</span>
-                </div>
-                <div class="pills-row" id="toggleGames">
-                    <button type="button" class="pill-select active" data-val="6">🎾 6 Games</button>
-                    <button type="button" class="pill-select" data-val="9">🚀 9 Games</button>
-                </div>
-
-                <div class="section-header" style="margin-top: 2px;">
-                    <span>🔥 Tiebreak at 6-6</span>
-                </div>
-                <div class="pills-row" id="toggleTb">
-                    <button type="button" class="pill-select active" data-val="1">🔥 Tiebreak ON</button>
-                    <button type="button" class="pill-select" data-val="0">🚫 Advantage</button>
-                </div>
-
-                <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled>
-                    <span>💾 Save Rules to Scoreboard</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ============================================ -->
-        <!-- TAB 4: INFO & LOG                            -->
+        <!-- TAB 6: INFO & APP UPDATES                    -->
         <!-- ============================================ -->
         <div class="tab-pane" id="paneInfo">
             <div class="scroll-card">
                 <div class="section-header">
+                    <span>📲 App Version & Updates</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.1</span>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 11px; color: var(--text-muted);">PWA Auto-Update Status:</span>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--accent-green);" id="appUpdateStatusText">Up to date</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        <button type="button" class="btn-tool-chip" id="btnCheckAppUpdate" style="padding: 8px; font-weight: 700;">
+                            🔄 Check Updates
+                        </button>
+                        <button type="button" class="btn-tool-chip" id="btnClearAppCache" style="padding: 8px; font-weight: 700; color: var(--accent-gold);">
+                            🧹 Reset Cache
+                        </button>
+                    </div>
+                </div>
+
+                <div class="section-header" style="margin-top: 6px;">
                     <span>📱 Zero-Server Court Setup</span>
                 </div>
                 <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
@@ -1468,7 +1643,7 @@
                     https://schepie.github.io/7segment/
                 </a>
                 <p style="font-size: 11px; color: var(--text-sub); line-height: 1.4;">
-                    💡 Tap menu (⋮) ➔ <strong>"Add to Home screen"</strong> to install as a full-screen app on your phone!
+                    💡 Tap browser menu (⋮) ➔ <strong>"Add to Home screen"</strong> to install as a native offline PWA on iOS or Android!
                 </p>
 
                 <div class="section-header" style="margin-top: 6px;">
@@ -1488,17 +1663,21 @@
             <span class="icon">🎾</span>
             <span>Court</span>
         </button>
+        <button type="button" class="bottom-nav-btn" data-tab="rules" id="navRules">
+            <span class="icon">⚙️</span>
+            <span>Rules</span>
+        </button>
         <button type="button" class="bottom-nav-btn" data-tab="counter" id="navCounter">
             <span class="icon">⏱️</span>
             <span>Counter</span>
         </button>
+        <button type="button" class="bottom-nav-btn" data-tab="clock" id="navClock">
+            <span class="icon">🕒</span>
+            <span>Clock</span>
+        </button>
         <button type="button" class="bottom-nav-btn" data-tab="display" id="navDisplay">
             <span class="icon">💡</span>
             <span>Display</span>
-        </button>
-        <button type="button" class="bottom-nav-btn" data-tab="rules" id="navRules">
-            <span class="icon">⚙️</span>
-            <span>Rules</span>
         </button>
         <button type="button" class="bottom-nav-btn" data-tab="info" id="navInfo">
             <span class="icon">📋</span>
@@ -1565,6 +1744,9 @@
     const localTimeDisplay   = document.getElementById('localTimeDisplay');
     const btnSaveConfig      = document.getElementById('btnSaveConfig');
     const btnSaveDisplay     = document.getElementById('btnSaveDisplay');
+    const btnSaveClock       = document.getElementById('btnSaveClock');
+    const btnSwitchToClockMode = document.getElementById('btnSwitchToClockMode');
+    const btnSwitchToScoreMode = document.getElementById('btnSwitchToScoreMode');
     const pickerClockColor   = document.getElementById('pickerClockColor');
     const clockColorHexBadge = document.getElementById('clockColorHexBadge');
     const customColorCircle  = document.getElementById('customColorCircle');
@@ -1576,13 +1758,14 @@
     const satValBadge        = document.getElementById('satValBadge');
     const consoleBox         = document.getElementById('consoleBox');
 
-    // Bottom Navigation Bar Switching
+    // Bottom Navigation Bar Switching (6 Dedicated Tabs)
     const navButtons = document.querySelectorAll('.bottom-nav-btn');
     const tabPanes   = {
         court: document.getElementById('paneCourt'),
-        counter: document.getElementById('paneCounter'),
-        display: document.getElementById('paneDisplay'),
         rules: document.getElementById('paneRules'),
+        counter: document.getElementById('paneCounter'),
+        clock: document.getElementById('paneClock'),
+        display: document.getElementById('paneDisplay'),
         info: document.getElementById('paneInfo')
     };
 
@@ -1706,6 +1889,9 @@
         btnSyncTime.disabled = false;
         btnSaveConfig.disabled = false;
         if (btnSaveDisplay) btnSaveDisplay.disabled = false;
+        if (btnSaveClock) btnSaveClock.disabled = false;
+        if (btnSwitchToClockMode) btnSwitchToClockMode.disabled = false;
+        if (btnSwitchToScoreMode) btnSwitchToScoreMode.disabled = false;
 
         // Trigger config fetch
         watchChar.readValue().catch(() => {});
@@ -1724,6 +1910,9 @@
         btnSyncTime.disabled = true;
         btnSaveConfig.disabled = true;
         if (btnSaveDisplay) btnSaveDisplay.disabled = true;
+        if (btnSaveClock) btnSaveClock.disabled = true;
+        if (btnSwitchToClockMode) btnSwitchToClockMode.disabled = true;
+        if (btnSwitchToScoreMode) btnSwitchToScoreMode.disabled = true;
 
         watchChar = null;
         log('Device disconnected', 'err');
@@ -2207,31 +2396,18 @@
     setClockColorUI(appConfig.clockColor, false, true);
 
     // -------------------------------------------------------------
-    // Send Settings & Rules to ESP32 Flash
+    // Save Handlers for Rules, Display, and Clock Tabs
     // -------------------------------------------------------------
-    async function sendBleConfig() {
-        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
-        try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
-
+    async function sendBleRules() {
+        if (!watchChar) {
+            alert('Scoreboard not connected via Bluetooth.');
+            return;
+        }
         if (btnSaveConfig) {
             btnSaveConfig.disabled = true;
             btnSaveConfig.textContent = 'Saving...';
         }
-        if (btnSaveDisplay) {
-            btnSaveDisplay.disabled = true;
-            btnSaveDisplay.textContent = 'Saving...';
-        }
-
-        // 1. Send dedicated color command first (fits safely in single MTU 23 packet)
-        const colOk = await sendBleText(`CMD,COL,${colStr}`);
-
-        // 2. Send dedicated brightness command (CFG,BRT= is compatible with all firmwares)
-        const brtOk = await sendBleText(`CFG,BRT=${appConfig.brt}`);
-
-        // 3. Send dedicated layout command
-        await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
-
-        // 4. Send match rules configuration WITH BRT included
+        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
         const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
         const cfgOk = await sendBleText(rulesPayload);
 
@@ -2239,22 +2415,94 @@
             btnSaveConfig.disabled = false;
             btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
         }
+        if (cfgOk) {
+            log(`Rules saved: GP=${appConfig.gp}, Sets=${appConfig.sets}, Games=${appConfig.games}, TB=${appConfig.tb}`, 'suc');
+            alert('✓ Match rules successfully saved to Scoreboard Flash!');
+        } else {
+            alert('Failed to send rules. Check Bluetooth connection.');
+        }
+    }
+
+    async function sendBleDisplaySettings() {
+        try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
+        if (!watchChar) {
+            alert('Scoreboard not connected. Layout preference saved locally on phone.');
+            return;
+        }
+        if (btnSaveDisplay) {
+            btnSaveDisplay.disabled = true;
+            btnSaveDisplay.textContent = 'Saving...';
+        }
+        const brtOk = await sendBleText(`CFG,BRT=${appConfig.brt}`);
+        await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
+        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
+        const fullPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+        const cfgOk = await sendBleText(fullPayload);
+
         if (btnSaveDisplay) {
             btnSaveDisplay.disabled = false;
             btnSaveDisplay.innerHTML = '<span>💾 Save Display Settings</span>';
         }
-        if (colOk || brtOk || cfgOk) {
+        if (brtOk || cfgOk) {
             const pct = Math.round((appConfig.brt / 255) * 100);
-            log(`Config saved: BRT=${appConfig.brt} (${pct}%), COL=${colStr}`, 'suc');
-            alert(`✓ Rules and Display settings (Brightness: ${pct}%, Color: ${colStr}) saved to Scoreboard Flash!`);
+            log(`Display saved: BRT=${appConfig.brt} (${pct}%), LAY=${appConfig.layout}`, 'suc');
+            alert(`✓ Display settings (Brightness: ${pct}%, Layout: ${appConfig.layout}) saved to Scoreboard Flash!`);
         } else {
-            alert('Failed to send settings. Check Bluetooth connection.');
+            alert('Failed to send display settings. Check Bluetooth connection.');
         }
     }
 
-    btnSaveConfig.addEventListener('click', sendBleConfig);
-    if (btnSaveDisplay) {
-        btnSaveDisplay.addEventListener('click', sendBleConfig);
+    async function sendBleClockSettings() {
+        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
+        try { localStorage.setItem('padel_clock_color', colStr); } catch(e) {}
+        if (!watchChar) {
+            alert(`Clock digit color (${colStr}) saved locally on phone.`);
+            return;
+        }
+        if (btnSaveClock) {
+            btnSaveClock.disabled = true;
+            btnSaveClock.textContent = 'Saving...';
+        }
+        const colOk = await sendBleText(`CMD,COL,${colStr}`);
+        const fullPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+        await sendBleText(fullPayload);
+
+        if (btnSaveClock) {
+            btnSaveClock.disabled = false;
+            btnSaveClock.innerHTML = '<span>💾 Save Clock Settings</span>';
+        }
+        if (colOk) {
+            log(`Clock settings saved: Color=${colStr}`, 'suc');
+            alert(`✓ Clock digit color (${colStr}) saved to Scoreboard Flash!`);
+        } else {
+            alert('Failed to send clock settings. Check Bluetooth connection.');
+        }
+    }
+
+    if (btnSaveConfig) btnSaveConfig.addEventListener('click', sendBleRules);
+    if (btnSaveDisplay) btnSaveDisplay.addEventListener('click', sendBleDisplaySettings);
+    if (btnSaveClock) btnSaveClock.addEventListener('click', sendBleClockSettings);
+
+    if (btnSwitchToClockMode) {
+        btnSwitchToClockMode.addEventListener('click', () => {
+            sendBleText('CMD,CLOCK');
+            boardState.currentMode = 'CLOCK';
+            if (displayModeBadge) {
+                displayModeBadge.textContent = 'CLOCK';
+                displayModeBadge.style.color = 'var(--accent-gold)';
+            }
+        });
+    }
+
+    if (btnSwitchToScoreMode) {
+        btnSwitchToScoreMode.addEventListener('click', () => {
+            sendBleText('CMD,SCORE');
+            boardState.currentMode = 'SCORE';
+            if (displayModeBadge) {
+                displayModeBadge.textContent = 'SCORE';
+                displayModeBadge.style.color = 'var(--accent-green)';
+            }
+        });
     }
 
     // -------------------------------------------------------------
@@ -2615,6 +2863,157 @@
             alert(`✓ Scoreboard clock synced to ${h}:${m}:${s}!`);
         }
     });
+
+    // -------------------------------------------------------------
+    // PWA Service Worker & Real-Time Push Update Manager
+    // -------------------------------------------------------------
+    const CURRENT_APP_VERSION = '1.4.1';
+    let swRegistration = null;
+
+    const updateBanner        = document.getElementById('updateBanner');
+    const updateBannerText    = document.getElementById('updateBannerText');
+    const btnUpdateNow        = document.getElementById('btnUpdateNow');
+    const btnUpdateDismiss    = document.getElementById('btnUpdateDismiss');
+    const btnCheckAppUpdate   = document.getElementById('btnCheckAppUpdate');
+    const btnClearAppCache    = document.getElementById('btnClearAppCache');
+    const appUpdateStatusText = document.getElementById('appUpdateStatusText');
+
+    function showUpdatePrompt(newVer, notes) {
+        if (updateBannerText) {
+            updateBannerText.textContent = notes ? `v${newVer}: ${notes}` : `Version v${newVer} is ready to install.`;
+        }
+        if (updateBanner) {
+            updateBanner.style.display = 'flex';
+        }
+        if (appUpdateStatusText) {
+            appUpdateStatusText.textContent = `Update available (v${newVer})`;
+            appUpdateStatusText.style.color = 'var(--accent-gold)';
+        }
+    }
+
+    async function checkAppVersion(isManual = false) {
+        try {
+            if (isManual && appUpdateStatusText) {
+                appUpdateStatusText.textContent = 'Checking server...';
+            }
+            const res = await fetch(`version.json?_t=${Date.now()}`, { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.version && data.version !== CURRENT_APP_VERSION) {
+                    showUpdatePrompt(data.version, data.notes);
+                    if (isManual) {
+                        alert(`New version v${data.version} is available! Tap "Update Now" on the banner to apply.`);
+                    }
+                    return true;
+                } else if (isManual) {
+                    if (appUpdateStatusText) {
+                        appUpdateStatusText.textContent = `Up to date (v${CURRENT_APP_VERSION})`;
+                        appUpdateStatusText.style.color = 'var(--accent-green)';
+                    }
+                    alert(`✓ You are already on the latest version (v${CURRENT_APP_VERSION}).`);
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to check version.json:', err);
+            if (isManual) alert('Could not reach update server. Please check your internet connection.');
+        }
+        return false;
+    }
+
+    async function applyAppUpdate() {
+        if (btnUpdateNow) {
+            btnUpdateNow.disabled = true;
+            btnUpdateNow.textContent = 'Updating...';
+        }
+        try {
+            if (swRegistration && swRegistration.waiting) {
+                swRegistration.waiting.postMessage({ type: 'SKIP_WAITING', action: 'skipWaiting' });
+            }
+            if ('caches' in window) {
+                const cacheKeys = await caches.keys();
+                await Promise.all(cacheKeys.map(k => caches.delete(k)));
+            }
+        } catch (e) {
+            console.warn('Cache clearing error:', e);
+        }
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
+    }
+
+    if (btnUpdateNow) {
+        btnUpdateNow.addEventListener('click', applyAppUpdate);
+    }
+
+    if (btnUpdateDismiss) {
+        btnUpdateDismiss.addEventListener('click', () => {
+            if (updateBanner) updateBanner.style.display = 'none';
+        });
+    }
+
+    if (btnCheckAppUpdate) {
+        btnCheckAppUpdate.addEventListener('click', () => {
+            if (swRegistration) swRegistration.update();
+            checkAppVersion(true);
+        });
+    }
+
+    if (btnClearAppCache) {
+        btnClearAppCache.addEventListener('click', async () => {
+            if (confirm('Clear all offline caches and force-reload latest version from server?')) {
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                }
+                if (swRegistration) {
+                    await swRegistration.unregister();
+                }
+                window.location.reload();
+            }
+        });
+    }
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+            .then((reg) => {
+                swRegistration = reg;
+                console.log('PWA Service Worker registered:', reg.scope);
+
+                if (reg.waiting) {
+                    showUpdatePrompt('Latest', 'New version ready to activate.');
+                }
+
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdatePrompt('Latest', 'New version downloaded in background.');
+                            }
+                        });
+                    }
+                });
+
+                // Auto-check every 15 minutes
+                setInterval(() => {
+                    reg.update();
+                    checkAppVersion(false);
+                }, 15 * 60 * 1000);
+            })
+            .catch((err) => {
+                console.warn('Service worker registration failed:', err);
+            });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if (swRegistration) swRegistration.update();
+                checkAppVersion(false);
+            }
+        });
+    }
+
+    // Initial background check
+    setTimeout(() => checkAppVersion(false), 2000);
 
 </script>
 </body>
