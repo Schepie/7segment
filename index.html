@@ -1821,18 +1821,6 @@
         <div class="tab-pane" id="paneClock">
             <div class="scroll-card">
 
-                <div class="section-header">
-                    <span>🕒 Scoreboard Display Mode</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button type="button" class="btn-tool-chip" id="btnSwitchToClockMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 255, 0, 0.4); color: var(--clock-color, #00ff00);">
-                        <span>🕒 Clock Mode</span>
-                    </button>
-                    <button type="button" class="btn-tool-chip" id="btnSwitchToScoreMode" style="padding: 10px; font-weight: 800; border-color: rgba(0, 210, 255, 0.4); color: var(--team1-blue);">
-                        <span>🎾 Score Mode</span>
-                    </button>
-                </div>
-
                 <div class="section-header" style="margin-top: 6px;">
                     <span>🕒 Phone Clock Sync (RTC)</span>
                 </div>
@@ -2196,6 +2184,8 @@
             sendBleText('CMD,CTR,GET');
         } else if (target === 'court') {
             sendBleText('CMD,SCORE');
+        } else if (target === 'clock') {
+            sendBleText('CMD,CLOCK');
         }
     }
 
