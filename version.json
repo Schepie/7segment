@@ -1,5 +1,5 @@
 {
-  "version": "1.4.7",
-  "buildTime": "2026-09-16T23:00:00Z",
-  "notes": "Combined dark/light theme switcher in Info tab."
+  "buildTime": "2026-09-17T09:00:00Z",
+  "notes": "Clock tab now directly activates clock mode; removed Scoreboard Display Mode toggle.",
+  "version": "1.4.8"
 }
