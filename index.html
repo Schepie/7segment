@@ -1999,6 +1999,8 @@
                         <span style="font-size: 11px; color: var(--text-muted);">PWA Auto-Update Status:</span>
                         <span style="font-size: 11px; font-weight: 700; color: var(--accent-green);" id="appUpdateStatusText">Up to date</span>
                     </div>
+                    <div id="appReleaseNotes" style="font-size: 11px; color: var(--text-muted); line-height: 1.5; padding: 6px 8px; background: rgba(255,255,255,0.04); border-radius: var(--radius-sm); display: none;">
+                    </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                         <button type="button" class="btn-tool-chip" id="btnCheckAppUpdate" style="padding: 8px; font-weight: 700;">
                             🔄 Check Updates
@@ -3441,7 +3443,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.8';
+    const CURRENT_APP_VERSION = '1.4.9';
     let swRegistration = null;
     let isRefreshing = false;
 
@@ -3488,6 +3490,14 @@
             const res = await fetch(`version.json?_t=${Date.now()}`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
+
+                // Always show the release notes for the fetched version
+                const notesEl = document.getElementById('appReleaseNotes');
+                if (notesEl && data.notes) {
+                    notesEl.textContent = `📝 v${data.version}: ${data.notes}`;
+                    notesEl.style.display = 'block';
+                }
+
                 if (data && data.version && data.version !== CURRENT_APP_VERSION) {
                     showUpdatePrompt(data.version, data.notes);
                     if (isManual) {

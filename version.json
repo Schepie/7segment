@@ -1,5 +1,6 @@
 {
-  "buildTime": "2026-09-17T09:00:00Z",
-  "notes": "Clock tab now directly activates clock mode; removed Scoreboard Display Mode toggle.",
-  "version": "1.4.8"
+  "buildTime": "2026-09-20T11:58:00Z",
+  "notes": "Team swap fixed: scoring buttons now respect swap state; button labels update on swap; remote long press (1500ms) triggers court side swap.",
+  "version": "1.4.9"
 }
+
