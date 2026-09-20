@@ -269,6 +269,13 @@ volatile RemoteButton lastPressedButton = BUTTON_NONE;
 volatile uint32_t lastPressTime = 0;
 volatile bool pendingSingleClick = false;
 
+// Long press detection (>= 1500ms held = trigger SWAP)
+#define LONG_PRESS_MS 1500
+volatile uint32_t buttonDownTime = 0;     // millis() when button was first pressed
+volatile bool     buttonIsDown = false;   // true while physical button is held
+volatile bool     longPressConsumed = false; // prevents single-click firing after a long press
+bool triggerSwapAction = false;           // set true to trigger swap in main loop
+
 // BLE Central State & Persistent Pairing
 Preferences prefs;
 String savedRemoteMac = "";
@@ -2551,19 +2558,43 @@ void onHIDNotification(NimBLERemoteCharacteristic* pChar, uint8_t* pData, size_t
   for (size_t i = 0; i < length; i++) Serial.printf("0x%02X ", pData[i]);
   Serial.println();
 
-  // Xiaomi XYLY01 remote report bytes
-  if (pData[0] & 0x40) {
-    Serial.println("[HID] -> Big Button (Team 1)");
-    handleButtonPress(BUTTON_BIG);
-    return;
-  }
-  if (pData[0] & 0x80) {
-    Serial.println("[HID] -> Small Button (Team 2)");
-    handleButtonPress(BUTTON_SMALL);
+  // ── Button RELEASE detection ──────────────────────────────────────────────
+  // The Xiaomi XYLY01 sends 0x00 when all buttons are released.
+  // Use this to finalise long-press vs normal-press classification.
+  bool allZero = true;
+  for (size_t i = 0; i < length; i++) { if (pData[i] != 0) { allZero = false; break; } }
+  if (allZero && buttonIsDown) {
+    uint32_t heldMs = millis() - buttonDownTime;
+    buttonIsDown = false;
+    if (!longPressConsumed) {
+      // Short release: treat as normal button press
+      handleButtonPress(lastPressedButton);
+    } else {
+      // Long press was already consumed in the loop — swallow this release
+      longPressConsumed = false;
+    }
     return;
   }
 
-  // Consumer Control report (Volume Up/Down, Shutter)
+  // Xiaomi XYLY01 remote report bytes
+  if (pData[0] & 0x40) {
+    Serial.println("[HID] -> Big Button (Team 1) PRESSED");
+    buttonDownTime = millis();
+    buttonIsDown = true;
+    longPressConsumed = false;
+    lastPressedButton = BUTTON_BIG;
+    return; // defer action to release or long-press proactive check
+  }
+  if (pData[0] & 0x80) {
+    Serial.println("[HID] -> Small Button (Team 2) PRESSED");
+    buttonDownTime = millis();
+    buttonIsDown = true;
+    longPressConsumed = false;
+    lastPressedButton = BUTTON_SMALL;
+    return; // defer action to release or long-press proactive check
+  }
+
+  // Consumer Control report (Volume Up/Down, Shutter) — fire immediately (no release event)
   if (pData[0] == 0x01 || pData[0] == 0xE9) {
     Serial.println("[HID] -> Button 1 (Shutter/VolUp -> Team 1)");
     handleButtonPress(BUTTON_BIG);
@@ -2575,7 +2606,7 @@ void onHIDNotification(NimBLERemoteCharacteristic* pChar, uint8_t* pData, size_t
     return;
   }
 
-  // Standard keyboard report (Enter / Space)
+  // Standard keyboard report (Enter / Space) — fire immediately
   if (length >= 3 && pData[2] != 0) {
     uint8_t key = pData[2];
     Serial.printf("[HID] -> Keyboard Key: 0x%02X\n", key);
@@ -2964,6 +2995,17 @@ void loop() {
 #endif
   }
 
+  // ── Long-press proactive check (fires while button is still held) ─────────
+  // If a button has been held for >= LONG_PRESS_MS without being released yet,
+  // consume it as a swap now (don't wait for release). Cancel any pending single-click.
+  if (buttonIsDown && !longPressConsumed && (millis() - buttonDownTime >= LONG_PRESS_MS)) {
+    longPressConsumed = true;     // suppress the eventual release from adding a point
+    pendingSingleClick = false;   // cancel any in-flight single-click
+    triggerSwapAction = true;
+    Serial.printf("[LONG-PRESS] Button held %lums -> triggering SWAP\n",
+                  (unsigned long)(millis() - buttonDownTime));
+  }
+
   // Handle single-click expiration (380ms timeout)
   if (pendingSingleClick && (millis() - lastPressTime >= 380)) {
     pendingSingleClick = false;
@@ -3028,6 +3070,26 @@ void loop() {
       } else {
         Serial.println("[BUTTON] Undo pressed, but no history available");
       }
+    }
+  }
+
+  // Handle Long-press SWAP (triggered by holding a remote button for >= 1500ms)
+  if (triggerSwapAction) {
+    triggerSwapAction = false;
+    lastActivityTime = millis();
+    if (currentMode == MODE_SCOREBOARD) {
+      Serial.println("[LONG-PRESS] Triggering SWAP of court sides!");
+      currentCourtSwapped = !currentCourtSwapped;
+      animateCourtSideSwap(currentCourtSwapped);
+      notifyWatchScore();
+      scoreNeedsUpdate = true;
+    } else if (currentMode == MODE_CLOCK) {
+      // Long press in clock mode: wake to scoreboard with swap
+      currentMode = MODE_SCOREBOARD;
+      currentCourtSwapped = !currentCourtSwapped;
+      animateCourtSideSwap(currentCourtSwapped);
+      notifyWatchScore();
+      scoreNeedsUpdate = true;
     }
   }
 

@@ -638,6 +638,7 @@
 
         input[type="range"] {
             -webkit-appearance: none;
+            appearance: none;
             width: 100%;
             height: 8px;
             border-radius: 99px;
@@ -648,6 +649,7 @@
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
+            appearance: none;
             width: 24px;
             height: 24px;
             border-radius: 50%;
@@ -1542,11 +1544,11 @@
             <div class="scoring-hero">
                 <button type="button" class="btn-giant-score t1" id="btnPointT1" disabled>
                     <span class="giant-plus">+1</span>
-                    <span class="giant-team-title">TEAM 1</span>
+                    <span class="giant-team-title" id="btnPointT1Label">TEAM 1</span>
                 </button>
                 <button type="button" class="btn-giant-score t2" id="btnPointT2" disabled>
                     <span class="giant-plus">+1</span>
-                    <span class="giant-team-title">TEAM 2</span>
+                    <span class="giant-team-title" id="btnPointT2Label">TEAM 2</span>
                 </button>
             </div>
 
@@ -2438,18 +2440,28 @@
     }
 
     function renderMirrorUI() {
+        const btnT1Label = document.getElementById('btnPointT1Label');
+        const btnT2Label = document.getElementById('btnPointT2Label');
         if (!boardState.isSwapped) {
             digitT1.textContent = boardState.t1Point;
             digitT2.textContent = boardState.t2Point;
             ladderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
             ladderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
             courtSideText.textContent = '↔️ L: Team 1 (Blue) | R: Team 2 (Red)';
+            if (btnT1Label) btnT1Label.textContent = 'TEAM 1';
+            if (btnT2Label) btnT2Label.textContent = 'TEAM 2';
+            if (btnPointT1) { btnPointT1.classList.remove('t2'); btnPointT1.classList.add('t1'); }
+            if (btnPointT2) { btnPointT2.classList.remove('t1'); btnPointT2.classList.add('t2'); }
         } else {
             digitT1.textContent = boardState.t2Point;
             digitT2.textContent = boardState.t1Point;
             ladderGames.textContent = `${boardState.t2Games} - ${boardState.t1Games}`;
             ladderSets.textContent  = `${boardState.t2Sets} - ${boardState.t1Sets}`;
             courtSideText.textContent = '↔️ L: Team 2 (Red) | R: Team 1 (Blue)';
+            if (btnT1Label) btnT1Label.textContent = 'TEAM 2';
+            if (btnT2Label) btnT2Label.textContent = 'TEAM 1';
+            if (btnPointT1) { btnPointT1.classList.remove('t1'); btnPointT1.classList.add('t2'); }
+            if (btnPointT2) { btnPointT2.classList.remove('t2'); btnPointT2.classList.add('t1'); }
         }
 
         if (boardState.tbIntro) {
@@ -2516,10 +2528,16 @@
     // -------------------------------------------------------------
     // Court Remote Buttons
     // -------------------------------------------------------------
-    btnPointT1.addEventListener('click', () => sendBleText('CMD,P1'));
-    btnPointT2.addEventListener('click', () => sendBleText('CMD,P2'));
+    // Scoring buttons respect swap state: left button always scores the team currently on the left side
+    btnPointT1.addEventListener('click', () => sendBleText(boardState.isSwapped ? 'CMD,P2' : 'CMD,P1'));
+    btnPointT2.addEventListener('click', () => sendBleText(boardState.isSwapped ? 'CMD,P1' : 'CMD,P2'));
     btnCmdUndo.addEventListener('click', () => sendBleText('CMD,UNDO'));
-    btnCmdSwap.addEventListener('click', () => sendBleText('CMD,SWAP'));
+    btnCmdSwap.addEventListener('click', () => {
+        // Optimistic local update so UI responds instantly (before BLE round-trip)
+        boardState.isSwapped = !boardState.isSwapped;
+        renderMirrorUI();
+        sendBleText('CMD,SWAP');
+    });
     btnCmdReset.addEventListener('click', () => {
         if (confirm('Reset match scores to 0-0?')) {
             sendBleText('CMD,RESET');
