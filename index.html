@@ -1038,8 +1038,7 @@
 
         /* Bottom Fixed Navigation Bar */
         .bottom-nav {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            display: flex;
             gap: 2px;
             background: var(--bg-card);
             backdrop-filter: blur(16px);
@@ -1051,6 +1050,8 @@
         }
 
         .bottom-nav-btn {
+            flex: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1065,6 +1066,14 @@
             color: var(--text-muted);
             cursor: pointer;
             transition: all 0.15s ease;
+        }
+
+        .bottom-nav-btn.advanced-nav-btn {
+            display: none;
+        }
+
+        body.show-advanced .bottom-nav-btn.advanced-nav-btn {
+            display: flex;
         }
 
         .bottom-nav-btn span.icon {
@@ -1992,7 +2001,7 @@
 
                 <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.4.7</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.5.0</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2037,6 +2046,21 @@
                     </div>
                 </div>
 
+                <!-- Advanced Settings Toggle -->
+                <div class="section-header" style="margin-top: 6px;">
+                    <span>⚙️ Advanced Settings</span>
+                </div>
+                <div class="pills-row" id="pillsAdvancedMode" style="grid-template-columns: 1fr 1fr;">
+                    <button type="button" class="pill-select active" data-advanced="0" id="pillAdvancedOff" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
+                        🎾 Simple
+                    </button>
+                    <button type="button" class="pill-select" data-advanced="1" id="pillAdvancedOn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
+                        🛠️ Advanced
+                    </button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                    Simple mode displays Court, Rules, and Info. Turn on Advanced to enable Counter, Clock, and LED Display controls.
+                </p>
 
             </div>
         </div>
@@ -2175,6 +2199,34 @@
         }
     }
 
+    // Advanced Settings Navigation Control
+    const pillAdvancedOff = document.getElementById('pillAdvancedOff');
+    const pillAdvancedOn  = document.getElementById('pillAdvancedOn');
+
+    function setAdvancedSettings(enabled) {
+        if (enabled) {
+            document.body.classList.add('show-advanced');
+            localStorage.setItem('padel_advanced_mode', '1');
+            if (pillAdvancedOn) pillAdvancedOn.classList.add('active');
+            if (pillAdvancedOff) pillAdvancedOff.classList.remove('active');
+        } else {
+            document.body.classList.remove('show-advanced');
+            localStorage.setItem('padel_advanced_mode', '0');
+            if (pillAdvancedOn) pillAdvancedOn.classList.remove('active');
+            if (pillAdvancedOff) pillAdvancedOff.classList.add('active');
+            const activeNav = document.querySelector('.bottom-nav-btn.active');
+            if (activeNav && activeNav.classList.contains('advanced-nav-btn')) {
+                switchTab('court');
+            }
+        }
+    }
+
+    if (pillAdvancedOff) pillAdvancedOff.addEventListener('click', () => setAdvancedSettings(false));
+    if (pillAdvancedOn)  pillAdvancedOn.addEventListener('click', () => setAdvancedSettings(true));
+
+    const isAdvancedInit = localStorage.getItem('padel_advanced_mode') === '1';
+    setAdvancedSettings(isAdvancedInit);
+
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             switchTab(btn.dataset.tab);
@@ -2184,14 +2236,23 @@
     // Support URL hash navigation (e.g. #display, #rules, #court, #info)
     const initialHashTab = (window.location.hash || '').replace('#', '').toLowerCase();
     if (initialHashTab && tabPanes[initialHashTab]) {
+        if (['counter', 'clock', 'display'].includes(initialHashTab)) {
+            setAdvancedSettings(true);
+        }
         switchTab(initialHashTab);
     }
     window.addEventListener('hashchange', () => {
         const hashTab = (window.location.hash || '').replace('#', '').toLowerCase();
-        if (hashTab && tabPanes[hashTab]) switchTab(hashTab);
+        if (hashTab && tabPanes[hashTab]) {
+            if (['counter', 'clock', 'display'].includes(hashTab)) {
+                setAdvancedSettings(true);
+            }
+            switchTab(hashTab);
+        }
     });
 
     function log(msg, type = '') {
+        if (!consoleBox) return;
         const d = document.createElement('div');
         if (type) d.className = 'log-' + type;
         const time = new Date().toLocaleTimeString();
@@ -3425,7 +3486,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.4.9';
+    const CURRENT_APP_VERSION = '1.5.0';
     let swRegistration = null;
     let isRefreshing = false;
 

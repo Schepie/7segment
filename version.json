@@ -1,6 +1,6 @@
 {
-  "buildTime": "2026-09-20T11:58:00Z",
-  "notes": "Team swap fixed: scoring buttons now respect swap state; button labels update on swap; remote long press (1500ms) triggers court side swap.",
-  "version": "1.4.9"
+  "buildTime": "2026-09-20T12:15:00Z",
+  "notes": "Simplified navigation (Court, Rules & Info); Advanced Settings toggle under Info unlocks Counter, Clock & Display tabs; Cleaned Info menu; Firmware side-swap fix.",
+  "version": "1.5.0"
 }
 
