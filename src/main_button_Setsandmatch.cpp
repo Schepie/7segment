@@ -1119,7 +1119,7 @@ void renderPadelScoreboard() {
       return;
     }
   }
-  renderBoardWithState(isCourtSwapped(), 1.0f);
+  renderBoardWithState(currentCourtSwapped, 1.0f);
 }
 
 // ==============================================================================
