@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-22T16:35:00Z",
-  "notes": "Renamed teams to Home and Guests, and cleaned up scoreboard card.",
-  "version": "1.6.1"
+  "buildTime": "2026-09-22T16:40:00Z",
+  "notes": "Scoreboard view update, Home/Guests renaming, and version sync fix.",
+  "version": "1.6.2"
 }
