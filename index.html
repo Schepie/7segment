@@ -2487,22 +2487,30 @@
     function renderMirrorUI() {
         const btnT1Label = document.getElementById('btnPointT1Label');
         const btnT2Label = document.getElementById('btnPointT2Label');
+        const labelT1    = document.getElementById('labelT1');
+        const labelT2    = document.getElementById('labelT2');
+
+        digitT1.textContent = boardState.t1Point;
+        digitT2.textContent = boardState.t2Point;
+        ladderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
+        ladderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
+
         if (!boardState.isSwapped) {
-            digitT1.textContent = boardState.t1Point;
-            digitT2.textContent = boardState.t2Point;
-            ladderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
-            ladderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
             courtSideText.textContent = '↔️ L: Team 1 (Blue) | R: Team 2 (Red)';
+            if (labelT1) { labelT1.textContent = 'Team 1'; labelT1.classList.remove('t2'); labelT1.classList.add('t1'); }
+            if (labelT2) { labelT2.textContent = 'Team 2'; labelT2.classList.remove('t1'); labelT2.classList.add('t2'); }
+            digitT1.classList.remove('t2'); digitT1.classList.add('t1');
+            digitT2.classList.remove('t1'); digitT2.classList.add('t2');
             if (btnT1Label) btnT1Label.textContent = 'TEAM 1';
             if (btnT2Label) btnT2Label.textContent = 'TEAM 2';
             if (btnPointT1) { btnPointT1.classList.remove('t2'); btnPointT1.classList.add('t1'); }
             if (btnPointT2) { btnPointT2.classList.remove('t1'); btnPointT2.classList.add('t2'); }
         } else {
-            digitT1.textContent = boardState.t2Point;
-            digitT2.textContent = boardState.t1Point;
-            ladderGames.textContent = `${boardState.t2Games} - ${boardState.t1Games}`;
-            ladderSets.textContent  = `${boardState.t2Sets} - ${boardState.t1Sets}`;
             courtSideText.textContent = '↔️ L: Team 2 (Red) | R: Team 1 (Blue)';
+            if (labelT1) { labelT1.textContent = 'Team 2'; labelT1.classList.remove('t1'); labelT1.classList.add('t2'); }
+            if (labelT2) { labelT2.textContent = 'Team 1'; labelT2.classList.remove('t2'); labelT2.classList.add('t1'); }
+            digitT1.classList.remove('t1'); digitT1.classList.add('t2');
+            digitT2.classList.remove('t2'); digitT2.classList.add('t1');
             if (btnT1Label) btnT1Label.textContent = 'TEAM 2';
             if (btnT2Label) btnT2Label.textContent = 'TEAM 1';
             if (btnPointT1) { btnPointT1.classList.remove('t1'); btnPointT1.classList.add('t2'); }
@@ -3486,7 +3494,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.5.0';
+    const CURRENT_APP_VERSION = '1.5.1';
     let swRegistration = null;
     let isRefreshing = false;
 

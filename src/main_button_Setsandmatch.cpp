@@ -108,6 +108,7 @@ struct ScoreState {
   bool betweenGames;
   bool betweenSets;
   int compSetG1, compSetG2;
+  bool courtInverted;
 };
 
 #define SCORE_HISTORY_DEPTH 30
@@ -159,17 +160,21 @@ uint32_t matchWonStartTime = 0;
 //   4 games (4-0): Normal (false)   <- No change! (even)
 //   5 games (3-2): Swapped (true)   <- Swapped on 5th game (uneven)
 //   9 games (5-4): Swapped (true)   <- Swapped on 9th game (uneven)
+bool courtSideInverted = false;
 bool currentCourtSwapped = false;
 inline bool isCourtSwapped() {
+  bool standardSwap = false;
   if (inTiebreak) {
     int tbSum = tiebreakPoints1 + tiebreakPoints2;
     int totalGames = team1Games + team2Games;
     bool baseSwapped = ((totalGames + 1) / 2) % 2 == 1;
     bool tbSwap = ((tbSum + 5) / 6) % 2 == 1;
-    return baseSwapped ^ tbSwap;
+    standardSwap = baseSwapped ^ tbSwap;
+  } else {
+    int totalGames = team1Games + team2Games;
+    standardSwap = ((totalGames + 1) / 2) % 2 == 1;
   }
-  int totalGames = team1Games + team2Games;
-  return ((totalGames + 1) / 2) % 2 == 1;
+  return standardSwap ^ courtSideInverted;
 }
 
 bool triggerGameWonAnimation  = false;
@@ -1473,6 +1478,7 @@ void saveScoreState() {
     scoreHistory[historyCount].betweenSets = betweenSets;
     scoreHistory[historyCount].compSetG1 = completedSetGames1;
     scoreHistory[historyCount].compSetG2 = completedSetGames2;
+    scoreHistory[historyCount].courtInverted = courtSideInverted;
     historyCount++;
   } else {
     for (int i = 0; i < SCORE_HISTORY_DEPTH - 1; i++) {
@@ -1499,6 +1505,7 @@ void saveScoreState() {
     scoreHistory[SCORE_HISTORY_DEPTH - 1].betweenSets = betweenSets;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].compSetG1 = completedSetGames1;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].compSetG2 = completedSetGames2;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].courtInverted = courtSideInverted;
   }
 }
 
@@ -1526,6 +1533,7 @@ bool undoScoreState() {
   betweenSets = scoreHistory[historyCount].betweenSets;
   completedSetGames1 = scoreHistory[historyCount].compSetG1;
   completedSetGames2 = scoreHistory[historyCount].compSetG2;
+  courtSideInverted  = scoreHistory[historyCount].courtInverted;
   if (!matchWon) {
     matchWonPhase = MATCH_PHASE_NONE;
   }
@@ -1916,6 +1924,7 @@ void resetMatchScores() {
   tiebreakPoints2 = 0;
   matchWon = false;
   matchWonPhase = MATCH_PHASE_NONE;
+  courtSideInverted = false;
   currentCourtSwapped = false;
   scoreNeedsUpdate = true;
   notifyWatchScore();
@@ -2226,19 +2235,23 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       if (cmd == "P1") {
         if (currentMode == MODE_CLOCK) currentMode = MODE_SCOREBOARD;
         addPadelPoint(1);
-        bool newSwapped = isCourtSwapped();
-        if (newSwapped != currentCourtSwapped) {
-          animateCourtSideSwap(newSwapped);
-          currentCourtSwapped = newSwapped;
+        if (inTiebreak) {
+          bool newSwapped = isCourtSwapped();
+          if (newSwapped != currentCourtSwapped) {
+            animateCourtSideSwap(newSwapped);
+            currentCourtSwapped = newSwapped;
+          }
         }
         scoreNeedsUpdate = true;
       } else if (cmd == "P2") {
         if (currentMode == MODE_CLOCK) currentMode = MODE_SCOREBOARD;
         addPadelPoint(2);
-        bool newSwapped = isCourtSwapped();
-        if (newSwapped != currentCourtSwapped) {
-          animateCourtSideSwap(newSwapped);
-          currentCourtSwapped = newSwapped;
+        if (inTiebreak) {
+          bool newSwapped = isCourtSwapped();
+          if (newSwapped != currentCourtSwapped) {
+            animateCourtSideSwap(newSwapped);
+            currentCourtSwapped = newSwapped;
+          }
         }
         scoreNeedsUpdate = true;
       } else if (cmd == "UNDO") {
@@ -2256,7 +2269,8 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
         splashText("RST ", pixels.Color(255, 120, 0));
         delay(300);
       } else if (cmd == "SWAP") {
-        currentCourtSwapped = !currentCourtSwapped;
+        courtSideInverted = !courtSideInverted;
+        currentCourtSwapped = isCourtSwapped();
         animateCourtSideSwap(currentCourtSwapped);
         notifyWatchScore();
         scoreNeedsUpdate = true;
@@ -2915,6 +2929,7 @@ void setup() {
   splashText("CLOC", pixels.Color(0, 180, 255));
   delay(500);
 
+  courtSideInverted = false;
   currentCourtSwapped = isCourtSwapped();
   currentMode = MODE_CLOCK; // Panel starts in Clock Mode!
   lastActivityTime = millis();
@@ -3018,10 +3033,12 @@ void loop() {
         addPadelPoint(1);
         Serial.printf("[BUTTON] Big Button -> Team 1 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
                       pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-        bool newSwapped = isCourtSwapped();
-        if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
-          animateCourtSideSwap(newSwapped);
-          currentCourtSwapped = newSwapped;
+        if (inTiebreak) {
+          bool newSwapped = isCourtSwapped();
+          if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
+            animateCourtSideSwap(newSwapped);
+            currentCourtSwapped = newSwapped;
+          }
         }
         lastActivityTime = millis();
         scoreNeedsUpdate = true;
@@ -3029,10 +3046,12 @@ void loop() {
         addPadelPoint(2);
         Serial.printf("[BUTTON] Small Button -> Team 2 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
                       pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-        bool newSwapped = isCourtSwapped();
-        if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
-          animateCourtSideSwap(newSwapped);
-          currentCourtSwapped = newSwapped;
+        if (inTiebreak) {
+          bool newSwapped = isCourtSwapped();
+          if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
+            animateCourtSideSwap(newSwapped);
+            currentCourtSwapped = newSwapped;
+          }
         }
         lastActivityTime = millis();
         scoreNeedsUpdate = true;
@@ -3077,16 +3096,13 @@ void loop() {
   if (triggerSwapAction) {
     triggerSwapAction = false;
     lastActivityTime = millis();
-    if (currentMode == MODE_SCOREBOARD) {
+    if (currentMode == MODE_SCOREBOARD || currentMode == MODE_CLOCK) {
+      if (currentMode == MODE_CLOCK) {
+        currentMode = MODE_SCOREBOARD;
+      }
       Serial.println("[LONG-PRESS] Triggering SWAP of court sides!");
-      currentCourtSwapped = !currentCourtSwapped;
-      animateCourtSideSwap(currentCourtSwapped);
-      notifyWatchScore();
-      scoreNeedsUpdate = true;
-    } else if (currentMode == MODE_CLOCK) {
-      // Long press in clock mode: wake to scoreboard with swap
-      currentMode = MODE_SCOREBOARD;
-      currentCourtSwapped = !currentCourtSwapped;
+      courtSideInverted = !courtSideInverted;
+      currentCourtSwapped = isCourtSwapped();
       animateCourtSideSwap(currentCourtSwapped);
       notifyWatchScore();
       scoreNeedsUpdate = true;

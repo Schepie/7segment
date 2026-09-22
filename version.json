@@ -1,6 +1,5 @@
 {
-  "buildTime": "2026-09-20T12:15:00Z",
-  "notes": "Simplified navigation (Court, Rules & Info); Advanced Settings toggle under Info unlocks Counter, Clock & Display tabs; Cleaned Info menu; Firmware side-swap fix.",
-  "version": "1.5.0"
+  "buildTime": "2026-09-22T08:05:00Z",
+  "notes": "Fix court side swap reverting on first point; preserve swapped team colors across points and games; fix web mirror UI double-swap.",
+  "version": "1.5.1"
 }
-
