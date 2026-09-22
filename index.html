@@ -97,7 +97,6 @@
             border-right-color: rgba(0, 0, 0, 0.10) !important;
         }
         [data-theme="light"] .ladder-score {
-            color: #1c1c1e !important;
             background: rgba(0, 0, 0, 0.07) !important;
         }
         [data-theme="light"] .court-banner {
@@ -432,6 +431,24 @@
             background: rgba(255, 255, 255, 0.08);
             padding: 2px 6px;
             border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ladder-t1 {
+            color: var(--team1-blue);
+            font-weight: 900;
+        }
+        .ladder-t2 {
+            color: var(--team2-red);
+            font-weight: 900;
+        }
+        .ladder-sep {
+            color: var(--text-muted);
+            opacity: 0.55;
+            margin: 0 3px;
+            font-weight: 600;
         }
 
         .court-banner {
@@ -1788,10 +1805,38 @@
             font-weight: 900;
             letter-spacing: 2px;
             color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sb-ladder-val .ladder-t1 {
+            color: var(--team1-blue);
+            text-shadow: 0 0 16px var(--team1-glow);
+        }
+
+        .sb-ladder-val .ladder-t2 {
+            color: var(--team2-red);
+            text-shadow: 0 0 16px var(--team2-glow);
+        }
+
+        .sb-ladder-val .ladder-sep {
+            color: var(--text-muted);
+            opacity: 0.45;
+            margin: 0 5px;
+            font-weight: 600;
         }
 
         [data-theme="light"] .sb-ladder-val {
             color: #1c1c1e;
+        }
+        [data-theme="light"] .sb-ladder-val .ladder-t1 {
+            color: var(--team1-blue);
+            text-shadow: none;
+        }
+        [data-theme="light"] .sb-ladder-val .ladder-t2 {
+            color: var(--team2-red);
+            text-shadow: none;
         }
 
         .sb-ladder-divider {
@@ -1964,9 +2009,9 @@
 
                     <div class="middle-ladder">
                         <span class="ladder-label">Games</span>
-                        <div class="ladder-score" id="ladderGames">0 - 0</div>
+                        <div class="ladder-score" id="ladderGames"><span class="ladder-t1">0</span><span class="ladder-sep"> - </span><span class="ladder-t2">0</span></div>
                         <span class="ladder-label" style="margin-top: 3px;">Sets</span>
-                        <div class="ladder-score" id="ladderSets">0 - 0</div>
+                        <div class="ladder-score" id="ladderSets"><span class="ladder-t1">0</span><span class="ladder-sep"> - </span><span class="ladder-t2">0</span></div>
                     </div>
 
                     <div class="team-pod">
@@ -2434,7 +2479,7 @@
 
                 <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.3</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.4</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2568,12 +2613,12 @@
         <div class="sb-center-ladder">
             <div class="sb-ladder-block">
                 <span class="sb-ladder-title">Games</span>
-                <span class="sb-ladder-val" id="sbLadderGames">0 - 0</span>
+                <span class="sb-ladder-val" id="sbLadderGames"><span class="ladder-t1">0</span><span class="ladder-sep"> - </span><span class="ladder-t2">0</span></span>
             </div>
             <div class="sb-ladder-divider"></div>
             <div class="sb-ladder-block">
                 <span class="sb-ladder-title">Sets</span>
-                <span class="sb-ladder-val" id="sbLadderSets">0 - 0</span>
+                <span class="sb-ladder-val" id="sbLadderSets"><span class="ladder-t1">0</span><span class="ladder-sep"> - </span><span class="ladder-t2">0</span></span>
             </div>
             <span class="sb-tb-indicator" id="sbTbIndicator" style="display: none;">TIEBREAK</span>
         </div>
@@ -3012,8 +3057,12 @@
 
         digitT1.textContent = boardState.t1Point;
         digitT2.textContent = boardState.t2Point;
-        ladderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
-        ladderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
+
+        const clsL = !boardState.isSwapped ? 'ladder-t1' : 'ladder-t2';
+        const clsR = !boardState.isSwapped ? 'ladder-t2' : 'ladder-t1';
+
+        ladderGames.innerHTML = `<span class="${clsL}">${boardState.t1Games}</span><span class="ladder-sep"> - </span><span class="${clsR}">${boardState.t2Games}</span>`;
+        ladderSets.innerHTML  = `<span class="${clsL}">${boardState.t1Sets}</span><span class="ladder-sep"> - </span><span class="${clsR}">${boardState.t2Sets}</span>`;
 
         // Big screen scoreboard mirror elements
         const sbDigitL = document.getElementById('sbDigitL');
@@ -3028,8 +3077,8 @@
         const sbTeamSideR = document.getElementById('sbTeamSideR');
         const sbTbIndicator = document.getElementById('sbTbIndicator');
 
-        if (sbLadderGames) sbLadderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
-        if (sbLadderSets)  sbLadderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
+        if (sbLadderGames) sbLadderGames.innerHTML = `<span class="${clsL}">${boardState.t1Games}</span><span class="ladder-sep"> - </span><span class="${clsR}">${boardState.t2Games}</span>`;
+        if (sbLadderSets)  sbLadderSets.innerHTML  = `<span class="${clsL}">${boardState.t1Sets}</span><span class="ladder-sep"> - </span><span class="${clsR}">${boardState.t2Sets}</span>`;
 
         if (!boardState.isSwapped) {
             courtSideText.textContent = '↔️ L: Home (Blue) | R: Guests (Red)';
@@ -4060,7 +4109,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.6.3';
+    const CURRENT_APP_VERSION = '1.6.4';
     let swRegistration = null;
     let isRefreshing = false;
 
