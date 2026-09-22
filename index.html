@@ -2434,7 +2434,7 @@
 
                 <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.2</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.3</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3063,8 +3063,8 @@
             if (btnPointT2) { btnPointT2.classList.remove('t2'); btnPointT2.classList.add('t1'); }
 
             // Big screen scoreboard (swapped)
-            if (sbDigitL) sbDigitL.textContent = boardState.t2Point;
-            if (sbDigitR) sbDigitR.textContent = boardState.t1Point;
+            if (sbDigitL) sbDigitL.textContent = boardState.t1Point;
+            if (sbDigitR) sbDigitR.textContent = boardState.t2Point;
             if (sbLabelL) sbLabelL.textContent = 'Guests';
             if (sbLabelR) sbLabelR.textContent = 'Home';
             if (sbBadgeL) sbBadgeL.textContent = 'Red';
@@ -3151,6 +3151,9 @@
     btnCmdSwap.addEventListener('click', () => {
         // Optimistic local update so UI responds instantly (before BLE round-trip)
         boardState.isSwapped = !boardState.isSwapped;
+        const tmpPt = boardState.t1Point; boardState.t1Point = boardState.t2Point; boardState.t2Point = tmpPt;
+        const tmpG = boardState.t1Games; boardState.t1Games = boardState.t2Games; boardState.t2Games = tmpG;
+        const tmpS = boardState.t1Sets; boardState.t1Sets = boardState.t2Sets; boardState.t2Sets = tmpS;
         renderMirrorUI();
         sendBleText('CMD,SWAP');
     });
@@ -4057,7 +4060,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.6.2';
+    const CURRENT_APP_VERSION = '1.6.3';
     let swRegistration = null;
     let isRefreshing = false;
 
@@ -4376,6 +4379,9 @@
         sbBtnSwap.addEventListener('click', () => {
             if (navigator.vibrate) navigator.vibrate(25);
             boardState.isSwapped = !boardState.isSwapped;
+            const tmpPt = boardState.t1Point; boardState.t1Point = boardState.t2Point; boardState.t2Point = tmpPt;
+            const tmpG = boardState.t1Games; boardState.t1Games = boardState.t2Games; boardState.t2Games = tmpG;
+            const tmpS = boardState.t1Sets; boardState.t1Sets = boardState.t2Sets; boardState.t2Sets = tmpS;
             renderMirrorUI();
             sendBleText('CMD,SWAP');
         });
