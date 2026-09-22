@@ -6,6 +6,8 @@
 
 // --- Key Parameters ---
 panel_id              = 1;     // [1:4]
+part_sel              = 0;     // [0:"all - Full Assembly", 1:"backplate_only - Backplate Only (for STL export)", 2:"frontplate_black - Black Frontplate", 3:"frontplate_white - White Diffusers", 4:"wpt_lid_only - WPT Retainer Lid"]
+render_part           = "all"; // ["all": Full Assembly, "backplate_only": Backplate Only (for 3D Printing STL), "frontplate_black": Black Frontplate Only, "frontplate_white": White Diffuser Only, "wpt_lid_only": WPT Retainer Lid Only]
 
 // --- Visibility, Assembly & Inspection Modes ---
 /* [Inspection & Quality Control] */
@@ -18,6 +20,7 @@ show_frontplate_black = true;  // Set to true to view black frontplate housing
 show_frontplate_white = true;  // Set to true to view white diffuser frontplate
 show_backplate        = true;  // Set to true to view backplate
 show_pogo_hardware    = true;  // Set to true to preview 3D pogo connectors sitting in mounting pockets
+show_wpt_hardware     = true;  // Set to true to preview 3D metal ring & wireless coil (Panel 3)
 exploded_view         = true;  // Legacy toggle (used when inspection_mode is exploded)
 explode_distance      = 55.0;  // Distance between exploded layers in mm
 
@@ -26,6 +29,7 @@ alpha_frontplate_black = 1.0;  // [0.0:0.05:1.0]
 alpha_frontplate_white = 1.0;  // [0.0:0.05:1.0]
 alpha_backplate        = 1.0;  // [0.0:0.05:1.0]
 alpha_pogo_hardware    = 1.0;  // [0.0:0.05:1.0]
+alpha_wpt_hardware     = 1.0;  // [0.0:0.05:1.0]
 
 use <assembly_inspector.scad>
 use <rear_joining_bracket_hinged.scad>
@@ -105,6 +109,20 @@ esp_outer_l = esp_inner_l + esp_wall * 2; // 27.0mm
 esp_h = 3.5;            // Retaining wall height above backplate
 pcb_thick = 1.6;        // Standard PCB thickness
 snap_lip = 0.7;         // Retention overhang depth
+
+// --- Wireless Power Transfer (Qi / MagSafe) Receiver Parameters (Panel 3) ---
+/* [Wireless Power Transfer (Panel 3)] */
+enable_wireless_power      = true;  // Enable WPT ring and coil pocket on Panel 3
+wpt_pos_y                  = 46.0;  // Y center position (46.0mm = Upper digit loop, 0.0mm = Center)
+wpt_ring_od                = 57.2;  // Ring outer diameter with clearance (nominal 57.0mm + 0.2mm)
+wpt_ring_id                = 45.8;  // Ring inner diameter with clearance (nominal 46.0mm - 0.2mm)
+wpt_ring_depth             = 1.1;   // Stepped groove depth for 1.0mm metal ring
+wpt_coil_w                 = 34.0;  // Rectangular coil pocket width (nominal 33.0mm + 1.0mm)
+wpt_coil_l                 = 43.0;  // Rectangular coil pocket length (nominal 42.0mm + 1.0mm)
+wpt_coil_corner_r          = 5.0;   // Corner radius for coil pocket
+wpt_coil_depth             = 1.5;   // Depth for coil + ferrite sheet
+wpt_floor_thick            = 0.8;   // Solid exterior rear skin thickness (mm)
+wpt_show_alignment_guide   = true;  // 0.2mm subtle debossed target ring on outside rear face
 
 // --- Calculated Dimensions ---
 diffuser_w = strip_width + 2;      // inner diffuser width
@@ -441,6 +459,112 @@ module backplate_perimeter_cable_holders() {
     }
 }
 
+// ==============================================================================
+// Wireless Power Transfer (WPT) Receiver Pocket Modules (Panel 3)
+// Accommodates:
+// - Outer Ferromagnetic Ring: 57 mm OD, 46 mm ID, 1.0 mm thick
+// - Rectangular Induction Coil: 33 mm x 42 mm, ~1.2 - 1.5 mm thick
+// - Continuous 0.8 mm solid exterior rear skin for sealed, support-free print
+// ==============================================================================
+module wpt_interior_pocket(pos_y = wpt_pos_y) {
+    pocket_bottom_z = -backplate_thick + wpt_floor_thick; // e.g. -5.5 + 0.8 = -4.7 mm
+    pocket_h        = backplate_thick - wpt_floor_thick + 0.5; // reaches cleanly through Z = 0
+    
+    translate([0, pos_y, 0]) {
+        // 1. Outer Ferromagnetic Ring Shelf (57.2mm OD, 45.8mm ID, 1.1mm deep)
+        translate([0, 0, pocket_bottom_z]) {
+            difference() {
+                cylinder(h = wpt_ring_depth, r = wpt_ring_od / 2, $fn = 90);
+                translate([0, 0, -0.1])
+                    cylinder(h = wpt_ring_depth + 0.2, r = wpt_ring_id / 2, $fn = 80);
+            }
+        }
+        
+        // 2. Central Access Bore (matching ring ID 45.8mm, full height to Z = 0)
+        translate([0, 0, pocket_bottom_z]) {
+            cylinder(h = pocket_h, r = wpt_ring_id / 2, $fn = 80);
+        }
+        
+        // 3. Rectangular Coil Cavity (34.0 x 43.0 mm, with 5mm corner fillets)
+        translate([0, 0, pocket_bottom_z]) {
+            linear_extrude(pocket_h) {
+                offset(r = wpt_coil_corner_r, $fn = 32)
+                    square([wpt_coil_w - wpt_coil_corner_r * 2, wpt_coil_l - wpt_coil_corner_r * 2], center = true);
+            }
+        }
+        
+        // 4. Wire Egress Trough: routes 2 coil leads southward toward center wire highway
+        translate([0, -wpt_coil_l / 2 - 4.0, pocket_bottom_z + pocket_h / 2]) {
+            cube([6.0, 10.0, pocket_h + 0.1], center = true);
+        }
+    }
+}
+
+// Subtle 0.2mm debossed target alignment guide on the outside rear face
+module wpt_alignment_guide(pos_y = wpt_pos_y) {
+    if (wpt_show_alignment_guide) {
+        translate([0, pos_y, -backplate_thick - 0.05]) {
+            // Concentric alignment circle (0.2mm deep into 0.8mm skin, leaves 0.6mm solid floor)
+            difference() {
+                cylinder(h = 0.25, r = (wpt_ring_od + wpt_ring_id) / 4 + 0.4, $fn = 80);
+                translate([0, 0, -0.05])
+                    cylinder(h = 0.35, r = (wpt_ring_od + wpt_ring_id) / 4 - 0.4, $fn = 80);
+            }
+            // Small center dot
+            cylinder(h = 0.25, r = 1.2, $fn = 20);
+        }
+    }
+}
+
+// Optional standalone clip-in lid/retainer that can be 3D printed separately
+module wpt_coil_retainer_lid() {
+    lid_thick = 1.0;
+    difference() {
+        union() {
+            // Main round lid body fitting ring ID
+            cylinder(h = lid_thick, r = (wpt_ring_id / 2) - 0.2, $fn = 80);
+            // Wing tabs fitting into rectangular coil pocket corners
+            linear_extrude(lid_thick) {
+                offset(r = wpt_coil_corner_r - 0.2, $fn = 32)
+                    square([wpt_coil_w - 0.4 - (wpt_coil_corner_r - 0.2) * 2, 
+                            wpt_coil_l - 0.4 - (wpt_coil_corner_r - 0.2) * 2], center = true);
+            }
+        }
+        // Center finger pry hole & ventilation slot
+        cylinder(h = lid_thick + 0.2, r = 5.0, center = true, $fn = 30);
+        // Wire egress cutout
+        translate([0, -wpt_coil_l / 2 + 2.0, 0])
+            cube([6.5, 6.0, lid_thick + 0.2], center = true);
+    }
+}
+
+// 3D hardware visual preview of metal ring and copper induction coil
+module wpt_hardware_preview(pos_y = wpt_pos_y, alpha = 1.0) {
+    pocket_bottom_z = -backplate_thick + wpt_floor_thick;
+    translate([0, pos_y, 0]) {
+        // Outer Ferromagnetic Ring
+        color("Silver", alpha)
+            translate([0, 0, pocket_bottom_z])
+                difference() {
+                    cylinder(h = 1.0, r = 57.0/2, $fn = 80);
+                    translate([0, 0, -0.05])
+                        cylinder(h = 1.1, r = 46.0/2, $fn = 70);
+                }
+        // Rectangular Copper Induction Coil
+        color("DarkGoldenrod", alpha)
+            translate([0, 0, pocket_bottom_z + 0.1])
+                linear_extrude(1.2)
+                    offset(r = 4.0, $fn = 32)
+                        square([33.0 - 8.0, 42.0 - 8.0], center = true);
+        // Dark Ferrite backing sheet
+        color("#222222", alpha)
+            translate([0, 0, pocket_bottom_z + 1.3])
+                linear_extrude(0.3)
+                    offset(r = 4.0, $fn = 32)
+                        square([33.0 - 8.0, 42.0 - 8.0], center = true);
+    }
+}
+
 // Visual 3D model of the 4-pin magnetic connector with mounting ears
 module pogo_connector_model(is_male = true, alpha = 1.0) {
     color("#1e293b", alpha) { // Dark gray / black molded body
@@ -758,6 +882,12 @@ module backplate(panel_id = panel_id) {
             
             // Integrated Backplate Cable Retention Clips
             backplate_perimeter_cable_holders();
+
+            // WPT wire guide clip on Panel 3
+            if (panel_id == 3 && enable_wireless_power) {
+                translate([0, wpt_pos_y - 28.0, 0])
+                    backplate_wire_clip(along_x = false);
+            }
         }
             
         // Recesses for all 7 LED strip channels (2mm deep from Z = 0, enlarged 10% to 13.2mm width)
@@ -889,6 +1019,12 @@ module backplate(panel_id = panel_id) {
             linear_extrude(1.0)
                 mirror([1, 0, 0])
                     text("© GSC • POGO EDITION", size=3.8, font="Liberation Sans:style=Bold", halign="center", valign="center");
+
+        // Wireless Power Transfer (WPT) Receiver Pocket (Panel 3 only)
+        if (panel_id == 3 && enable_wireless_power) {
+            wpt_interior_pocket(wpt_pos_y);
+            wpt_alignment_guide(wpt_pos_y);
+        }
     }
 }
 
@@ -945,7 +1081,15 @@ module pogo_connectors_preview(panel_id = panel_id, alpha = alpha_pogo_hardware,
 
 // --- Render Assembly & Inspection Logic ---
 module render_7segment_assembly() {
-    if (inspection_mode == "collision_check") {
+    if (part_sel == 1 || render_part == "backplate_only") {
+        backplate(panel_id = panel_id);
+    } else if (part_sel == 2 || render_part == "frontplate_black") {
+        frontplate_black(panel_id = panel_id);
+    } else if (part_sel == 3 || render_part == "frontplate_white") {
+        frontplate_white();
+    } else if (part_sel == 4 || render_part == "wpt_lid_only") {
+        wpt_coil_retainer_lid();
+    } else if (inspection_mode == "collision_check") {
         // 1. Interference between Black Housing and Backplate
         show_collision() {
             frontplate_black(panel_id = panel_id);
@@ -968,6 +1112,7 @@ module render_7segment_assembly() {
             if (show_frontplate_white) color("White", alpha_frontplate_white) frontplate_white();
             if (show_backplate) color("SlateGray", alpha_backplate) backplate(panel_id = panel_id);
             if (show_pogo_hardware) pogo_connectors_preview(panel_id, alpha = alpha_pogo_hardware);
+            if (panel_id == 3 && enable_wireless_power && show_wpt_hardware) wpt_hardware_preview(wpt_pos_y, alpha = alpha_wpt_hardware);
         }
     } else if (inspection_mode == "cutaway_y") {
         cutaway(axis = "y", cut_depth = cutaway_depth) {
@@ -975,6 +1120,7 @@ module render_7segment_assembly() {
             if (show_frontplate_white) color("White", alpha_frontplate_white) frontplate_white();
             if (show_backplate) color("SlateGray", alpha_backplate) backplate(panel_id = panel_id);
             if (show_pogo_hardware) pogo_connectors_preview(panel_id, alpha = alpha_pogo_hardware);
+            if (panel_id == 3 && enable_wireless_power && show_wpt_hardware) wpt_hardware_preview(wpt_pos_y, alpha = alpha_wpt_hardware);
         }
     } else if (inspection_mode == "slice_z") {
         slice_2d(cut_z = pogo_z) {
@@ -1003,6 +1149,11 @@ module render_7segment_assembly() {
             translate([0, 0, exp_back_z]) 
                 color("SlateGray", alpha_backplate) 
                     backplate(panel_id = panel_id);
+
+        if (panel_id == 3 && enable_wireless_power && show_wpt_hardware) {
+            translate([0, 0, exp_back_z])
+                wpt_hardware_preview(wpt_pos_y, alpha = alpha_wpt_hardware);
+        }
 
         if (show_pogo_hardware) {
             pogo_connectors_preview(panel_id, alpha = alpha_pogo_hardware, exp_x = exp_pogo_x);

@@ -1473,9 +1473,441 @@
             text-align: center;
         }
 
-        .btn-qr-link:active {
-            transform: scale(0.96);
-            background: rgba(0, 210, 255, 0.2);
+        /* Scoreboard Pill in banner */
+        .btn-sb-pill {
+            background: rgba(0, 210, 255, 0.15);
+            border: 1px solid rgba(0, 210, 255, 0.35);
+            color: var(--team1-blue);
+            border-radius: 6px;
+            padding: 2px 7px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease;
+        }
+        .btn-sb-pill:active {
+            transform: scale(0.95);
+            background: rgba(0, 210, 255, 0.3);
+        }
+
+        /* ============================================================ */
+        /* FULLSCREEN BIG-SCREEN SCOREBOARD VIEW                        */
+        /* ============================================================ */
+        .scoreboard-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            background: #04070d;
+            background: radial-gradient(circle at 50% 25%, #0d1726 0%, #03060a 90%);
+            color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+            animation: sbFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes sbFadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        [data-theme="light"] .scoreboard-overlay {
+            background: #f2f2f7;
+            background: radial-gradient(circle at 50% 25%, #ffffff 0%, #e5e5ea 90%);
+            color: #1c1c1e;
+        }
+
+        /* Header */
+        .sb-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            height: 38px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .sb-btn-close {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .sb-btn-close:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        [data-theme="light"] .sb-btn-close {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #1c1c1e;
+        }
+
+        .sb-match-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-green);
+            background: rgba(0, 230, 118, 0.12);
+            border: 1px solid rgba(0, 230, 118, 0.28);
+            padding: 4px 12px;
+            border-radius: 99px;
+        }
+
+        .sb-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sb-ble-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .sb-ble-status.connected {
+            border-color: rgba(0, 230, 118, 0.35);
+            color: var(--accent-green);
+        }
+        .sb-ble-status.connected .status-dot {
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .sb-btn-icon {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-main);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .sb-btn-icon:active {
+            transform: scale(0.92);
+        }
+
+        [data-theme="light"] .sb-btn-icon {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #1c1c1e;
+        }
+
+        /* Stage Layout */
+        .sb-stage {
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            width: 100%;
+        }
+
+        /* Team Side Box */
+        .sb-team-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-xl);
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.12s ease, background 0.18s ease;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .sb-team-side:active {
+            transform: scale(0.98);
+        }
+
+        .sb-team-side.t1 {
+            background: linear-gradient(145deg, rgba(0, 210, 255, 0.06), rgba(0, 119, 255, 0.14));
+            border: 2px solid rgba(0, 210, 255, 0.35);
+            box-shadow: inset 0 0 50px rgba(0, 210, 255, 0.06), 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .sb-team-side.t2 {
+            background: linear-gradient(145deg, rgba(255, 51, 102, 0.06), rgba(255, 0, 60, 0.14));
+            border: 2px solid rgba(255, 51, 102, 0.35);
+            box-shadow: inset 0 0 50px rgba(255, 51, 102, 0.06), 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        [data-theme="light"] .sb-team-side.t1 {
+            background: linear-gradient(145deg, #e3f2fd, #bbdefb);
+            border-color: rgba(0, 122, 255, 0.45);
+        }
+
+        [data-theme="light"] .sb-team-side.t2 {
+            background: linear-gradient(145deg, #ffebee, #ffcdd2);
+            border-color: rgba(255, 59, 48, 0.45);
+        }
+
+        .sb-team-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+            flex-shrink: 0;
+        }
+
+        .sb-team-badge {
+            font-size: 11px;
+            font-weight: 900;
+            padding: 2px 7px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .sb-team-side.t1 .sb-team-badge {
+            background: var(--team1-blue);
+            color: #030811;
+        }
+
+        .sb-team-side.t2 .sb-team-badge {
+            background: var(--team2-red);
+            color: #fff;
+        }
+
+        .sb-team-name {
+            font-size: clamp(14px, 3.5vw, 24px);
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .sb-team-side.t1 .sb-team-name {
+            color: var(--team1-blue);
+        }
+
+        .sb-team-side.t2 .sb-team-name {
+            color: var(--team2-red);
+        }
+
+        .sb-digit-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .sb-digit {
+            font-family: var(--font-display);
+            font-weight: 900;
+            line-height: 0.85;
+            letter-spacing: -4px;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+
+        .sb-team-side.t1 .sb-digit {
+            color: var(--team1-blue);
+            text-shadow: 0 0 50px var(--team1-glow);
+        }
+
+        .sb-team-side.t2 .sb-digit {
+            color: var(--team2-red);
+            text-shadow: 0 0 50px var(--team2-glow);
+        }
+
+        /* Center Ladder (Games & Sets) */
+        .sb-center-ladder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-xl);
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.6);
+            flex-shrink: 0;
+            backdrop-filter: blur(12px);
+        }
+
+        [data-theme="light"] .sb-center-ladder {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .sb-ladder-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+        }
+
+        .sb-ladder-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .sb-ladder-val {
+            font-family: var(--font-display);
+            font-size: clamp(22px, 4.5vw, 40px);
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+
+        [data-theme="light"] .sb-ladder-val {
+            color: #1c1c1e;
+        }
+
+        .sb-ladder-divider {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        [data-theme="light"] .sb-ladder-divider {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .sb-tb-indicator {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            color: var(--accent-gold);
+            background: rgba(255, 179, 0, 0.18);
+            border: 1px solid rgba(255, 179, 0, 0.4);
+            padding: 3px 10px;
+            border-radius: 99px;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* Bottom Quick Toolbar */
+        .sb-bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            height: 42px;
+            flex-shrink: 0;
+            padding-top: 4px;
+        }
+
+        .sb-quick-btn {
+            padding: 8px 18px;
+            font-size: 12px;
+            font-weight: 800;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sb-quick-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .sb-quick-btn.active {
+            background: rgba(0, 230, 118, 0.15);
+            border-color: rgba(0, 230, 118, 0.4);
+            color: var(--accent-green);
+        }
+
+        [data-theme="light"] .sb-quick-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #1c1c1e;
+        }
+
+        /* LANDSCAPE ORIENTATION (Optimal for tablets, stands, distance viewing) */
+        @media (orientation: landscape) {
+            .sb-stage {
+                flex-direction: row;
+                align-items: stretch;
+                gap: 16px;
+                padding: 4px 0;
+            }
+            .sb-team-side {
+                flex: 1;
+            }
+            .sb-digit {
+                font-size: clamp(100px, 22vw, 260px);
+            }
+            .sb-center-ladder {
+                flex-direction: column;
+                gap: 8px;
+                padding: 14px 18px;
+                min-width: 140px;
+            }
+            .sb-ladder-divider {
+                width: 80%;
+                height: 1px;
+            }
+        }
+
+        /* PORTRAIT ORIENTATION (Phones in portrait) */
+        @media (orientation: portrait) {
+            .sb-stage {
+                flex-direction: column;
+                gap: 10px;
+                padding: 6px 0;
+            }
+            .sb-center-ladder {
+                flex-direction: row;
+                justify-content: space-around;
+                width: 100%;
+                padding: 8px 12px;
+            }
+            .sb-ladder-divider {
+                width: 1px;
+                height: 36px;
+            }
+            .sb-team-side {
+                flex: 1;
+            }
+            .sb-digit {
+                font-size: clamp(80px, 25vh, 180px);
+            }
         }
     </style>
 </head>
@@ -1509,6 +1941,7 @@
                 <span class="status-dot" id="bleStatusDot"></span>
                 <span id="bleStatusText">Connect</span>
             </button>
+            <button type="button" class="btn-tool-chip" id="btnOpenScoreboard" style="padding: 5px 8px; border-radius: 8px;" title="Big Screen Scoreboard View">📺</button>
             <a href="ota.html" class="btn-tool-chip" style="padding: 5px 8px; border-radius: 8px; text-decoration: none;" title="Flash">⚡</a>
         </div>
     </header>
@@ -1522,10 +1955,10 @@
         <div class="tab-pane active" id="paneCourt">
 
             <!-- Digital Scoreboard Display Mirror -->
-            <div class="score-board">
+            <div class="score-board" id="cardScoreMirror" title="Tap to expand to Big Screen Scoreboard View" style="cursor: pointer;">
                 <div class="score-grid">
                     <div class="team-pod">
-                        <span class="team-pod-name t1" id="labelT1">Team 1</span>
+                        <span class="team-pod-name t1" id="labelT1">Home</span>
                         <div class="lcd-digits t1" id="digitT1">00</div>
                     </div>
 
@@ -1537,13 +1970,13 @@
                     </div>
 
                     <div class="team-pod">
-                        <span class="team-pod-name t2" id="labelT2">Team 2</span>
+                        <span class="team-pod-name t2" id="labelT2">Guests</span>
                         <div class="lcd-digits t2" id="digitT2">00</div>
                     </div>
                 </div>
 
                 <div class="court-banner">
-                    <span id="courtSideText">↔️ L: Team 1 (Blue) | R: Team 2 (Red)</span>
+                    <span id="courtSideText">↔️ L: Home (Blue) | R: Guests (Red)</span>
                     <span id="tbBadge" class="badge-tb-indicator" style="display: none;">tb</span>
                     <span id="displayModeBadge" style="font-size: 10px; font-weight: 800; color: var(--accent-green);">SCORE</span>
                 </div>
@@ -1553,11 +1986,11 @@
             <div class="scoring-hero">
                 <button type="button" class="btn-giant-score t1" id="btnPointT1" disabled>
                     <span class="giant-plus">+1</span>
-                    <span class="giant-team-title" id="btnPointT1Label">TEAM 1</span>
+                    <span class="giant-team-title" id="btnPointT1Label">HOME</span>
                 </button>
                 <button type="button" class="btn-giant-score t2" id="btnPointT2" disabled>
                     <span class="giant-plus">+1</span>
-                    <span class="giant-team-title" id="btnPointT2Label">TEAM 2</span>
+                    <span class="giant-team-title" id="btnPointT2Label">GUESTS</span>
                 </button>
             </div>
 
@@ -1694,7 +2127,7 @@
                 <div class="score-board" id="cardDualMirror" style="display: none;">
                     <div class="score-grid">
                         <div class="team-pod">
-                            <span class="team-pod-name t1">Team 1 (Blue)</span>
+                            <span class="team-pod-name t1">Home (Blue)</span>
                             <div class="lcd-digits t1" id="dispDualT1Sec">00</div>
                             <div style="font-size: 11px; font-weight: 700; color: var(--team1-blue);" id="dispDualT1Min">0 min</div>
                         </div>
@@ -1706,7 +2139,7 @@
                         </div>
 
                         <div class="team-pod">
-                            <span class="team-pod-name t2">Team 2 (Red)</span>
+                            <span class="team-pod-name t2">Guests (Red)</span>
                             <div class="lcd-digits t2" id="dispDualT2Sec">00</div>
                             <div style="font-size: 11px; font-weight: 700; color: var(--team2-red);" id="dispDualT2Min">0 min</div>
                         </div>
@@ -1767,7 +2200,7 @@
                     <div class="dual-card-container">
                         <!-- Timer 1 (Blue) -->
                         <div class="dual-timer-box t1">
-                            <span style="font-size: 11px; font-weight: 800; color: var(--team1-blue); text-transform: uppercase;">Team 1 (Blue)</span>
+                            <span style="font-size: 11px; font-weight: 800; color: var(--team1-blue); text-transform: uppercase;">Home (Blue)</span>
                             <div class="dual-timer-time t1" id="boxDualT1Time">00:00</div>
                             <div style="display: flex; gap: 4px; width: 100%;">
                                 <button type="button" class="btn-tool-chip" id="btnT1StartPause" style="flex: 1;">▶ Start</button>
@@ -1777,7 +2210,7 @@
 
                         <!-- Timer 2 (Red) -->
                         <div class="dual-timer-box t2">
-                            <span style="font-size: 11px; font-weight: 800; color: var(--team2-red); text-transform: uppercase;">Team 2 (Red)</span>
+                            <span style="font-size: 11px; font-weight: 800; color: var(--team2-red); text-transform: uppercase;">Guests (Red)</span>
                             <div class="dual-timer-time t2" id="boxDualT2Time">00:00</div>
                             <div style="display: flex; gap: 4px; width: 100%;">
                                 <button type="button" class="btn-tool-chip" id="btnT2StartPause" style="flex: 1;">▶ Start</button>
@@ -1797,7 +2230,7 @@
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                             <div style="background: rgba(0,210,255,0.06); padding: 6px; border-radius: var(--radius-md); border: 1px solid rgba(0,210,255,0.2);">
-                                <div style="font-size: 10px; color: var(--team1-blue); font-weight: 700; margin-bottom: 2px;">T1 Time (MM:SS)</div>
+                                <div style="font-size: 10px; color: var(--team1-blue); font-weight: 700; margin-bottom: 2px;">Home Time (MM:SS)</div>
                                 <div style="display: flex; gap: 2px; align-items: center;">
                                     <input type="number" id="inputT1Min" min="0" max="59" value="5" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
                                     <span>:</span>
@@ -1805,7 +2238,7 @@
                                 </div>
                             </div>
                             <div style="background: rgba(255,51,102,0.06); padding: 6px; border-radius: var(--radius-md); border: 1px solid rgba(255,51,102,0.2);">
-                                <div style="font-size: 10px; color: var(--team2-red); font-weight: 700; margin-bottom: 2px;">T2 Time (MM:SS)</div>
+                                <div style="font-size: 10px; color: var(--team2-red); font-weight: 700; margin-bottom: 2px;">Guests Time (MM:SS)</div>
                                 <div style="display: flex; gap: 2px; align-items: center;">
                                     <input type="number" id="inputT2Min" min="0" max="59" value="3" style="width: 48px; background: #03060a; border: 1px solid var(--bg-card-border); color: #fff; padding: 4px; border-radius: 4px; text-align: center;">
                                     <span>:</span>
@@ -2001,7 +2434,7 @@
 
                 <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.5.0</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.1</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2095,6 +2528,83 @@
         </button>
     </nav>
 
+</div>
+
+<!-- ============================================================ -->
+<!-- FULLSCREEN BIG-SCREEN SCOREBOARD VIEW OVERLAY               -->
+<!-- ============================================================ -->
+<div id="scoreboardView" class="scoreboard-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Big Screen Scoreboard">
+    <!-- Top Utility Bar -->
+    <header class="sb-header">
+        <button type="button" class="sb-btn-close" id="btnCloseScoreboard" title="Close Scoreboard View (Esc)">
+            ✕ Close
+        </button>
+        <div class="sb-match-badge" id="sbMatchBadge">SCOREBOARD</div>
+        <div class="sb-header-right">
+            <div class="sb-ble-status" id="sbBleStatus" title="BLE Connection Status">
+                <span class="status-dot" id="sbBleDot"></span>
+                <span id="sbBleText">Offline</span>
+            </div>
+            <button type="button" class="sb-btn-icon" id="btnToggleFs" title="Toggle Fullscreen">
+                <span id="sbFsIcon">⛶</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Score Stage -->
+    <div class="sb-stage">
+        <!-- Left Court Team -->
+        <div class="sb-team-side t1" id="sbTeamSideL" title="Tap to score +1 for Left team">
+            <div class="sb-team-header">
+                <span class="sb-team-badge" id="sbBadgeL">BLUE</span>
+                <span class="sb-team-name" id="sbLabelL">HOME</span>
+            </div>
+            <div class="sb-digit-wrap">
+                <div class="sb-digit" id="sbDigitL">00</div>
+            </div>
+        </div>
+
+        <!-- Center Ladder (Games & Sets) -->
+        <div class="sb-center-ladder">
+            <div class="sb-ladder-block">
+                <span class="sb-ladder-title">Games</span>
+                <span class="sb-ladder-val" id="sbLadderGames">0 - 0</span>
+            </div>
+            <div class="sb-ladder-divider"></div>
+            <div class="sb-ladder-block">
+                <span class="sb-ladder-title">Sets</span>
+                <span class="sb-ladder-val" id="sbLadderSets">0 - 0</span>
+            </div>
+            <span class="sb-tb-indicator" id="sbTbIndicator" style="display: none;">TIEBREAK</span>
+        </div>
+
+        <!-- Right Court Team -->
+        <div class="sb-team-side t2" id="sbTeamSideR" title="Tap to score +1 for Right team">
+            <div class="sb-team-header">
+                <span class="sb-team-badge" id="sbBadgeR">RED</span>
+                <span class="sb-team-name" id="sbLabelR">GUESTS</span>
+            </div>
+            <div class="sb-digit-wrap">
+                <div class="sb-digit" id="sbDigitR">00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Quick Actions Toolbar -->
+    <footer class="sb-bottom-bar">
+        <button type="button" class="sb-quick-btn active" id="sbBtnLock" title="Toggle Touch Scoring Lock">
+            <span id="sbLockIcon">🔓</span>
+            <span id="sbLockText">Tap to Score</span>
+        </button>
+        <button type="button" class="sb-quick-btn" id="sbBtnSwap" title="Swap Court Sides (↔️)">
+            <span>↔️</span>
+            <span>Swap Sides</span>
+        </button>
+        <button type="button" class="sb-quick-btn" id="sbBtnUndo" title="Undo Last Point (↩️)">
+            <span>↩️</span>
+            <span>Undo</span>
+        </button>
+    </footer>
 </div>
 
 <script>
@@ -2332,6 +2842,11 @@
         btnBleConnect.classList.add('connected');
         bleStatusText.textContent = 'Linked';
 
+        const sbBleStatus = document.getElementById('sbBleStatus');
+        const sbBleText = document.getElementById('sbBleText');
+        if (sbBleStatus) sbBleStatus.classList.add('connected');
+        if (sbBleText) sbBleText.textContent = 'Linked';
+
         btnPointT1.disabled = false;
         btnPointT2.disabled = false;
         btnCmdUndo.disabled = false;
@@ -2352,6 +2867,11 @@
     function onDisconnected() {
         btnBleConnect.classList.remove('connected');
         bleStatusText.textContent = 'Connect';
+
+        const sbBleStatus = document.getElementById('sbBleStatus');
+        const sbBleText = document.getElementById('sbBleText');
+        if (sbBleStatus) sbBleStatus.classList.remove('connected');
+        if (sbBleText) sbBleText.textContent = 'Offline';
 
         btnPointT1.disabled = true;
         btnPointT2.disabled = true;
@@ -2495,34 +3015,77 @@
         ladderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
         ladderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
 
+        // Big screen scoreboard mirror elements
+        const sbDigitL = document.getElementById('sbDigitL');
+        const sbDigitR = document.getElementById('sbDigitR');
+        const sbLadderGames = document.getElementById('sbLadderGames');
+        const sbLadderSets = document.getElementById('sbLadderSets');
+        const sbLabelL = document.getElementById('sbLabelL');
+        const sbLabelR = document.getElementById('sbLabelR');
+        const sbBadgeL = document.getElementById('sbBadgeL');
+        const sbBadgeR = document.getElementById('sbBadgeR');
+        const sbTeamSideL = document.getElementById('sbTeamSideL');
+        const sbTeamSideR = document.getElementById('sbTeamSideR');
+        const sbTbIndicator = document.getElementById('sbTbIndicator');
+
+        if (sbLadderGames) sbLadderGames.textContent = `${boardState.t1Games} - ${boardState.t2Games}`;
+        if (sbLadderSets)  sbLadderSets.textContent  = `${boardState.t1Sets} - ${boardState.t2Sets}`;
+
         if (!boardState.isSwapped) {
-            courtSideText.textContent = '↔️ L: Team 1 (Blue) | R: Team 2 (Red)';
-            if (labelT1) { labelT1.textContent = 'Team 1'; labelT1.classList.remove('t2'); labelT1.classList.add('t1'); }
-            if (labelT2) { labelT2.textContent = 'Team 2'; labelT2.classList.remove('t1'); labelT2.classList.add('t2'); }
+            courtSideText.textContent = '↔️ L: Home (Blue) | R: Guests (Red)';
+            if (labelT1) { labelT1.textContent = 'Home'; labelT1.classList.remove('t2'); labelT1.classList.add('t1'); }
+            if (labelT2) { labelT2.textContent = 'Guests'; labelT2.classList.remove('t1'); labelT2.classList.add('t2'); }
             digitT1.classList.remove('t2'); digitT1.classList.add('t1');
             digitT2.classList.remove('t1'); digitT2.classList.add('t2');
-            if (btnT1Label) btnT1Label.textContent = 'TEAM 1';
-            if (btnT2Label) btnT2Label.textContent = 'TEAM 2';
+            if (btnT1Label) btnT1Label.textContent = 'HOME';
+            if (btnT2Label) btnT2Label.textContent = 'GUESTS';
             if (btnPointT1) { btnPointT1.classList.remove('t2'); btnPointT1.classList.add('t1'); }
             if (btnPointT2) { btnPointT2.classList.remove('t1'); btnPointT2.classList.add('t2'); }
+
+            // Big screen scoreboard
+            if (sbDigitL) sbDigitL.textContent = boardState.t1Point;
+            if (sbDigitR) sbDigitR.textContent = boardState.t2Point;
+            if (sbLabelL) sbLabelL.textContent = 'Home';
+            if (sbLabelR) sbLabelR.textContent = 'Guests';
+            if (sbBadgeL) sbBadgeL.textContent = 'Blue';
+            if (sbBadgeR) sbBadgeR.textContent = 'Red';
+            if (sbTeamSideL) { sbTeamSideL.classList.remove('t2'); sbTeamSideL.classList.add('t1'); }
+            if (sbTeamSideR) { sbTeamSideR.classList.remove('t1'); sbTeamSideR.classList.add('t2'); }
         } else {
-            courtSideText.textContent = '↔️ L: Team 2 (Red) | R: Team 1 (Blue)';
-            if (labelT1) { labelT1.textContent = 'Team 2'; labelT1.classList.remove('t1'); labelT1.classList.add('t2'); }
-            if (labelT2) { labelT2.textContent = 'Team 1'; labelT2.classList.remove('t2'); labelT2.classList.add('t1'); }
+            courtSideText.textContent = '↔️ L: Guests (Red) | R: Home (Blue)';
+            if (labelT1) { labelT1.textContent = 'Guests'; labelT1.classList.remove('t1'); labelT1.classList.add('t2'); }
+            if (labelT2) { labelT2.textContent = 'Home'; labelT2.classList.remove('t2'); labelT2.classList.add('t1'); }
             digitT1.classList.remove('t1'); digitT1.classList.add('t2');
             digitT2.classList.remove('t2'); digitT2.classList.add('t1');
-            if (btnT1Label) btnT1Label.textContent = 'TEAM 2';
-            if (btnT2Label) btnT2Label.textContent = 'TEAM 1';
+            if (btnT1Label) btnT1Label.textContent = 'GUESTS';
+            if (btnT2Label) btnT2Label.textContent = 'HOME';
             if (btnPointT1) { btnPointT1.classList.remove('t1'); btnPointT1.classList.add('t2'); }
             if (btnPointT2) { btnPointT2.classList.remove('t2'); btnPointT2.classList.add('t1'); }
+
+            // Big screen scoreboard (swapped)
+            if (sbDigitL) sbDigitL.textContent = boardState.t2Point;
+            if (sbDigitR) sbDigitR.textContent = boardState.t1Point;
+            if (sbLabelL) sbLabelL.textContent = 'Guests';
+            if (sbLabelR) sbLabelR.textContent = 'Home';
+            if (sbBadgeL) sbBadgeL.textContent = 'Red';
+            if (sbBadgeR) sbBadgeR.textContent = 'Blue';
+            if (sbTeamSideL) { sbTeamSideL.classList.remove('t1'); sbTeamSideL.classList.add('t2'); }
+            if (sbTeamSideR) { sbTeamSideR.classList.remove('t2'); sbTeamSideR.classList.add('t1'); }
         }
 
         if (boardState.tbIntro) {
             const isSuperTb = (boardState.tbMode === 2) || (appConfig.tb === 1 && appConfig.sets === 2 && boardState.t1Sets === 1 && boardState.t2Sets === 1);
             tbBadge.textContent = isSuperTb ? 'Stb' : 'tb';
             tbBadge.style.display = 'inline-flex';
+            if (sbTbIndicator) {
+                sbTbIndicator.textContent = isSuperTb ? 'SUPER TIEBREAK' : 'TIEBREAK';
+                sbTbIndicator.style.display = 'inline-flex';
+            }
         } else {
             tbBadge.style.display = 'none';
+            if (sbTbIndicator) {
+                sbTbIndicator.style.display = 'none';
+            }
         }
     }
     window.parseScoreString = parseScoreString;
@@ -3705,6 +4268,172 @@
     document.querySelectorAll('.pill-theme').forEach(pill => {
         pill.addEventListener('click', () => applyTheme(pill.dataset.theme));
     });
+
+    // -------------------------------------------------------------
+    // Fullscreen Big-Screen Scoreboard View Controller
+    // -------------------------------------------------------------
+    let sbScoringLocked = false;
+    let wakeLockSentinel = null;
+
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+                wakeLockSentinel.addEventListener('release', () => {
+                    wakeLockSentinel = null;
+                });
+            } catch (err) {
+                console.debug('Wake lock request not available or rejected:', err);
+            }
+        }
+    }
+
+    function releaseWakeLock() {
+        if (wakeLockSentinel) {
+            wakeLockSentinel.release().catch(() => {});
+            wakeLockSentinel = null;
+        }
+    }
+
+    function openScoreboardView() {
+        const sb = document.getElementById('scoreboardView');
+        if (!sb) return;
+        sb.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        requestWakeLock();
+        renderMirrorUI();
+
+        // Sync BLE connection status in scoreboard header
+        const isConnected = !!(watchChar && watchChar.service && watchChar.service.device && watchChar.service.device.gatt && watchChar.service.device.gatt.connected);
+        const sbBleStatus = document.getElementById('sbBleStatus');
+        const sbBleText = document.getElementById('sbBleText');
+        if (sbBleStatus) sbBleStatus.classList.toggle('connected', isConnected);
+        if (sbBleText) sbBleText.textContent = isConnected ? 'Linked' : 'Offline';
+
+        try {
+            history.pushState({ scoreboardOpen: true }, '');
+        } catch(e) {}
+    }
+
+    function closeScoreboardView() {
+        const sb = document.getElementById('scoreboardView');
+        if (!sb) return;
+        sb.style.display = 'none';
+        document.body.style.overflow = '';
+        releaseWakeLock();
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+
+    function toggleScoreboardFullscreen() {
+        const sb = document.getElementById('scoreboardView');
+        if (!sb) return;
+        if (!document.fullscreenElement) {
+            if (sb.requestFullscreen) {
+                sb.requestFullscreen().catch(() => {});
+            } else if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+    }
+
+    // Connect openers
+    const btnOpenScoreboard = document.getElementById('btnOpenScoreboard');
+    if (btnOpenScoreboard) btnOpenScoreboard.addEventListener('click', openScoreboardView);
+
+    const btnBannerBigScreen = document.getElementById('btnBannerBigScreen');
+    if (btnBannerBigScreen) btnBannerBigScreen.addEventListener('click', openScoreboardView);
+
+    const cardScoreMirror = document.getElementById('cardScoreMirror');
+    if (cardScoreMirror) cardScoreMirror.addEventListener('click', (e) => {
+        // Prevent opening if clicking an interactive button within
+        if (e.target.closest('button, a, input, select')) return;
+        openScoreboardView();
+    });
+
+    const btnCloseScoreboard = document.getElementById('btnCloseScoreboard');
+    if (btnCloseScoreboard) btnCloseScoreboard.addEventListener('click', closeScoreboardView);
+
+    const btnToggleFs = document.getElementById('btnToggleFs');
+    if (btnToggleFs) btnToggleFs.addEventListener('click', toggleScoreboardFullscreen);
+
+    // Scoreboard Bottom Quick Action Buttons
+    const sbBtnUndo = document.getElementById('sbBtnUndo');
+    if (sbBtnUndo) {
+        sbBtnUndo.addEventListener('click', () => {
+            if (navigator.vibrate) navigator.vibrate(20);
+            sendBleText('CMD,UNDO');
+        });
+    }
+
+    const sbBtnSwap = document.getElementById('sbBtnSwap');
+    if (sbBtnSwap) {
+        sbBtnSwap.addEventListener('click', () => {
+            if (navigator.vibrate) navigator.vibrate(25);
+            boardState.isSwapped = !boardState.isSwapped;
+            renderMirrorUI();
+            sendBleText('CMD,SWAP');
+        });
+    }
+
+    const sbBtnLock = document.getElementById('sbBtnLock');
+    const sbLockIcon = document.getElementById('sbLockIcon');
+    const sbLockText = document.getElementById('sbLockText');
+    const sbTeamSideL = document.getElementById('sbTeamSideL');
+    const sbTeamSideR = document.getElementById('sbTeamSideR');
+
+    if (sbBtnLock) {
+        sbBtnLock.addEventListener('click', () => {
+            sbScoringLocked = !sbScoringLocked;
+            sbBtnLock.classList.toggle('active', !sbScoringLocked);
+            if (sbLockIcon) sbLockIcon.textContent = sbScoringLocked ? '🔒' : '🔓';
+            if (sbLockText) sbLockText.textContent = sbScoringLocked ? 'View Only' : 'Tap to Score';
+            if (sbTeamSideL) sbTeamSideL.style.cursor = sbScoringLocked ? 'default' : 'pointer';
+            if (sbTeamSideR) sbTeamSideR.style.cursor = sbScoringLocked ? 'default' : 'pointer';
+        });
+    }
+
+    // Touch Scoring on Big Screen
+    if (sbTeamSideL) {
+        sbTeamSideL.addEventListener('click', () => {
+            if (sbScoringLocked) return;
+            if (navigator.vibrate) navigator.vibrate(35);
+            sendBleText(boardState.isSwapped ? 'CMD,P2' : 'CMD,P1');
+        });
+    }
+
+    if (sbTeamSideR) {
+        sbTeamSideR.addEventListener('click', () => {
+            if (sbScoringLocked) return;
+            if (navigator.vibrate) navigator.vibrate(35);
+            sendBleText(boardState.isSwapped ? 'CMD,P1' : 'CMD,P2');
+        });
+    }
+
+    // Handle Escape key and mobile Back button
+    window.addEventListener('popstate', () => {
+        const sb = document.getElementById('scoreboardView');
+        if (sb && sb.style.display !== 'none') {
+            closeScoreboardView();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const sb = document.getElementById('scoreboardView');
+            if (sb && sb.style.display !== 'none') {
+                closeScoreboardView();
+            }
+        }
+    });
+
+    window.openScoreboardView = openScoreboardView;
+    window.closeScoreboardView = closeScoreboardView;
 
 </script>
 </body>

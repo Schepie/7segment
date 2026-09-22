@@ -1,5 +1,5 @@
 // Padel Scoreboard PWA Service Worker
-const APP_VERSION = 'v1.4.7';
+const APP_VERSION = 'v1.6.1';
 const CACHE_NAME = `padel-scoreboard-${APP_VERSION}`;
 
 const PRECACHE_ASSETS = [
