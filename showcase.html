@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PadelPulse — The Smart 7-Segment Padel Scoreboard & Wall Clock</title>
+    <meta name="description" content="Explore the ESP32-powered modular 7-segment Padel Scoreboard and Digital Clock. Features zero-lag Bluetooth racket clicker, Wear OS smartwatch sync, Web Bluetooth controller, and snap-fit 3D printed modular design.">
+    <meta name="keywords" content="Padel Scoreboard, 7 segment display, ESP32, Wear OS padel, Bluetooth clicker, Padel racket remote, WS2812B, 3D printed scoreboard, digital clock">
+    <meta property="og:title" content="PadelPulse — Smart 7-Segment Padel Scoreboard & Digital Clock">
+    <meta property="og:description" content="Real-time court scoreboard with instant racket clicker, smartwatch sync, and ambient wall clock mode. Tell us what you want to pay and help shape the product!">
+    <meta property="og:image" content="Images/full_scoreboard_preview.png">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #06090e;
+            --bg-base: #0a0f18;
+            --bg-surface: #101726;
+            --bg-card: rgba(16, 23, 38, 0.78);
+            --bg-card-hover: rgba(22, 33, 54, 0.88);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(0, 210, 255, 0.35);
+
+            --team1-blue: #00d2ff;
+            --team1-glow: rgba(0, 210, 255, 0.4);
+            --team2-red: #ff3366;
+            --team2-glow: rgba(255, 51, 102, 0.4);
+            --accent-green: #00e676;
+            --accent-green-glow: rgba(0, 230, 118, 0.35);
+            --accent-gold: #ffb300;
+            --accent-gold-glow: rgba(255, 179, 0, 0.4);
+            --clock-green: #00ff66;
+
+            --text-main: #f0f4f8;
+            --text-muted: #94a3b8;
+            --text-sub: #64748b;
+
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --font-display: 'Orbitron', monospace;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(ellipse at 50% -10%, rgba(0, 210, 255, 0.18) 0%, transparent 60%),
+                radial-gradient(ellipse at 85% 40%, rgba(255, 51, 102, 0.10) 0%, transparent 50%),
+                radial-gradient(ellipse at 15% 75%, rgba(0, 230, 118, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── Header & Navigation ── */
+        .site-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 15, 24, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .nav-logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            box-shadow: 0 0 12px var(--team1-glow);
+        }
+
+        .logo-title {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 99px;
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(0, 119, 255, 0.3));
+            border: 1px solid var(--border-highlight);
+            color: var(--team1-blue);
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            list-style: none;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-main);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-ghost-nav {
+            color: var(--team1-blue);
+            border: 1px solid var(--border-highlight);
+            background: rgba(0, 210, 255, 0.08);
+            padding: 7px 14px;
+            border-radius: 99px;
+            font-size: 12.5px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-ghost-nav:hover {
+            background: rgba(0, 210, 255, 0.2);
+            box-shadow: 0 0 15px var(--team1-glow);
+        }
+
+        .btn-cta-nav {
+            background: linear-gradient(135deg, #00d2ff, #0077ff);
+            color: #030811;
+            font-weight: 800;
+            font-size: 12.5px;
+            padding: 8px 18px;
+            border-radius: 99px;
+            text-decoration: none;
+            box-shadow: 0 4px 18px var(--team1-glow);
+            transition: all 0.2s;
+        }
+
+        .btn-cta-nav:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(0, 210, 255, 0.6);
+        }
+
+        /* ── Container Layout ── */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Section Styling ── */
+        section {
+            padding: 80px 0;
+            position: relative;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--team1-blue);
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            padding: 4px 12px;
+            border-radius: 99px;
+            margin-bottom: 16px;
+        }
+
+        .section-tag.gold {
+            color: var(--accent-gold);
+            background: rgba(255, 179, 0, 0.1);
+            border-color: rgba(255, 179, 0, 0.25);
+        }
+
+        .section-tag.green {
+            color: var(--accent-green);
+            background: rgba(0, 230, 118, 0.1);
+            border-color: rgba(0, 230, 118, 0.25);
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4.5vw, 44px);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            font-size: clamp(15px, 1.8vw, 18px);
+            color: var(--text-muted);
+            max-width: 680px;
+            margin-bottom: 40px;
+        }
+
+        /* ── HERO SECTION ── */
+        .hero {
+            padding: 70px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-headline {
+            font-size: clamp(34px, 5.8vw, 62px);
+            font-weight: 900;
+            letter-spacing: -0.035em;
+            line-height: 1.1;
+            margin: 18px auto 20px;
+            max-width: 980px;
+        }
+
+        .hero-gradient-text {
+            background: linear-gradient(135deg, #ffffff 15%, var(--team1-blue) 60%, #a5f3fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            font-size: clamp(16px, 2.2vw, 20px);
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto 36px;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 50px;
+        }
+
+        .btn-hero-primary {
+            background: linear-gradient(135deg, #00d2ff 0%, #0066ff 100%);
+            color: #030811;
+            font-size: 16px;
+            font-weight: 800;
+            padding: 15px 32px;
+            border-radius: 99px;
+            text-decoration: none;
+            box-shadow: 0 8px 30px rgba(0, 210, 255, 0.45);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 210, 255, 0.7);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(16, 23, 38, 0.8);
+            color: var(--text-main);
+            border: 1px solid var(--border-subtle);
+            font-size: 16px;
+            font-weight: 700;
+            padding: 15px 30px;
+            border-radius: 99px;
+            text-decoration: none;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-secondary:hover {
+            border-color: var(--border-highlight);
+            background: rgba(22, 33, 54, 0.95);
+            transform: translateY(-2px);
+        }
+
+        .hero-pills {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .pill-badge {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── INTERACTIVE LIVE SCOREBOARD DEMO ── */
+        .demo-section {
+            background: radial-gradient(circle at 50% 30%, rgba(16, 23, 38, 0.95) 0%, var(--bg-deep) 100%);
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 36px;
+            align-items: center;
+        }
+
+        /* Scoreboard Physical Shell Mockup */
+        .virtual-board-housing {
+            background: #080c14;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            box-shadow: 
+                0 25px 60px -15px rgba(0, 0, 0, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 40px rgba(0, 210, 255, 0.08);
+            position: relative;
+        }
+
+        .housing-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .housing-brand {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .housing-brand .dot-live {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse-dot 1.8s infinite;
+        }
+
+        .housing-mode-pill {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(0, 230, 118, 0.15);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            color: var(--accent-green);
+            text-transform: uppercase;
+        }
+
+        .housing-mode-pill.clock {
+            background: rgba(0, 255, 102, 0.15);
+            border-color: rgba(0, 255, 102, 0.35);
+            color: var(--clock-green);
+        }
+
+        /* The 7-segment display panel */
+        .board-face {
+            background: #020408;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px 16px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 16px;
+            box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.85);
+            position: relative;
+            min-height: 200px;
+        }
+
+        .team-digit-box {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .team-label {
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        .team-digit-box.t1 .team-label {
+            background: rgba(0, 210, 255, 0.15);
+            color: var(--team1-blue);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+
+        .team-digit-box.t2 .team-label {
+            background: rgba(255, 51, 102, 0.15);
+            color: var(--team2-red);
+            border: 1px solid rgba(255, 51, 102, 0.3);
+        }
+
+        .seven-segment-digits {
+            font-family: var(--font-display);
+            font-size: clamp(54px, 7vw, 86px);
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 120px;
+            display: inline-block;
+            transition: all 0.15s ease;
+        }
+
+        .seven-segment-digits.t1 {
+            color: var(--team1-blue);
+            text-shadow: 0 0 24px var(--team1-glow), 0 0 50px rgba(0, 210, 255, 0.25);
+        }
+
+        .seven-segment-digits.t2 {
+            color: var(--team2-red);
+            text-shadow: 0 0 24px var(--team2-glow), 0 0 50px rgba(255, 51, 102, 0.25);
+        }
+
+        .seven-segment-digits.clock {
+            color: var(--clock-green);
+            text-shadow: 0 0 24px rgba(0, 255, 102, 0.45);
+        }
+
+        /* Middle 24-LED Games & Sets Module */
+        .ladder-module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            background: rgba(10, 15, 24, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            min-width: 90px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .ladder-title {
+            font-size: 9.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-sub);
+            margin-bottom: 2px;
+        }
+
+        .ladder-val {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ladder-val.games {
+            color: var(--text-main);
+        }
+
+        .ladder-val.sets {
+            color: var(--accent-gold);
+            text-shadow: 0 0 10px var(--accent-gold-glow);
+        }
+
+        .ladder-sep {
+            color: var(--text-sub);
+            font-size: 14px;
+        }
+
+        .board-footer-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 700;
+        }
+
+        /* Remote Clicker Controller Widget */
+        .clicker-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .clicker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .clicker-badge {
+            font-size: 11px;
+            font-weight: 800;
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--team1-blue);
+            padding: 3px 9px;
+            border-radius: 99px;
+            border: 1px solid rgba(0, 210, 255, 0.25);
+        }
+
+        /* Virtual Physical Racket Shutter Remote */
+        .racket-clicker-chassis {
+            background: #141b27;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 40px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 140px;
+            margin: 0 auto;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.6),
+                inset 0 2px 4px rgba(255, 255, 255, 0.15);
+        }
+
+        .clicker-btn {
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.1s ease;
+            outline: none;
+            user-select: none;
+        }
+
+        .clicker-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* Big Button (Shutter) = Team 1 */
+        .btn-clicker-big {
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #1a8bb8 0%, #06405e 90%);
+            border: 3px solid rgba(0, 210, 255, 0.6);
+            box-shadow: 
+                0 6px 16px rgba(0, 0, 0, 0.7),
+                0 0 16px var(--team1-glow);
+            color: #fff;
+        }
+
+        .btn-clicker-big:active {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 8px var(--team1-glow);
+        }
+
+        .btn-clicker-big .btn-icon {
+            font-size: 26px;
+            font-weight: 900;
+        }
+
+        .btn-clicker-big .btn-sub {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #c7f3ff;
+        }
+
+        /* Small Button (Mode) = Team 2 */
+        .btn-clicker-small {
+            width: 68px;
+            height: 68px;
+            border-radius: 20px;
+            background: radial-gradient(circle at 35% 30%, #a82042 0%, #540e1f 90%);
+            border: 3px solid rgba(255, 51, 102, 0.6);
+            box-shadow: 
+                0 6px 16px rgba(0, 0, 0, 0.7),
+                0 0 16px var(--team2-glow);
+            color: #fff;
+        }
+
+        .btn-clicker-small:active {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 8px var(--team2-glow);
+        }
+
+        .btn-clicker-small .btn-icon {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .btn-clicker-small .btn-sub {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #ffccd7;
+        }
+
+        .clicker-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            padding: 10px;
+            border-radius: var(--radius-sm);
+        }
+
+        .demo-controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-control-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-control-chip:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-control-chip.active {
+            background: rgba(0, 210, 255, 0.15);
+            border-color: var(--team1-blue);
+            color: var(--team1-blue);
+        }
+
+        /* ── THE 4-WAY CONNECTED ECOSYSTEM ── */
+        .ecosystem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .eco-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            transition: all 0.25s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .eco-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-4px);
+            background: var(--bg-card-hover);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+        }
+
+        .eco-icon-wrap {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            color: var(--team1-blue);
+        }
+
+        .eco-icon-wrap.red {
+            background: rgba(255, 51, 102, 0.1);
+            border-color: rgba(255, 51, 102, 0.25);
+            color: var(--team2-red);
+        }
+
+        .eco-icon-wrap.gold {
+            background: rgba(255, 179, 0, 0.1);
+            border-color: rgba(255, 179, 0, 0.25);
+            color: var(--accent-gold);
+        }
+
+        .eco-icon-wrap.green {
+            background: rgba(0, 230, 118, 0.1);
+            border-color: rgba(0, 230, 118, 0.25);
+            color: var(--accent-green);
+        }
+
+        .eco-title {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .eco-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.55;
+            flex: 1;
+        }
+
+        .eco-points {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-main);
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 14px;
+        }
+
+        .eco-points li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .eco-points li::before {
+            content: "✓";
+            color: var(--accent-green);
+            font-weight: 900;
+        }
+
+        /* ── HARDWARE & ENGINEERING DEEP DIVE ── */
+        .hardware-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .hw-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .hw-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-3px);
+        }
+
+        .hw-img-container {
+            width: 100%;
+            height: 240px;
+            background: #04070c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hw-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.4s ease;
+            padding: 10px;
+        }
+
+        .hw-card:hover .hw-img-container img {
+            transform: scale(1.05);
+        }
+
+        .hw-content {
+            padding: 24px;
+        }
+
+        .hw-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .hw-desc {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .tech-spec-bar {
+            background: rgba(16, 23, 38, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .spec-item .spec-val {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--team1-blue);
+            margin-bottom: 4px;
+        }
+
+        .spec-item .spec-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── PRODUCT PACKAGES ── */
+        .pricing-packages {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+
+        .pkg-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: 32px 26px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            position: relative;
+            transition: all 0.25s ease;
+        }
+
+        .pkg-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .pkg-card.featured {
+            border-color: var(--team1-blue);
+            background: linear-gradient(180deg, rgba(0, 210, 255, 0.08) 0%, rgba(16, 23, 38, 0.9) 100%);
+            box-shadow: 0 15px 40px -10px var(--team1-glow);
+        }
+
+        .pkg-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #00d2ff, #0066ff);
+            color: #030811;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 4px 14px;
+            border-radius: 99px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .pkg-title {
+            font-size: 22px;
+            font-weight: 900;
+        }
+
+        .pkg-desc {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            min-height: 42px;
+        }
+
+        .pkg-price-est {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 16px;
+        }
+
+        .pkg-price-num {
+            font-family: var(--font-display);
+            font-size: 34px;
+            font-weight: 900;
+            color: var(--text-main);
+        }
+
+        .pkg-price-note {
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+
+        .pkg-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 13.5px;
+            flex: 1;
+        }
+
+        .pkg-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .pkg-features li::before {
+            content: "✓";
+            color: var(--team1-blue);
+            font-weight: 900;
+            margin-top: 1px;
+        }
+
+        .btn-select-pkg {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 12px;
+            border-radius: 99px;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-select-pkg:hover,
+        .pkg-card.featured .btn-select-pkg {
+            background: linear-gradient(135deg, #00d2ff, #0077ff);
+            color: #030811;
+            border-color: transparent;
+            font-weight: 800;
+        }
+
+        /* ── MARKET VALIDATION & PRICING FEEDBACK SURVEY (CORE FUNNEL) ── */
+        .feedback-section {
+            background: radial-gradient(circle at 50% 10%, rgba(0, 210, 255, 0.12) 0%, rgba(10, 15, 24, 0.98) 70%);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .feedback-container {
+            max-width: 860px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-highlight);
+            border-radius: var(--radius-xl);
+            padding: clamp(24px, 5vw, 48px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+        }
+
+        .form-group {
+            margin-bottom: 26px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14.5px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .form-subtext {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: -6px;
+            margin-bottom: 12px;
+        }
+
+        /* Interactive Radio Chips for Persona & Tier */
+        .chip-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+        }
+
+        .chip-option {
+            position: relative;
+        }
+
+        .chip-option input[type="radio"],
+        .chip-option input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .chip-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .chip-option input:checked + .chip-label {
+            background: rgba(0, 210, 255, 0.15);
+            border-color: var(--team1-blue);
+            color: var(--team1-blue);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Interactive Price Slider Widget */
+        .slider-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .slider-display-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .slider-value-badge {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--team1-blue);
+            text-shadow: 0 0 18px var(--team1-glow);
+        }
+
+        .price-verdict {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .slider-input {
+            width: 100%;
+            height: 10px;
+            border-radius: 99px;
+            background: linear-gradient(to right, #00d2ff, #ffb300, #ff3366);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #080c14;
+            box-shadow: 0 0 14px rgba(0, 210, 255, 0.8);
+            cursor: grab;
+            transition: transform 0.1s;
+        }
+
+        .slider-input::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+            cursor: grabbing;
+        }
+
+        .slider-labels-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-sub);
+        }
+
+        /* Form Inputs */
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 640px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .text-input,
+        .text-area {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .text-input:focus,
+        .text-area:focus {
+            border-color: var(--team1-blue);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.25);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .text-area {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .btn-submit-feedback {
+            width: 100%;
+            background: linear-gradient(135deg, #00d2ff 0%, #0077ff 100%);
+            color: #030811;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 900;
+            padding: 16px;
+            border-radius: 99px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.4);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-submit-feedback:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 210, 255, 0.65);
+        }
+
+        .btn-submit-feedback:active {
+            transform: translateY(0);
+        }
+
+        /* Success State */
+        .feedback-success {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .success-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(0, 230, 118, 0.15);
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 30px var(--accent-green-glow);
+        }
+
+        .success-title {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .success-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto 24px;
+        }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 50px 0 30px;
+            background: #04070c;
+            color: var(--text-muted);
+            font-size: 13.5px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        .footer-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--team1-blue);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            padding-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        /* Animations */
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.25); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 900px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Navigation -->
+    <header class="site-nav">
+        <a href="#hero" class="nav-logo">
+            <img src="favicon.png" alt="Padel Score Logo">
+            <div class="logo-title">
+                PadelPulse
+                <span class="logo-badge">ESP32 7-SEG</span>
+            </div>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="#demo" class="nav-link">Interactive Demo</a></li>
+            <li><a href="#ecosystem" class="nav-link">Ecosystem</a></li>
+            <li><a href="#hardware" class="nav-link">Hardware & Tech</a></li>
+            <li><a href="#packages" class="nav-link">Packages</a></li>
+            <li><a href="#feedback" class="nav-link">Pricing Survey</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <a href="index.html" class="btn-ghost-nav" title="Launch Web Bluetooth Controller">
+                <span>📱 App Controller</span>
+            </a>
+            <a href="#feedback" class="btn-cta-nav">Give Feedback</a>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="section-tag">
+                <span>🎾</span> Professional ESP32 Sports Engineering
+            </div>
+            
+            <h1 class="hero-headline">
+                The Smart <span class="hero-gradient-text">7-Segment Scoreboard</span> & Ambient Court Clock
+            </h1>
+
+            <p class="hero-desc">
+                Never argue about the score again. High-visibility WS2812B LEDs, instant Bluetooth racket clicker, Wear OS wrist companion, and automated 24-hour wall clock mode.
+            </p>
+
+            <div class="hero-cta-group">
+                <a href="#demo" class="btn-hero-primary">
+                    <span>🎮 Try Interactive Demo</span>
+                </a>
+                <a href="#feedback" class="btn-hero-secondary">
+                    <span>📊 Shape the Price & Specs</span>
+                </a>
+            </div>
+
+            <div class="hero-pills">
+                <span class="pill-badge">⚡ Zero-Latency Racket Remote</span>
+                <span class="pill-badge">⌚ Wear OS Wrist Scoring</span>
+                <span class="pill-badge">📲 Zero-Install Web App</span>
+                <span class="pill-badge">🕒 DS1302 Real-Time Clock</span>
+                <span class="pill-badge">🧩 Snap-Fit Modular 3D Case</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE SCOREBOARD DEMO -->
+    <section class="demo-section" id="demo">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <div class="section-tag green">
+                    <span>⚡</span> Live Virtual Simulator
+                </div>
+                <h2 class="section-title">Experience How It Works</h2>
+                <p class="section-subtitle" style="margin: 0 auto;">
+                    Click the physical racket remote buttons below to test live score progression, Golden Point rules, and watch how it smoothly switches to an ambient wall clock.
+                </p>
+            </div>
+
+            <div class="demo-grid">
+                <!-- Virtual Physical Scoreboard Mockup -->
+                <div class="virtual-board-housing">
+                    <div class="housing-top-bar">
+                        <div class="housing-brand">
+                            <span class="dot-live"></span>
+                            <span>PADEL DISPLAY // ESP32 MASTER</span>
+                        </div>
+                        <div class="housing-mode-pill" id="simModeBadge">SCOREBOARD MODE</div>
+                    </div>
+
+                    <!-- Digital Face -->
+                    <div class="board-face" id="simBoardFace">
+                        <!-- Team 1 / Blue -->
+                        <div class="team-digit-box t1">
+                            <span class="team-label" id="simLabelT1">TEAM 1</span>
+                            <div class="seven-segment-digits t1" id="simDigitsT1">00</div>
+                        </div>
+
+                        <!-- 24-LED Middle Ladder (Games & Sets) -->
+                        <div class="ladder-module" id="simLadderModule">
+                            <span class="ladder-title">GAMES</span>
+                            <div class="ladder-val games" id="simLadderGames">
+                                <span style="color: var(--team1-blue);" id="simGamesT1">0</span>
+                                <span class="ladder-sep">-</span>
+                                <span style="color: var(--team2-red);" id="simGamesT2">0</span>
+                            </div>
+
+                            <span class="ladder-title" style="margin-top: 6px;">SETS</span>
+                            <div class="ladder-val sets" id="simLadderSets">
+                                <span id="simSetsT1">0</span>
+                                <span class="ladder-sep">-</span>
+                                <span id="simSetsT2">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Team 2 / Red -->
+                        <div class="team-digit-box t2">
+                            <span class="team-label" id="simLabelT2">TEAM 2</span>
+                            <div class="seven-segment-digits t2" id="simDigitsT2">00</div>
+                        </div>
+                    </div>
+
+                    <div class="board-footer-bar">
+                        <div class="status-chip">
+                            <span>📡 BLE 5.0:</span>
+                            <span style="color: var(--accent-green);">Auto-Paired</span>
+                        </div>
+                        <div id="simRuleStatus" style="font-weight: 700; color: var(--accent-gold);">
+                            Rule: Golden Point (Punto de Oro)
+                        </div>
+                        <div class="status-chip">
+                            <span>Undo Stack:</span>
+                            <span id="simUndoCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Virtual Remote Clicker & Controls -->
+                <div class="clicker-card">
+                    <div class="clicker-header">
+                        <div>
+                            <h3 style="font-size: 18px; font-weight: 800;">Racket Clicker Remote</h3>
+                            <p style="font-size: 12px; color: var(--text-muted);">Clip-on BLE controller or Xiaomi Shutter</p>
+                        </div>
+                        <span class="clicker-badge">XiaoYi / Custom CAD</span>
+                    </div>
+
+                    <!-- Physical Clicker Visual -->
+                    <div class="racket-clicker-chassis">
+                        <!-- Top Big Button = Team 1 (Blue) -->
+                        <button type="button" class="clicker-btn btn-clicker-big" id="btnSimRemoteT1" title="Single click: +1 Team 1 | Double click: Undo">
+                            <span class="btn-icon">○</span>
+                            <span class="btn-sub">Team 1</span>
+                        </button>
+
+                        <!-- Bottom Small Button = Team 2 (Red) -->
+                        <button type="button" class="clicker-btn btn-clicker-small" id="btnSimRemoteT2" title="Single click: +1 Team 2 | Double click: Undo">
+                            <span class="btn-icon">■</span>
+                            <span class="btn-sub">Team 2</span>
+                        </button>
+                    </div>
+
+                    <div class="clicker-hint">
+                        💡 <strong>Try Double-Clicking</strong> either button within 400ms to test instant <strong>UNDO</strong>!
+                    </div>
+
+                    <!-- Simulator Auxiliary Options -->
+                    <div class="demo-controls-bar">
+                        <button type="button" class="btn-control-chip" id="btnSimToggleMode">
+                            <span>🔄 Switch to Wall Clock</span>
+                        </button>
+                        <button type="button" class="btn-control-chip" id="btnSimToggleRule">
+                            <span>⚖️ Golden Point / Ad</span>
+                        </button>
+                        <button type="button" class="btn-control-chip" id="btnSimReset">
+                            <span>🗑️ Reset Match</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- THE 4-WAY CONNECTED ECOSYSTEM -->
+    <section id="ecosystem">
+        <div class="container">
+            <div class="section-tag">
+                <span>🔗</span> Complete Synchronized Network
+            </div>
+            <h2 class="section-title">The 4-Way Padel Ecosystem</h2>
+            <p class="section-subtitle">
+                The ESP32 Scoreboard acts as the authoritative <strong>Master Rules Engine</strong>. All wireless remotes, smartwatches, and spectator displays mirror the exact match state in real time.
+            </p>
+
+            <div class="ecosystem-grid">
+                <!-- 1. Master ESP32 -->
+                <div class="eco-card">
+                    <div class="eco-icon-wrap">
+                        <span>📟</span>
+                    </div>
+                    <h3 class="eco-title">ESP32 Master Scoreboard</h3>
+                    <p class="eco-desc">
+                        Hardware SPI DMA WS2812B bitstream driver ensures 100% flicker-free LED animations even during high-frequency BLE packet transfers. NVS flash memory restores match state across power cuts.
+                    </p>
+                    <ul class="eco-points">
+                        <li>Official FIP rules: Golden Point, Tiebreak</li>
+                        <li>Automated celebration & past set score cycles</li>
+                        <li>Automatic idle fallback to real-time clock</li>
+                    </ul>
+                </div>
+
+                <!-- 2. Racket Clicker -->
+                <div class="eco-card">
+                    <div class="eco-icon-wrap red">
+                        <span>🔘</span>
+                    </div>
+                    <h3 class="eco-title">Racket Clip-On Clicker</h3>
+                    <p class="eco-desc">
+                        Ergonomic tactile remote mounted directly onto the racket handle or wrist strap. Score without looking at the board, breaking rhythm, or arguing between rallies.
+                    </p>
+                    <ul class="eco-points">
+                        <li>Instant single-click scoring for both teams</li>
+                        <li>Double-click mistake correction (30-step undo)</li>
+                        <li>Over 6 months battery life on CR2032 coin cell</li>
+                    </ul>
+                </div>
+
+                <!-- 3. Wear OS Smartwatch -->
+                <div class="eco-card">
+                    <div class="eco-icon-wrap gold">
+                        <span>⌚</span>
+                    </div>
+                    <h3 class="eco-title">Wear OS Smartwatch App</h3>
+                    <p class="eco-desc">
+                        Full haptic wrist feedback on points won, games won, and side swaps. Synchronizes master rules instantly over BLE GATT upon stepping onto the court.
+                    </p>
+                    <ul class="eco-points">
+                        <li>Glanceable court side-swap tracking</li>
+                        <li>Haptic vibration cues for match points</li>
+                        <li>NFC & QR quick pairing for spectators</li>
+                    </ul>
+                </div>
+
+                <!-- 4. Web Bluetooth Controller -->
+                <div class="eco-card">
+                    <div class="eco-icon-wrap green">
+                        <span>📱</span>
+                    </div>
+                    <h3 class="eco-title">Web Bluetooth Companion</h3>
+                    <p class="eco-desc">
+                        Zero install required. Open Chrome, Edge, or Bluefy on your smartphone to adjust brightness, configure match rules, or synchronize the DS1302 hardware clock with your phone's time.
+                    </p>
+                    <ul class="eco-points">
+                        <li>No app store download needed (instant PWA)</li>
+                        <li>Master rules configuration & brightness slider</li>
+                        <li>Spectator cloud live link generation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HARDWARE & ENGINEERING -->
+    <section style="background: rgba(10, 15, 24, 0.5); border-top: 1px solid var(--border-subtle);" id="hardware">
+        <div class="container">
+            <div class="section-tag gold">
+                <span>🛠️</span> Industrial 3D Print Design & Optics
+            </div>
+            <h2 class="section-title">Engineered for Court Visibility & Longevity</h2>
+            <p class="section-subtitle">
+                Designed from scratch in OpenSCAD with snap-fit modular joints, high-efficiency optical diffusers, and robust pogo-pin bus connections.
+            </p>
+
+            <div class="hardware-gallery">
+                <!-- Card 1 -->
+                <div class="hw-card">
+                    <div class="hw-img-container">
+                        <img src="Images/full_scoreboard_preview.png" alt="Full Scoreboard Front Assembly">
+                    </div>
+                    <div class="hw-content">
+                        <h4 class="hw-title">Full Modular Assembly</h4>
+                        <p class="hw-desc">
+                            4 large 7-segment digits flanking the central 24-LED Games & Sets ladder. Assembles cleanly with interlocking rear brackets.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="hw-card">
+                    <div class="hw-img-container">
+                        <img src="Images/full_scoreboard_exploded.png" alt="Scoreboard Exploded View">
+                    </div>
+                    <div class="hw-content">
+                        <h4 class="hw-title">Snap-Fit Optical Diffusers</h4>
+                        <p class="hw-desc">
+                            Dual-layer diffusion blocks eliminate individual LED hotspots, creating crisp, solid neon-style strokes readable from across the court.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="hw-card">
+                    <div class="hw-img-container">
+                        <img src="Images/padel_racket_button_concept_sketch.jpg" alt="Padel Racket Clicker Concept">
+                    </div>
+                    <div class="hw-content">
+                        <h4 class="hw-title">Custom Racket Clip Integration</h4>
+                        <p class="hw-desc">
+                            CAD-optimized ergonomic button housing tailored to clip securely onto padel racket handle grips and wrist safety straps.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech Spec Counters -->
+            <div class="tech-spec-bar">
+                <div class="spec-item">
+                    <div class="spec-val">136</div>
+                    <div class="spec-label">WS2812B RGB LEDs</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">&lt; 15ms</div>
+                    <div class="spec-label">Click-to-Score Latency</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">24h</div>
+                    <div class="spec-label">DS1302 Hardware RTC</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">30 Steps</div>
+                    <div class="spec-label">History Undo Stack</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-val">100%</div>
+                    <div class="spec-label">Open-Source Ready</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCT PACKAGES -->
+    <section id="packages">
+        <div class="container">
+            <div class="section-tag">
+                <span>📦</span> Potential Editions & Options
+            </div>
+            <h2 class="section-title">Designed for Players, Clubs & Makers</h2>
+            <p class="section-subtitle">
+                Which version suits your court best? Review our envisioned configurations and let us know your ideal price below.
+            </p>
+
+            <div class="pricing-packages">
+                <!-- Package 1: Maker Kit -->
+                <div class="pkg-card">
+                    <h3 class="pkg-title">DIY Maker / Kit Pack</h3>
+                    <p class="pkg-desc">For 3D printing enthusiasts and electronics hobbyists who want to build their own.</p>
+                    <div class="pkg-price-est">
+                        <span class="pkg-price-num">€79 - €99</span>
+                        <span class="pkg-price-note">est. hardware kit</span>
+                    </div>
+                    <ul class="pkg-features">
+                        <li>Pre-flashed ESP32 microcontroller</li>
+                        <li>Tested WS2812B LED light engine & wiring harness</li>
+                        <li>All 3MF & STL printable digital files</li>
+                        <li>DS1302 Real-Time Clock module</li>
+                        <li>Step-by-step digital assembly guide</li>
+                    </ul>
+                    <a href="#feedback" class="btn-select-pkg" onclick="selectTier('maker')">Vote for This Pack</a>
+                </div>
+
+                <!-- Package 2: Turnkey Match Edition (Featured) -->
+                <div class="pkg-card featured">
+                    <div class="pkg-badge">Most Popular Choice</div>
+                    <h3 class="pkg-title">Turnkey Court Edition</h3>
+                    <p class="pkg-desc">Completely assembled, tested, calibrated, and ready to mount on your padel court fence.</p>
+                    <div class="pkg-price-est">
+                        <span class="pkg-price-num">€149 - €189</span>
+                        <span class="pkg-price-note">ready-to-play</span>
+                    </div>
+                    <ul class="pkg-features">
+                        <li>Fully assembled 4-digit + ladder scoreboard</li>
+                        <li>1x Paired Bluetooth Racket Clicker with strap</li>
+                        <li>5V power supply & court fence mounting brackets</li>
+                        <li>Web Bluetooth controller & Wear OS watch integration</li>
+                        <li>Automatic ambient digital wall clock mode</li>
+                        <li>Plug-and-play warranty</li>
+                    </ul>
+                    <a href="#feedback" class="btn-select-pkg" onclick="selectTier('turnkey')">Vote for This Pack</a>
+                </div>
+
+                <!-- Package 3: Club Multi-Court Pack -->
+                <div class="pkg-card">
+                    <h3 class="pkg-title">Club Multi-Court Pack</h3>
+                    <p class="pkg-desc">Designed for padel centers, clubs, and tournament organizers managing multiple courts.</p>
+                    <div class="pkg-price-est">
+                        <span class="pkg-price-num">€269+</span>
+                        <span class="pkg-price-note">multi-court bundle</span>
+                    </div>
+                    <ul class="pkg-features">
+                        <li>2x Full Scoreboards with club logo custom faceplates</li>
+                        <li>4x Paired Bluetooth Clickers (2 per court)</li>
+                        <li>Multi-court spectator cloud broadcast dashboard</li>
+                        <li>Heavy-duty protective acrylic front screens</li>
+                        <li>Priority firmware updates & tournament preset rules</li>
+                    </ul>
+                    <a href="#feedback" class="btn-select-pkg" onclick="selectTier('club')">Vote for This Pack</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MARKET FEEDBACK & PRICING DISCOVERY (CORE FUNNEL) -->
+    <section class="feedback-section" id="feedback">
+        <div class="container">
+            <div class="feedback-container">
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <div class="section-tag green">
+                        <span>💬</span> Community & Market Validation
+                    </div>
+                    <h2 style="font-size: clamp(24px, 3.5vw, 36px); font-weight: 900; margin-bottom: 10px;">
+                        What Would You Pay for This?
+                    </h2>
+                    <p style="font-size: 14.5px; color: var(--text-muted); max-width: 600px; margin: 0 auto;">
+                        We are finalizing production batches and pricing. Your direct feedback will determine the final retail pricing and which accessories ship standard in the box.
+                    </p>
+                </div>
+
+                <form id="feedbackForm" onsubmit="handleFeedbackSubmit(event)">
+                    <!-- 1. Persona Selector -->
+                    <div class="form-group">
+                        <label class="form-label">1. Who are you?</label>
+                        <div class="chip-options-grid">
+                            <label class="chip-option">
+                                <input type="radio" name="persona" value="player" checked>
+                                <span class="chip-label">🎾 Padel Player</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="radio" name="persona" value="club_owner">
+                                <span class="chip-label">🏢 Club / Court Owner</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="radio" name="persona" value="coach_ref">
+                                <span class="chip-label">📋 Coach / Tournament Org</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="radio" name="persona" value="maker">
+                                <span class="chip-label">🔧 Maker / Tech Enthusiast</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 2. Target Package -->
+                    <div class="form-group">
+                        <label class="form-label">2. Which package interests you most?</label>
+                        <div class="chip-options-grid">
+                            <label class="chip-option">
+                                <input type="radio" name="preferred_tier" value="turnkey" id="tierRadioTurnkey" checked>
+                                <span class="chip-label">⭐ Ready-to-Play Turnkey</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="radio" name="preferred_tier" value="maker" id="tierRadioMaker">
+                                <span class="chip-label">🛠️ DIY Electronics Kit</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="radio" name="preferred_tier" value="club" id="tierRadioClub">
+                                <span class="chip-label">🏆 Multi-Court Club Pack</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="radio" name="preferred_tier" value="files_only" id="tierRadioFiles">
+                                <span class="chip-label">📂 STL / 3MF & Firmware Only</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 3. Interactive Price Discovery Slider -->
+                    <div class="form-group">
+                        <label class="form-label">3. What price feels like great value to you?</label>
+                        <p class="form-subtext">Drag the slider to indicate your ideal target price for your chosen package:</p>
+                        
+                        <div class="slider-box">
+                            <div class="slider-display-row">
+                                <div class="slider-value-badge" id="sliderValueText">€149</div>
+                                <div class="price-verdict" id="priceVerdictBadge">🎯 Sweet Spot / Instant Buy</div>
+                            </div>
+                            
+                            <input type="range" class="slider-input" id="priceSlider" min="49" max="349" step="5" value="149" oninput="updatePriceSlider(this.value)">
+                            
+                            <div class="slider-labels-row">
+                                <span>€49 (Bargain)</span>
+                                <span>€149 (Balanced Match Scoreboard)</span>
+                                <span>€249 (Premium Club)</span>
+                                <span>€349+</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Most Desired Features -->
+                    <div class="form-group">
+                        <label class="form-label">4. Which features are essential to you? (Select all that apply)</label>
+                        <div class="chip-options-grid">
+                            <label class="chip-option">
+                                <input type="checkbox" name="features" value="racket_clicker" checked>
+                                <span class="chip-label">🔘 Racket Handle Clicker</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="checkbox" name="features" value="watch_app" checked>
+                                <span class="chip-label">⌚ Wear OS Watch Vibration</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="checkbox" name="features" value="wall_clock" checked>
+                                <span class="chip-label">🕒 24h Digital Wall Clock Mode</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="checkbox" name="features" value="battery_pack">
+                                <span class="chip-label">🔋 Rechargeable Battery Pack</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="checkbox" name="features" value="weatherproof">
+                                <span class="chip-label">🌧️ Outdoor Weather Resistance</span>
+                            </label>
+                            <label class="chip-option">
+                                <input type="checkbox" name="features" value="spectator_stream">
+                                <span class="chip-label">📡 Spectator Cloud Screen</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 5. Contact / Early-Bird Waitlist -->
+                    <div class="form-group">
+                        <label class="form-label">5. Want an early-bird discount or launch invite?</label>
+                        <div class="input-row">
+                            <input type="text" class="text-input" id="inputName" placeholder="Your Name or Club Name" required>
+                            <input type="email" class="text-input" id="inputEmail" placeholder="your.email@example.com" required>
+                        </div>
+                    </div>
+
+                    <!-- 6. Optional Message -->
+                    <div class="form-group">
+                        <label class="form-label">6. Any suggestions or specific requirements? (Optional)</label>
+                        <textarea class="text-area" id="inputComments" placeholder="e.g. Can we customize team colors? What are the exact dimensions? Can it run off a 10,000mAh USB powerbank?"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit-feedback">
+                        <span>🚀 Send Feedback & Claim Early-Bird VIP Status</span>
+                    </button>
+                </form>
+
+                <!-- Success Confirmation State -->
+                <div class="feedback-success" id="feedbackSuccess">
+                    <div class="success-icon">✓</div>
+                    <h3 class="success-title">Thank You For Your Feedback!</h3>
+                    <p class="success-desc">
+                        Your response has been recorded. Your pricing input directly guides our production planning and launch batch allocation.
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <a href="index.html" class="btn-hero-primary" style="font-size: 14px; padding: 12px 24px;">
+                            <span>📱 Try the Live Web Controller</span>
+                        </a>
+                        <button type="button" class="btn-hero-secondary" style="font-size: 14px; padding: 12px 24px; cursor: pointer;" onclick="downloadFeedbackSummary()">
+                            <span>💾 Download My Response</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="logo-title" style="margin-bottom: 12px;">
+                        PadelPulse
+                        <span class="logo-badge">ESP32</span>
+                    </div>
+                    <p style="font-size: 13.5px; line-height: 1.6; max-width: 360px; color: var(--text-muted);">
+                        Open-source, modular, and professional sports scoreboard technology combining ESP32 power, zero-lag BLE clickers, and Wear OS companion apps.
+                    </p>
+                </div>
+
+                <div>
+                    <h5 class="footer-title">Navigation</h5>
+                    <ul class="footer-links">
+                        <li><a href="#hero">Overview</a></li>
+                        <li><a href="#demo">Interactive Simulator</a></li>
+                        <li><a href="#ecosystem">4-Way Ecosystem</a></li>
+                        <li><a href="#hardware">3D CAD & Optics</a></li>
+                        <li><a href="#packages">Product Editions</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h5 class="footer-title">Live App & Code</h5>
+                    <ul class="footer-links">
+                        <li><a href="index.html">📱 Web Bluetooth Controller</a></li>
+                        <li><a href="ota.html">⚡ Firmware OTA Flash</a></li>
+                        <li><a href="https://github.com/Schepie/7segment" target="_blank" rel="noopener">🐙 GitHub Repository</a></li>
+                        <li><a href="README.md" target="_blank">📖 Technical Protocol Docs</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>© 2026 PadelPulse / Schepie 7-Segment Project. Built for padel players worldwide.</span>
+                <span style="color: var(--text-sub);">ESP32-C3 • WS2812B • BLE GATT 0x4FAF</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE SCRIPTS -->
+    <script>
+        /* ============================================================ */
+        /* 1. SCOREBOARD SIMULATOR STATE MACHINE                        */
+        /* ============================================================ */
+        const PADEL_POINTS = ["00", "15", "30", "40", "Ad"];
+        
+        let simState = {
+            mode: "SCORE", // "SCORE" or "CLOCK"
+            rule: "GP",    // "GP" (Golden Point) or "AD" (Advantage)
+            ptIndexT1: 0,
+            ptIndexT2: 0,
+            gamesT1: 0,
+            gamesT2: 0,
+            setsT1: 0,
+            setsT2: 0,
+            history: []
+        };
+
+        let lastClickTimeT1 = 0;
+        let lastClickTimeT2 = 0;
+        let clockTimer = null;
+
+        function saveHistory() {
+            simState.history.push({
+                ptIndexT1: simState.ptIndexT1,
+                ptIndexT2: simState.ptIndexT2,
+                gamesT1: simState.gamesT1,
+                gamesT2: simState.gamesT2,
+                setsT1: simState.setsT1,
+                setsT2: simState.setsT2
+            });
+            if (simState.history.length > 30) simState.history.shift();
+            document.getElementById("simUndoCount").innerText = simState.history.length;
+        }
+
+        function undoPoint() {
+            if (simState.history.length === 0) return;
+            const prev = simState.history.pop();
+            simState.ptIndexT1 = prev.ptIndexT1;
+            simState.ptIndexT2 = prev.ptIndexT2;
+            simState.gamesT1 = prev.gamesT1;
+            simState.gamesT2 = prev.gamesT2;
+            simState.setsT1 = prev.setsT1;
+            simState.setsT2 = prev.setsT2;
+            document.getElementById("simUndoCount").innerText = simState.history.length;
+            renderSimBoard();
+        }
+
+        function scorePoint(team) {
+            if (simState.mode === "CLOCK") {
+                simState.mode = "SCORE";
+                renderSimBoard();
+            }
+
+            saveHistory();
+
+            if (team === 1) {
+                // If at 40-40 (Golden Point)
+                if (simState.ptIndexT1 === 3 && simState.ptIndexT2 === 3) {
+                    if (simState.rule === "GP") {
+                        winGame(1);
+                        return;
+                    } else {
+                        // Advantage mode
+                        simState.ptIndexT1 = 4; // "Ad"
+                        renderSimBoard();
+                        return;
+                    }
+                }
+                // If Team 2 had Advantage, back to Deuce
+                if (simState.ptIndexT2 === 4) {
+                    simState.ptIndexT2 = 3;
+                    renderSimBoard();
+                    return;
+                }
+                // If Team 1 had Advantage, Game Won!
+                if (simState.ptIndexT1 === 4) {
+                    winGame(1);
+                    return;
+                }
+                // Normal point
+                if (simState.ptIndexT1 < 3) {
+                    simState.ptIndexT1++;
+                } else {
+                    winGame(1);
+                    return;
+                }
+            } else {
+                // Team 2
+                if (simState.ptIndexT1 === 3 && simState.ptIndexT2 === 3) {
+                    if (simState.rule === "GP") {
+                        winGame(2);
+                        return;
+                    } else {
+                        simState.ptIndexT2 = 4; // "Ad"
+                        renderSimBoard();
+                        return;
+                    }
+                }
+                if (simState.ptIndexT1 === 4) {
+                    simState.ptIndexT1 = 3;
+                    renderSimBoard();
+                    return;
+                }
+                if (simState.ptIndexT2 === 4) {
+                    winGame(2);
+                    return;
+                }
+                if (simState.ptIndexT2 < 3) {
+                    simState.ptIndexT2++;
+                } else {
+                    winGame(2);
+                    return;
+                }
+            }
+            renderSimBoard();
+        }
+
+        function winGame(team) {
+            simState.ptIndexT1 = 0;
+            simState.ptIndexT2 = 0;
+            if (team === 1) {
+                simState.gamesT1++;
+                if (simState.gamesT1 >= 6 && simState.gamesT1 - simState.gamesT2 >= 2) {
+                    winSet(1);
+                    return;
+                }
+            } else {
+                simState.gamesT2++;
+                if (simState.gamesT2 >= 6 && simState.gamesT2 - simState.gamesT1 >= 2) {
+                    winSet(2);
+                    return;
+                }
+            }
+            renderSimBoard();
+        }
+
+        function winSet(team) {
+            simState.gamesT1 = 0;
+            simState.gamesT2 = 0;
+            if (team === 1) simState.setsT1++;
+            else simState.setsT2++;
+
+            if (simState.setsT1 === 2 || simState.setsT2 === 2) {
+                celebrateMatchWin(team);
+            } else {
+                renderSimBoard();
+            }
+        }
+
+        function celebrateMatchWin(team) {
+            const digitT1 = document.getElementById("simDigitsT1");
+            const digitT2 = document.getElementById("simDigitsT2");
+            digitT1.innerText = team === 1 ? "W" : "L";
+            digitT2.innerText = team === 2 ? "W" : "L";
+            document.getElementById("simLadderGames").innerHTML = `<span style="color:var(--accent-gold); font-size:15px;">MATCH</span>`;
+            setTimeout(() => {
+                resetMatch();
+            }, 3000);
+        }
+
+        function resetMatch() {
+            simState.ptIndexT1 = 0;
+            simState.ptIndexT2 = 0;
+            simState.gamesT1 = 0;
+            simState.gamesT2 = 0;
+            simState.setsT1 = 0;
+            simState.setsT2 = 0;
+            simState.history = [];
+            document.getElementById("simUndoCount").innerText = "0";
+            renderSimBoard();
+        }
+
+        function renderSimBoard() {
+            const badge = document.getElementById("simModeBadge");
+            const digitT1 = document.getElementById("simDigitsT1");
+            const digitT2 = document.getElementById("simDigitsT2");
+            const ladder = document.getElementById("simLadderModule");
+            const labelT1 = document.getElementById("simLabelT1");
+            const labelT2 = document.getElementById("simLabelT2");
+
+            if (simState.mode === "CLOCK") {
+                badge.innerText = "WALL CLOCK MODE";
+                badge.className = "housing-mode-pill clock";
+                ladder.style.display = "none";
+                labelT1.innerText = "HOURS";
+                labelT2.innerText = "MINS";
+
+                digitT1.className = "seven-segment-digits clock";
+                digitT2.className = "seven-segment-digits clock";
+
+                const now = new Date();
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                digitT1.innerText = hh;
+                digitT2.innerText = mm;
+            } else {
+                badge.innerText = "SCOREBOARD MODE";
+                badge.className = "housing-mode-pill";
+                ladder.style.display = "flex";
+                labelT1.innerText = "TEAM 1";
+                labelT2.innerText = "TEAM 2";
+
+                digitT1.className = "seven-segment-digits t1";
+                digitT2.className = "seven-segment-digits t2";
+
+                // Golden Point badge check
+                if (simState.ptIndexT1 === 3 && simState.ptIndexT2 === 3 && simState.rule === "GP") {
+                    digitT1.innerText = "GP";
+                    digitT2.innerText = "GP";
+                } else {
+                    digitT1.innerText = PADEL_POINTS[simState.ptIndexT1];
+                    digitT2.innerText = PADEL_POINTS[simState.ptIndexT2];
+                }
+
+                document.getElementById("simGamesT1").innerText = simState.gamesT1;
+                document.getElementById("simGamesT2").innerText = simState.gamesT2;
+                document.getElementById("simSetsT1").innerText = simState.setsT1;
+                document.getElementById("simSetsT2").innerText = simState.setsT2;
+            }
+        }
+
+        /* Remote Button Click Handlers with Double-Click Detection */
+        document.getElementById("btnSimRemoteT1").addEventListener("click", () => {
+            const now = Date.now();
+            if (now - lastClickTimeT1 < 380) {
+                // Double click = UNDO
+                undoPoint();
+                lastClickTimeT1 = 0;
+            } else {
+                lastClickTimeT1 = now;
+                setTimeout(() => {
+                    if (Date.now() - lastClickTimeT1 >= 370 && lastClickTimeT1 !== 0) {
+                        scorePoint(1);
+                    }
+                }, 380);
+            }
+        });
+
+        document.getElementById("btnSimRemoteT2").addEventListener("click", () => {
+            const now = Date.now();
+            if (now - lastClickTimeT2 < 380) {
+                undoPoint();
+                lastClickTimeT2 = 0;
+            } else {
+                lastClickTimeT2 = now;
+                setTimeout(() => {
+                    if (Date.now() - lastClickTimeT2 >= 370 && lastClickTimeT2 !== 0) {
+                        scorePoint(2);
+                    }
+                }, 380);
+            }
+        });
+
+        // Toggle Clock Mode
+        document.getElementById("btnSimToggleMode").addEventListener("click", () => {
+            if (simState.mode === "SCORE") {
+                simState.mode = "CLOCK";
+                document.getElementById("btnSimToggleMode").classList.add("active");
+                document.getElementById("btnSimToggleMode").innerHTML = `<span>🎾 Switch to Scoreboard</span>`;
+                if (!clockTimer) {
+                    clockTimer = setInterval(() => {
+                        if (simState.mode === "CLOCK") renderSimBoard();
+                    }, 1000);
+                }
+            } else {
+                simState.mode = "SCORE";
+                document.getElementById("btnSimToggleMode").classList.remove("active");
+                document.getElementById("btnSimToggleMode").innerHTML = `<span>🔄 Switch to Wall Clock</span>`;
+            }
+            renderSimBoard();
+        });
+
+        // Toggle Rules (Golden Point vs Ad)
+        document.getElementById("btnSimToggleRule").addEventListener("click", () => {
+            simState.rule = simState.rule === "GP" ? "AD" : "GP";
+            document.getElementById("simRuleStatus").innerText = simState.rule === "GP" 
+                ? "Rule: Golden Point (Punto de Oro)" 
+                : "Rule: Advantage (Deuce / Ad)";
+            renderSimBoard();
+        });
+
+        // Reset Match
+        document.getElementById("btnSimReset").addEventListener("click", resetMatch);
+
+        /* ============================================================ */
+        /* 2. PRICING DISCOVERY & PACKAGES SELECTION                    */
+        /* ============================================================ */
+        function selectTier(tierName) {
+            if (tierName === 'maker') document.getElementById('tierRadioMaker').checked = true;
+            else if (tierName === 'turnkey') document.getElementById('tierRadioTurnkey').checked = true;
+            else if (tierName === 'club') document.getElementById('tierRadioClub').checked = true;
+            
+            // Adjust slider suggestion
+            const slider = document.getElementById('priceSlider');
+            if (tierName === 'maker') slider.value = 89;
+            else if (tierName === 'turnkey') slider.value = 159;
+            else if (tierName === 'club') slider.value = 269;
+            updatePriceSlider(slider.value);
+
+            document.getElementById('feedback').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updatePriceSlider(val) {
+            document.getElementById("sliderValueText").innerText = "€" + val;
+            const verdict = document.getElementById("priceVerdictBadge");
+            const price = parseInt(val, 10);
+
+            if (price <= 79) {
+                verdict.innerText = "🔥 Unbeatable Bargain / Instant Pre-order";
+                verdict.style.color = "var(--accent-green)";
+            } else if (price <= 139) {
+                verdict.innerText = "🎯 Sweet Spot / High Value";
+                verdict.style.color = "var(--team1-blue)";
+            } else if (price <= 199) {
+                verdict.innerText = "⚖️ Fair Commercial Tournament Price";
+                verdict.style.color = "var(--accent-gold)";
+            } else {
+                verdict.innerText = "💎 Premium / High-End Club Tier";
+                verdict.style.color = "var(--team2-red)";
+            }
+        }
+
+        /* ============================================================ */
+        /* 3. FEEDBACK FORM SUBMISSION & LOCAL DATA CAPTURE             */
+        /* ============================================================ */
+        let lastSubmission = null;
+
+        function handleFeedbackSubmit(event) {
+            event.preventDefault();
+
+            const persona = document.querySelector('input[name="persona"]:checked')?.value || "unknown";
+            const tier = document.querySelector('input[name="preferred_tier"]:checked')?.value || "unknown";
+            const targetPrice = document.getElementById("priceSlider").value;
+            
+            const selectedFeatures = Array.from(document.querySelectorAll('input[name="features"]:checked'))
+                .map(cb => cb.value);
+
+            const name = document.getElementById("inputName").value.trim();
+            const email = document.getElementById("inputEmail").value.trim();
+            const comments = document.getElementById("inputComments").value.trim();
+
+            lastSubmission = {
+                timestamp: new Date().toISOString(),
+                name,
+                email,
+                persona,
+                preferredTier: tier,
+                targetPriceEuros: targetPrice,
+                features: selectedFeatures,
+                comments
+            };
+
+            // Store in LocalStorage so the user's input is never lost
+            try {
+                const history = JSON.parse(localStorage.getItem("padelScoreboardFeedback") || "[]");
+                history.push(lastSubmission);
+                localStorage.setItem("padelScoreboardFeedback", JSON.stringify(history));
+            } catch (e) {
+                console.error("Local storage error:", e);
+            }
+
+            // Show success screen
+            document.getElementById("feedbackForm").style.display = "none";
+            document.getElementById("feedbackSuccess").style.display = "block";
+        }
+
+        function downloadFeedbackSummary() {
+            if (!lastSubmission) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastSubmission, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `padelpulse_feedback_${lastSubmission.name.toLowerCase().replace(/\\s+/g, '_')}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // Initialize state
+        renderSimBoard();
+    </script>
+</body>
+</html>
