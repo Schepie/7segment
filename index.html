@@ -1236,6 +1236,34 @@
             box-shadow: none;
         }
 
+        .btn-preview-rules {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 11px 14px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 210, 255, 0.35);
+            background: rgba(0, 210, 255, 0.09);
+            color: var(--team1-blue);
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+
+        .btn-preview-rules:hover {
+            background: rgba(0, 210, 255, 0.18);
+            box-shadow: none;
+        }
+
+        .btn-preview-rules:active {
+            transform: scale(0.98);
+        }
+
         .btn-add-shortcut-toggle:active {
             transform: scale(0.98);
         }
@@ -2417,6 +2445,11 @@
                         </div>
                     </div>
 
+                    <!-- Preview Rules on Scoreboard -->
+                    <button type="button" class="btn-preview-rules" id="btnPreviewRules">
+                        <span>📺 Preview Rules on Scoreboard</span>
+                    </button>
+
                     <!-- Save Selection as Shortcut Form -->
                     <button type="button" class="btn-add-shortcut-toggle" id="btnToggleAddShortcut">
                         <span>➕ Save Selection as Shortcut</span>
@@ -2765,7 +2798,7 @@
 
                 <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.6</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.7</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3879,6 +3912,21 @@
         log(`Shortcut "${newPreset.name}" created!`, 'suc');
     }
 
+    // Wire up Preview Rules on Scoreboard button
+    const btnPreviewRules = document.getElementById('btnPreviewRules');
+    if (btnPreviewRules) {
+        btnPreviewRules.addEventListener('click', async () => {
+            if (!watchChar) {
+                log('Scoreboard not connected via Bluetooth', 'err');
+                return;
+            }
+            const ok = await sendBleText('CMD,SHOW_CFG');
+            if (ok) {
+                log(`Showing rules on scoreboard: ${appConfig.sets}S ${appConfig.games}G ${appConfig.gp ? 'GP' : 'Ad'}`, 'suc');
+            }
+        });
+    }
+
     // Wire up Add Shortcut Controls
     const btnToggleAddShortcut = document.getElementById('btnToggleAddShortcut');
     if (btnToggleAddShortcut) {
@@ -4589,7 +4637,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.6.6';
+    const CURRENT_APP_VERSION = '1.6.7';
     let swRegistration = null;
     let isRefreshing = false;
 

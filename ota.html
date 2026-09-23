@@ -281,12 +281,53 @@
         .console-box .log-suc { color: var(--success); }
         .console-box .log-pri { color: var(--primary); }
 
-        .back-link {
-            text-align: center;
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: -4px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            text-decoration: none;
             font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            background: rgba(0, 210, 255, 0.12);
+            color: var(--primary);
+            border-color: rgba(0, 210, 255, 0.35);
+        }
+
+        .btn-close-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-muted);
             text-decoration: none;
-            transition: color 0.2s;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close-icon:hover {
+            background: rgba(255, 51, 102, 0.15);
+            border-color: rgba(255, 51, 102, 0.4);
+            color: #ff3366;
+            transform: scale(1.05);
         }
 
 
@@ -295,6 +336,12 @@
 <body>
 
 <div class="container">
+    <div class="top-nav">
+        <a href="index.html" class="btn-close-icon" title="Close" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </a>
+    </div>
+
     <div class="header">
         <span class="badge-pill">Bluetooth Low Energy</span>
         <h1>Wireless Firmware Flasher</h1>
@@ -325,14 +372,7 @@
             <div class="dropzone-filename" id="fileName"></div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 6px;">
-            <button type="button" class="btn btn-secondary" id="btnPresetSets" style="flex: 1; font-size: 12px; padding: 10px 6px; text-align: center;">
-                🏆 Sets & Match (ESP32-C3)
-            </button>
-            <button type="button" class="btn btn-secondary" id="btnPreset4Digits" style="flex: 1; font-size: 12px; padding: 10px 6px; text-align: center;">
-                ⚡ 4-Digit (ESP32-C3)
-            </button>
-        </div>
+
 
         <!-- Step 3: Flash Action -->
         <button class="btn btn-primary" id="btnFlash" disabled>
@@ -372,9 +412,11 @@
     </div>
 
 
-    <div style="display: flex; justify-content: center; gap: 16px; margin-top: 10px;">
-        <a href="index.html#display" class="back-link">⚙️ Display & Score Settings</a>
-        <a href="index.html" class="back-link">🎾 Padel Scoreboard Controller</a>
+    <div style="display: flex; justify-content: center; margin-top: 10px;">
+        <a href="index.html" class="btn-back">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <span>Back to Scoreboard</span>
+        </a>
     </div>
 </div>
 
@@ -571,42 +613,7 @@
         }
     }
 
-    async function loadPresetBinary(filename, labelText) {
-        try {
-            log(`Fetching preset firmware '${filename}'...`, 'pri');
-            const resp = await fetch(filename);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
-            fileBuffer = await resp.arrayBuffer();
-            selectedFile = { name: filename, size: fileBuffer.byteLength };
-            fileLabel.textContent = 'Selected Firmware:';
-            fileName.textContent = `${labelText} (${(fileBuffer.byteLength / 1024).toFixed(1)} KB)`;
-            log(`Successfully loaded ${filename} (${fileBuffer.byteLength} bytes)!`, 'suc');
-            checkReadyToFlash();
-        } catch (err) {
-            log(`Auto-fetch failed (${err.message}). If using file://, please click the dropzone above and choose '${filename}'.`, 'err');
-        }
-    }
 
-    const btnPresetSets = document.getElementById('btnPresetSets');
-    if (btnPresetSets) {
-        btnPresetSets.addEventListener('click', () => {
-            loadPresetBinary('firmware_sets_and_match.bin', 'Sets & Match Scoreboard (ESP32-C3)');
-        });
-    }
-
-    const btnPreset4Digits = document.getElementById('btnPreset4Digits');
-    if (btnPreset4Digits) {
-        btnPreset4Digits.addEventListener('click', () => {
-            loadPresetBinary('firmware_4digits.bin', '4-Digit Scoreboard (ESP32-C3)');
-        });
-    }
-
-    // Auto-load Sets & Match firmware on load if served over HTTP
-    window.addEventListener('DOMContentLoaded', () => {
-        if (window.location.protocol.startsWith('http')) {
-            loadPresetBinary('firmware_sets_and_match.bin', 'Sets & Match Scoreboard (ESP32-C3)');
-        }
-    });
 
     // Start Flash
     btnFlash.addEventListener('click', async () => {

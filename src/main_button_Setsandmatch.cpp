@@ -184,6 +184,7 @@ bool triggerTiebreakIntroAnimation = false;
 int winningTeam = 0;
 bool triggerUndoAction = false;
 bool scoreNeedsUpdate = true;
+bool showingSettingsInfo = true; // Kept on screen until first score is increased by remote, app, or watch
 // Mode State Machine & Inactivity Idle Timer
 enum DisplayMode {
   MODE_CLOCK,
@@ -914,6 +915,8 @@ void animateCourtSideSwap(bool toSwapped) {
 }
 
 void renderPadelScoreboard();
+void drawMatchSettingsDisplay();
+void showMatchSettingsSplash(uint32_t durationMs = 2000);
 
 void renderColon(bool colonOn, uint32_t color) {
   if (cfgLedLayout == 1) {
@@ -974,6 +977,7 @@ void getCharSegments(char c, bool segs[7]) {
     case 'd': case 'D': segs[0]=segs[1]=segs[2]=segs[3]=segs[6]=true; break;
     case 'E': case 'e': segs[0]=segs[1]=segs[3]=segs[4]=segs[5]=true; break;
     case 'F': case 'f': segs[0]=segs[3]=segs[4]=segs[5]=true; break;
+    case 'G': case 'g': segs[0]=segs[1]=segs[2]=segs[3]=segs[4]=segs[5]=true; break; // BL, B, BR, M, TL, T (7-segment uppercase G with middle bar)
     case 'H': case 'h': segs[0]=segs[2]=segs[3]=segs[4]=segs[6]=true; break;
     case 'L': case 'l': segs[0]=segs[1]=segs[4]=true; break;
     case 'n': case 'N': segs[0]=segs[2]=segs[3]=true; break;
@@ -1067,6 +1071,60 @@ void splashTextWithSets(const char* text, uint32_t color) {
   showPixelsSafe();
 }
 
+// Displays match format & scoring rules on the 4 digits (e.g. "26GP" or "26Ad")
+// Digit 0: Sets to win ('1', '2', or '3')
+// Digit 1: Games per set ('6' or '9')
+// Digits 2 & 3: Scoring rule ("GP" for Punto de Oro, "Ad" for Advantage)
+// Middle Module (if present): Highlights target games and sets
+void drawMatchSettingsDisplay() {
+  pixels.clear();
+
+  char sChar = '0' + (cfgSetsToWin >= 1 && cfgSetsToWin <= 3 ? cfgSetsToWin : 2);
+  char gChar = (cfgGamesPerSet == 9) ? '9' : '6';
+  char r1 = cfgGoldenPoint ? 'G' : 'A';
+  char r2 = cfgGoldenPoint ? 'P' : 'd';
+
+  // Format colors: Ice Blue for sets/games, Gold for GP, Amber/Orange for Ad
+  uint32_t cFormat = pixels.Color(0, 140, 210);
+  uint32_t cRule   = cfgGoldenPoint ? pixels.Color(240, 180, 0) : pixels.Color(255, 90, 0);
+
+  drawChar(0, sChar, cFormat);
+  drawChar(1, gChar, cFormat);
+  drawChar(2, r1, cRule);
+  drawChar(3, r2, cRule);
+
+  // If 24-LED Games & Sets module is present (layout 0), illuminate target thresholds
+  if (cfgLedLayout == 0) {
+    int base = getGamesSetsBaseLed();
+    uint32_t leftColColor  = !currentCourtSwapped ? pixels.Color(0, 80, 140) : pixels.Color(140, 0, 0);
+    uint32_t rightColColor = !currentCourtSwapped ? pixels.Color(140, 0, 0) : pixels.Color(0, 80, 140);
+    // Target games indicator on both sides
+    for (int g = 0; g < cfgGamesPerSet && g < 9; g++) {
+      pixels.setPixelColor(base + g, leftColColor);      // Left column
+      pixels.setPixelColor(base + 23 - g, rightColColor); // Right column
+    }
+    // Target sets indicator (Gold)
+    uint32_t cSet = pixels.Color(240, 180, 0);
+    if (cfgSetsToWin >= 1) {
+      pixels.setPixelColor(base + 10, cSet); // Left S1
+      pixels.setPixelColor(base + 13, cSet); // Right S1
+    }
+    if (cfgSetsToWin >= 2) {
+      pixels.setPixelColor(base + 11, cSet); // Left S2
+      pixels.setPixelColor(base + 12, cSet); // Right S2
+    }
+  }
+
+  showPixelsSafe();
+}
+
+void showMatchSettingsSplash(uint32_t durationMs) {
+  drawMatchSettingsDisplay();
+  if (durationMs > 0) {
+    delay(durationMs);
+  }
+}
+
 void renderMatchSetScores() {
   pixels.clear();
   uint32_t cBlue = pixels.Color(0, 110, 160); // Current-balanced Cyan (sum=270, matches Red 255)
@@ -1114,6 +1172,10 @@ void renderMatchSetScores() {
 }
 
 void renderPadelScoreboard() {
+  if (showingSettingsInfo) {
+    drawMatchSettingsDisplay();
+    return;
+  }
   if (matchWon) {
     if (matchWonPhase == MATCH_PHASE_SPEL) {
       uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
@@ -1537,10 +1599,25 @@ bool undoScoreState() {
   if (!matchWon) {
     matchWonPhase = MATCH_PHASE_NONE;
   }
+  if (team1Point == POINT_0 && team2Point == POINT_0 && team1Games == 0 && team2Games == 0 && team1Sets == 0 && team2Sets == 0 && !matchWon) {
+    showingSettingsInfo = true;
+  } else {
+    showingSettingsInfo = false;
+  }
   return true;
 }
 
 void addPadelPoint(int team) {
+  // If settings info is currently displayed on panel, this button press exits
+  // to the 0/0 scoring screen without incrementing the score yet.
+  if (showingSettingsInfo) {
+    showingSettingsInfo = false;
+    scoreNeedsUpdate = true;
+    notifyWatchScore();
+    Serial.println("[PADEL] Button press dismissed settings screen -> Showing 0-0");
+    return;
+  }
+
   // If match was already completed:
   if (matchWon) {
     if (millis() - matchWonStartTime < 3000) {
@@ -1926,6 +2003,7 @@ void resetMatchScores() {
   matchWonPhase = MATCH_PHASE_NONE;
   courtSideInverted = false;
   currentCourtSwapped = false;
+  showingSettingsInfo = true;
   scoreNeedsUpdate = true;
   notifyWatchScore();
   Serial.println("[PADEL] Match scores reset to 0-0 (0-0, 0-0)");
@@ -2100,9 +2178,11 @@ void parseConfigPayload(const std::string& val) {
                 (int)cfgLedLayout, cfgClockR, cfgClockG, cfgClockB);
 
   lastActivityTime = millis();
+  showingSettingsInfo = true;
   if (currentMode == MODE_CLOCK) {
     renderClock();
   } else {
+    scoreNeedsUpdate = true;
     renderPadelScoreboard();
   }
 
@@ -2267,7 +2347,10 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       } else if (cmd == "RESET") {
         resetMatchScores();
         splashText("RST ", pixels.Color(255, 120, 0));
-        delay(300);
+        delay(400);
+        showingSettingsInfo = true;
+        scoreNeedsUpdate = true;
+        renderPadelScoreboard();
       } else if (cmd == "SWAP") {
         courtSideInverted = !courtSideInverted;
         currentCourtSwapped = isCourtSwapped();
@@ -2389,6 +2472,16 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
         currentMode = MODE_SCOREBOARD;
         scoreNeedsUpdate = true;
         notifyWatchScore();
+      } else if (cmd == "SHOW_CFG" || cmd == "PREVIEW_CFG") {
+        showingSettingsInfo = true;
+        if (currentMode == MODE_COUNTER) {
+          showMatchSettingsSplash(2500);
+          renderCounterDisplay();
+        } else {
+          currentMode = MODE_SCOREBOARD;
+          scoreNeedsUpdate = true;
+          renderPadelScoreboard();
+        }
       } else if (cmd == "REQ" || cmd == "REQ_CFG") {
         sendConfigNotification();
         if (currentMode == MODE_COUNTER) {
@@ -2463,6 +2556,9 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
     if (watchSwapped != currentCourtSwapped) {
       animateCourtSideSwap(watchSwapped);
       currentCourtSwapped = watchSwapped;
+    }
+    if (team1Point != POINT_0 || team2Point != POINT_0 || team1Games > 0 || team2Games > 0 || team1Sets > 0 || team2Sets > 0) {
+      showingSettingsInfo = false;
     }
     scoreNeedsUpdate = true;
   }
@@ -3092,20 +3188,32 @@ void loop() {
     }
   }
 
-  // Handle Long-press SWAP (triggered by holding a remote button for >= 1500ms)
+  // Handle Long-press:
+  // - In Clock Mode: Long press goes back to Scoring (Scoreboard Mode).
+  // - In Scoreboard Mode during the 1st game (0-0 games/sets): Long press switches team positions (SWAP).
+  // - In Scoreboard Mode after the 1st game: Long press toggles to Clock Mode.
   if (triggerSwapAction) {
     triggerSwapAction = false;
     lastActivityTime = millis();
-    if (currentMode == MODE_SCOREBOARD || currentMode == MODE_CLOCK) {
-      if (currentMode == MODE_CLOCK) {
-        currentMode = MODE_SCOREBOARD;
-      }
-      Serial.println("[LONG-PRESS] Triggering SWAP of court sides!");
-      courtSideInverted = !courtSideInverted;
-      currentCourtSwapped = isCourtSwapped();
-      animateCourtSideSwap(currentCourtSwapped);
-      notifyWatchScore();
+    if (currentMode == MODE_CLOCK) {
+      Serial.println("[LONG-PRESS] Clock Mode -> Switching back to Scoring (Scoreboard Mode)!");
+      currentMode = MODE_SCOREBOARD;
       scoreNeedsUpdate = true;
+      notifyWatchScore();
+    } else if (currentMode == MODE_SCOREBOARD) {
+      bool isFirstGame = (team1Games == 0 && team2Games == 0 && team1Sets == 0 && team2Sets == 0);
+      if (isFirstGame) {
+        Serial.println("[LONG-PRESS] 1st Game -> Switching team positions (SWAP)!");
+        courtSideInverted = !courtSideInverted;
+        currentCourtSwapped = isCourtSwapped();
+        animateCourtSideSwap(currentCourtSwapped);
+        notifyWatchScore();
+        scoreNeedsUpdate = true;
+      } else {
+        Serial.println("[LONG-PRESS] After 1st Game -> Switching to Clock Mode!");
+        currentMode = MODE_CLOCK;
+        renderClock();
+      }
     }
   }
 
