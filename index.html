@@ -103,9 +103,23 @@
             border-top-color: rgba(0, 0, 0, 0.06) !important;
         }
 
-        /* Buttons */
-        [data-theme="light"] .btn-giant-score {
-            box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important;
+        /* Buttons - Shadowless Flat Aesthetic */
+        button,
+        .btn-giant-score,
+        .pill-select,
+        .btn-save-gold,
+        .btn-tool-chip,
+        .btn-rule-shortcut,
+        .rule-shortcut-item,
+        .btn-add-shortcut-toggle,
+        .btn-panel-save,
+        .btn-panel-cancel,
+        .btn-ctr-action,
+        .btn-step-chip,
+        .btn-ble-pill,
+        .color-chip,
+        .bottom-nav-btn {
+            box-shadow: none !important;
         }
         [data-theme="light"] .btn-tool-chip:active {
             background: rgba(0,0,0,0.07) !important;
@@ -524,7 +538,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
             transition: transform 0.1s ease, filter 0.15s ease;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: none;
             text-shadow: 0 2px 10px rgba(0,0,0,0.6);
         }
 
@@ -536,14 +550,14 @@
             background: linear-gradient(145deg, rgba(0, 210, 255, 0.25), rgba(0, 119, 255, 0.45));
             border-color: rgba(0, 210, 255, 0.55);
             color: #fff;
-            box-shadow: 0 8px 30px -4px var(--team1-glow);
+            box-shadow: none;
         }
 
         .btn-giant-score.t2 {
             background: linear-gradient(145deg, rgba(255, 51, 102, 0.25), rgba(255, 0, 60, 0.45));
             border-color: rgba(255, 51, 102, 0.55);
             color: #fff;
-            box-shadow: 0 8px 30px -4px var(--team2-glow);
+            box-shadow: none;
         }
 
         .giant-plus {
@@ -658,14 +672,14 @@
             background: rgba(0, 210, 255, 0.18);
             color: var(--team1-blue);
             border-color: rgba(0, 210, 255, 0.5);
-            box-shadow: 0 0 10px var(--team1-glow);
+            box-shadow: none;
         }
 
         .pill-select.active.gp {
             background: rgba(255, 179, 0, 0.18);
             color: var(--accent-gold);
             border-color: rgba(255, 179, 0, 0.5);
-            box-shadow: 0 0 10px var(--accent-gold-glow);
+            box-shadow: none;
         }
 
         /* Slider */
@@ -761,7 +775,7 @@
         .color-chip.active {
             background: rgba(255, 255, 255, 0.10);
             border-color: var(--chip-color, var(--team1-blue));
-            box-shadow: 0 0 12px var(--chip-glow, rgba(0, 210, 255, 0.3));
+            box-shadow: none;
         }
 
         .color-chip-dot {
@@ -769,7 +783,7 @@
             height: 18px;
             border-radius: 50%;
             background: var(--chip-color);
-            box-shadow: 0 0 8px var(--chip-glow);
+            box-shadow: none;
         }
 
         .color-chip-name {
@@ -1064,7 +1078,7 @@
         .rule-shortcut-item.active {
             background: rgba(0, 230, 118, 0.12);
             border-color: var(--accent-green);
-            box-shadow: 0 0 12px var(--accent-green-glow);
+            box-shadow: none;
         }
 
         .btn-rule-shortcut-body {
@@ -1219,7 +1233,7 @@
 
         .btn-add-shortcut-toggle:hover {
             background: rgba(0, 230, 118, 0.18);
-            box-shadow: 0 0 12px var(--accent-green-glow);
+            box-shadow: none;
         }
 
         .btn-add-shortcut-toggle:active {
@@ -1270,7 +1284,7 @@
 
         .input-shortcut-name:focus {
             border-color: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green-glow);
+            box-shadow: none;
         }
 
         .add-shortcut-actions {
@@ -1301,7 +1315,7 @@
             font-weight: 800;
             cursor: pointer;
             font-family: inherit;
-            box-shadow: 0 2px 8px var(--accent-green-glow);
+            box-shadow: none;
         }
 
         .btn-panel-save:active, .btn-panel-cancel:active {
@@ -1317,7 +1331,7 @@
             font-size: 15px;
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 6px 20px -3px var(--accent-gold-glow);
+            box-shadow: none;
             margin-top: 4px;
         }
 
@@ -1493,7 +1507,7 @@
             font-size: 11px;
             font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 119, 255, 0.4);
+            box-shadow: none;
             transition: all 0.15s ease;
         }
 
@@ -1575,13 +1589,13 @@
         .btn-ctr-action.start {
             background: linear-gradient(135deg, #00e676, #00a854);
             color: #041208;
-            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.35);
+            box-shadow: none;
         }
 
         .btn-ctr-action.pause {
             background: linear-gradient(135deg, #ffb300, #ff8c00);
             color: #1a0f00;
-            box-shadow: 0 4px 16px rgba(255, 179, 0, 0.35);
+            box-shadow: none;
         }
 
         .btn-ctr-action.reset {
@@ -2265,7 +2279,6 @@
                 <span id="bleStatusText">Connect</span>
             </button>
             <button type="button" class="btn-tool-chip" id="btnOpenScoreboard" style="padding: 5px 8px; border-radius: 8px;" title="Big Screen Scoreboard View">📺</button>
-            <a href="showcase.html" class="btn-tool-chip" style="padding: 5px 8px; border-radius: 8px; text-decoration: none;" title="Product Showcase & Pricing Feedback">✨</a>
             <a href="ota.html" class="btn-tool-chip" style="padding: 5px 8px; border-radius: 8px; text-decoration: none;" title="Flash">⚡</a>
         </div>
     </header>
@@ -2419,10 +2432,6 @@
                             <button type="button" class="btn-panel-save" id="btnConfirmAddShortcut">💾 Save Shortcut</button>
                         </div>
                     </div>
-
-                    <button type="button" class="btn-save-gold" id="btnSaveConfig" disabled style="margin-top: 4px;">
-                        <span>💾 Save Rules to Scoreboard</span>
-                    </button>
                 </div>
 
             </div>
@@ -2690,10 +2699,6 @@
                         </div>
                     </div>
                 </div>
-
-                <button type="button" class="btn-save-gold" id="btnSaveClock" disabled style="margin-top: 8px;">
-                    <span>💾 Save Clock Settings</span>
-                </button>
             </div>
         </div>
 
@@ -2737,10 +2742,6 @@
                     <button type="button" class="pill-select" data-layout="1">⏰ 114 LEDs (+Colon)</button>
                     <button type="button" class="pill-select" data-layout="2">🔢 112 LEDs (4 Digits)</button>
                 </div>
-
-                <button type="button" class="btn-save-gold" id="btnSaveDisplay" disabled style="margin-top: 8px;">
-                    <span>💾 Save Display Settings</span>
-                </button>
             </div>
         </div>
 
@@ -2764,7 +2765,7 @@
 
                 <div class="section-header" style="margin-top: 6px;">
                     <span>📲 App Version & Updates</span>
-                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.5</span>
+                    <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;" id="appVersionBadge">v1.6.6</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -2995,9 +2996,6 @@
     const brightnessValBadge = document.getElementById('brightnessValBadge');
     const btnSyncTime        = document.getElementById('btnSyncTime');
     const localTimeDisplay   = document.getElementById('localTimeDisplay');
-    const btnSaveConfig      = document.getElementById('btnSaveConfig');
-    const btnSaveDisplay     = document.getElementById('btnSaveDisplay');
-    const btnSaveClock       = document.getElementById('btnSaveClock');
     const btnSwitchToClockMode = document.getElementById('btnSwitchToClockMode');
     const btnSwitchToScoreMode = document.getElementById('btnSwitchToScoreMode');
     const pickerClockColor   = document.getElementById('pickerClockColor');
@@ -3184,9 +3182,6 @@
         btnCmdToggleMode.disabled = false;
         btnCmdReset.disabled = false;
         btnSyncTime.disabled = false;
-        btnSaveConfig.disabled = false;
-        if (btnSaveDisplay) btnSaveDisplay.disabled = false;
-        if (btnSaveClock) btnSaveClock.disabled = false;
         if (btnSwitchToClockMode) btnSwitchToClockMode.disabled = false;
         if (btnSwitchToScoreMode) btnSwitchToScoreMode.disabled = false;
 
@@ -3210,9 +3205,6 @@
         btnCmdToggleMode.disabled = true;
         btnCmdReset.disabled = true;
         btnSyncTime.disabled = true;
-        btnSaveConfig.disabled = true;
-        if (btnSaveDisplay) btnSaveDisplay.disabled = true;
-        if (btnSaveClock) btnSaveClock.disabled = true;
         if (btnSwitchToClockMode) btnSwitchToClockMode.disabled = true;
         if (btnSwitchToScoreMode) btnSwitchToScoreMode.disabled = true;
 
@@ -3601,16 +3593,6 @@
             sets: 2,    // 2 Sets + Super TB ipv 3de set
             games: 6,   // 6 Games
             tb: 1       // Super Tiebreak in 3rd set (10 pts)
-        },
-        {
-            id: 'basvelden',
-            name: '📅 4. Dinsdag Padel Basvelden',
-            pill: '1 Set to 9',
-            desc: '1 Win. Set to 9 Games with regular Tiebreak',
-            gp: 1,      // Golden Point
-            sets: 1,    // 1 winnende set tot 9
-            games: 9,   // 9 Games met tiebreak
-            tb: 0       // Super Tiebreak OFF (regular set tiebreak)
         }
     ];
 
@@ -3659,9 +3641,12 @@
         try {
             const raw = localStorage.getItem('padel_rule_shortcuts');
             if (raw) {
-                const parsed = JSON.parse(raw);
+                let parsed = JSON.parse(raw);
                 if (Array.isArray(parsed) && parsed.length > 0) {
+                    // Filter out removed default preset if present in cached storage
+                    parsed = parsed.filter(p => p.id !== 'basvelden');
                     rulePresetsList = parsed;
+                    saveRulePresets();
                     return;
                 }
             }
@@ -3806,6 +3791,7 @@
 
         syncRulesPresetBadge(presetId);
         updateAddShortcutPreview();
+        autoSaveBleRules();
         log(`Rules preset applied: ${preset.name}`, 'suc');
     }
 
@@ -3927,6 +3913,45 @@
         btnRestoreDefaultShortcuts.addEventListener('click', restoreDefaultShortcuts);
     }
 
+    // -------------------------------------------------------------
+    // Instant Live Auto-Save to Scoreboard Flash
+    // -------------------------------------------------------------
+    let autoSaveRulesTimer = null;
+    function autoSaveBleRules() {
+        clearTimeout(autoSaveRulesTimer);
+        autoSaveRulesTimer = setTimeout(async () => {
+            if (!watchChar) return;
+            const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
+            const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+            const ok = await sendBleText(rulesPayload);
+            if (ok) {
+                log(`Rules auto-saved: GP=${appConfig.gp}, Sets=${appConfig.sets}, Games=${appConfig.games}, TB=${appConfig.tb}`, 'suc');
+            }
+        }, 80);
+    }
+
+    let autoSaveIdleTimer = null;
+    function autoSaveBleIdle() {
+        clearTimeout(autoSaveIdleTimer);
+        autoSaveIdleTimer = setTimeout(async () => {
+            if (!watchChar) return;
+            const ok = await sendBleText(`CFG,IDLE=${appConfig.idle}`);
+            if (ok) {
+                const desc = (appConfig.idle === 0) ? 'Never' : `${Math.round(appConfig.idle / 60000)} min`;
+                log(`Auto-sleep timeout auto-saved: ${desc}`, 'suc');
+            }
+        }, 80);
+    }
+
+    async function autoSaveBleLayout() {
+        try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
+        if (!watchChar) return;
+        const ok = await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
+        if (ok) {
+            log(`Display layout auto-saved: ${appConfig.layout}`, 'suc');
+        }
+    }
+
     function setupPillGroup(containerId, configKey, valAttr = 'val') {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -3939,6 +3964,11 @@
                     if (configKey === 'tb') updateSetsPillLabel();
                     updateAddShortcutPreview();
                     syncRulesPresetBadge();
+                    autoSaveBleRules();
+                } else if (configKey === 'idle') {
+                    autoSaveBleIdle();
+                } else if (configKey === 'layout') {
+                    autoSaveBleLayout();
                 }
             });
         });
@@ -4174,94 +4204,6 @@
 
     // Initialize Clock Color UI with syncSliders = true
     setClockColorUI(appConfig.clockColor, false, true);
-
-    // -------------------------------------------------------------
-    // Save Handlers for Rules, Display, and Clock Tabs
-    // -------------------------------------------------------------
-    async function sendBleRules() {
-        if (!watchChar) {
-            alert('Scoreboard not connected via Bluetooth.');
-            return;
-        }
-        if (btnSaveConfig) {
-            btnSaveConfig.disabled = true;
-            btnSaveConfig.textContent = 'Saving...';
-        }
-        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
-        const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
-        const cfgOk = await sendBleText(rulesPayload);
-
-        if (btnSaveConfig) {
-            btnSaveConfig.disabled = false;
-            btnSaveConfig.innerHTML = '<span>💾 Save Rules to Scoreboard</span>';
-        }
-        if (cfgOk) {
-            log(`Rules saved: GP=${appConfig.gp}, Sets=${appConfig.sets}, Games=${appConfig.games}, TB=${appConfig.tb}`, 'suc');
-            alert('✓ Match rules successfully saved to Scoreboard Flash!');
-        } else {
-            alert('Failed to send rules. Check Bluetooth connection.');
-        }
-    }
-
-    async function sendBleDisplaySettings() {
-        try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch(e) {}
-        if (!watchChar) {
-            alert('Scoreboard not connected. Layout preference saved locally on phone.');
-            return;
-        }
-        if (btnSaveDisplay) {
-            btnSaveDisplay.disabled = true;
-            btnSaveDisplay.textContent = 'Saving...';
-        }
-        const brtOk = await sendBleText(`CFG,BRT=${appConfig.brt}`);
-        await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
-        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
-        const fullPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
-        const cfgOk = await sendBleText(fullPayload);
-
-        if (btnSaveDisplay) {
-            btnSaveDisplay.disabled = false;
-            btnSaveDisplay.innerHTML = '<span>💾 Save Display Settings</span>';
-        }
-        if (brtOk || cfgOk) {
-            const pct = Math.round((appConfig.brt / 255) * 100);
-            log(`Display saved: BRT=${appConfig.brt} (${pct}%), LAY=${appConfig.layout}`, 'suc');
-            alert(`✓ Display settings (Brightness: ${pct}%, Layout: ${appConfig.layout}) saved to Scoreboard Flash!`);
-        } else {
-            alert('Failed to send display settings. Check Bluetooth connection.');
-        }
-    }
-
-    async function sendBleClockSettings() {
-        const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
-        try { localStorage.setItem('padel_clock_color', colStr); } catch(e) {}
-        if (!watchChar) {
-            alert(`Clock digit color (${colStr}) saved locally on phone.`);
-            return;
-        }
-        if (btnSaveClock) {
-            btnSaveClock.disabled = true;
-            btnSaveClock.textContent = 'Saving...';
-        }
-        const colOk = await sendBleText(`CMD,COL,${colStr}`);
-        const fullPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
-        await sendBleText(fullPayload);
-
-        if (btnSaveClock) {
-            btnSaveClock.disabled = false;
-            btnSaveClock.innerHTML = '<span>💾 Save Clock Settings</span>';
-        }
-        if (colOk) {
-            log(`Clock settings saved: Color=${colStr}`, 'suc');
-            alert(`✓ Clock digit color (${colStr}) saved to Scoreboard Flash!`);
-        } else {
-            alert('Failed to send clock settings. Check Bluetooth connection.');
-        }
-    }
-
-    if (btnSaveConfig) btnSaveConfig.addEventListener('click', sendBleRules);
-    if (btnSaveDisplay) btnSaveDisplay.addEventListener('click', sendBleDisplaySettings);
-    if (btnSaveClock) btnSaveClock.addEventListener('click', sendBleClockSettings);
 
     if (btnSwitchToClockMode) {
         btnSwitchToClockMode.addEventListener('click', () => {
@@ -4647,7 +4589,7 @@
     // -------------------------------------------------------------
     // PWA Service Worker & Real-Time Push Update Manager
     // -------------------------------------------------------------
-    const CURRENT_APP_VERSION = '1.6.5';
+    const CURRENT_APP_VERSION = '1.6.6';
     let swRegistration = null;
     let isRefreshing = false;
 

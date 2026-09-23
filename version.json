@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-23T13:23:00Z",
-  "notes": "Added two-section rules layout (Shortcuts & Selections) with custom shortcut creation, deletion, and persistent storage.",
-  "version": "1.6.5"
+  "buildTime": "2026-09-23T13:38:00Z",
+  "notes": "Enabled instant auto-save to scoreboard flash on setting changes and removed redundant manual save buttons.",
+  "version": "1.6.6"
 }
