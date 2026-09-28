@@ -213,16 +213,8 @@ private:
       uint8_t magic = pData[0];
       uint16_t fileChipId = (uint16_t)(pData[12] | (pData[13] << 8));
 
-      #if defined(CONFIG_IDF_TARGET_ESP32C3)
       const uint16_t EXPECTED_CHIP = 0x0005;
       const char* CHIP_NAME = "ESP32-C3";
-      #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-      const uint16_t EXPECTED_CHIP = 0x0009;
-      const char* CHIP_NAME = "ESP32-S3";
-      #else
-      const uint16_t EXPECTED_CHIP = 0x0000;
-      const char* CHIP_NAME = "ESP32";
-      #endif
 
       if (magic != 0xE9 || fileChipId != EXPECTED_CHIP) {
         Serial.printf("[FOTA-FAILSAFE] REJECTED INCOMPATIBLE FIRMWARE! Magic: 0x%02X, Chip: 0x%04X (Expected %s: 0x%04X)\n",

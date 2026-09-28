@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PadelPulse — The Smart 7-Segment Padel Scoreboard & Wall Clock</title>
     <meta name="description" content="Explore the ESP32-powered modular 7-segment Padel Scoreboard and Digital Clock. Features zero-lag Bluetooth racket clicker, Wear OS smartwatch sync, Web Bluetooth controller, and snap-fit 3D printed modular design.">
-    <meta name="keywords" content="Padel Scoreboard, 7 segment display, ESP32, Wear OS padel, Bluetooth clicker, Padel racket remote, WS2812B, 3D printed scoreboard, digital clock">
+    <meta name="keywords" content="Padel Scoreboard, 7 segment display, ESP32, Wear OS padel, Bluetooth clicker, Padel racket remote, WS2813, 3D printed scoreboard, digital clock">
     <meta property="og:title" content="PadelPulse — Smart 7-Segment Padel Scoreboard & Digital Clock">
     <meta property="og:description" content="Real-time court scoreboard with instant racket clicker, smartwatch sync, and ambient wall clock mode. Tell us what you want to pay and help shape the product!">
     <meta property="og:image" content="Images/full_scoreboard_preview.png">
@@ -1366,10 +1366,14 @@
             <li><a href="#ecosystem" class="nav-link">Ecosystem</a></li>
             <li><a href="#hardware" class="nav-link">Hardware & Tech</a></li>
             <li><a href="#packages" class="nav-link">Packages</a></li>
+            <li><a href="presentation.html" class="nav-link" style="color:var(--team1-blue);">📊 Presentation</a></li>
             <li><a href="#feedback" class="nav-link">Pricing Survey</a></li>
         </ul>
 
         <div class="nav-actions">
+            <a href="presentation.html" class="btn-ghost-nav" title="Launch Engineering Presentation">
+                <span>📊 Presentation</span>
+            </a>
             <a href="index.html" class="btn-ghost-nav" title="Launch Web Bluetooth Controller">
                 <span>📱 App Controller</span>
             </a>
@@ -1389,7 +1393,7 @@
             </h1>
 
             <p class="hero-desc">
-                Never argue about the score again. High-visibility WS2812B LEDs, instant Bluetooth racket clicker, Wear OS wrist companion, and automated 24-hour wall clock mode.
+                Never argue about the score again. High-visibility WS2813 LEDs, instant Bluetooth racket clicker, Wear OS wrist companion, and automated 24-hour wall clock mode.
             </p>
 
             <div class="hero-cta-group">
@@ -1547,7 +1551,7 @@
                     </div>
                     <h3 class="eco-title">ESP32 Master Scoreboard</h3>
                     <p class="eco-desc">
-                        Hardware SPI DMA WS2812B bitstream driver ensures 100% flicker-free LED animations even during high-frequency BLE packet transfers. NVS flash memory restores match state across power cuts.
+                        Hardware SPI DMA WS2813 bitstream driver ensures 100% flicker-free LED animations even during high-frequency BLE packet transfers. NVS flash memory restores match state across power cuts.
                     </p>
                     <ul class="eco-points">
                         <li>Official FIP rules: Golden Point, Tiebreak</li>
@@ -1663,7 +1667,7 @@
             <div class="tech-spec-bar">
                 <div class="spec-item">
                     <div class="spec-val">136</div>
-                    <div class="spec-label">WS2812B RGB LEDs</div>
+                    <div class="spec-label">WS2813 RGB LEDs</div>
                 </div>
                 <div class="spec-item">
                     <div class="spec-val">&lt; 15ms</div>
@@ -1707,7 +1711,7 @@
                     </div>
                     <ul class="pkg-features">
                         <li>Pre-flashed ESP32 microcontroller</li>
-                        <li>Tested WS2812B LED light engine & wiring harness</li>
+                        <li>Tested WS2813 LED light engine & wiring harness</li>
                         <li>All 3MF & STL printable digital files</li>
                         <li>DS1302 Real-Time Clock module</li>
                         <li>Step-by-step digital assembly guide</li>
@@ -1950,7 +1954,7 @@
 
             <div class="footer-bottom">
                 <span>© 2026 PadelPulse / Schepie 7-Segment Project. Built for padel players worldwide.</span>
-                <span style="color: var(--text-sub);">ESP32-C3 • WS2812B • BLE GATT 0x4FAF</span>
+                <span style="color: var(--text-sub);">ESP32-C3 • WS2813 • BLE GATT 0x4FAF</span>
             </div>
         </div>
     </footer>

@@ -52,26 +52,16 @@ extern "C" void ble_svc_gatt_changed(uint16_t start_handle, uint16_t end_handle)
 #include <vector>
 #include <string>
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-  extern "C" void esp_brownout_disable(void);
-#endif
+extern "C" void esp_brownout_disable(void);
 
 // ==============================================================================
-// Hardware Configuration
+// Hardware Configuration (ESP32-C3 SuperMini)
 // ==============================================================================
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-  #define LED_PIN           2      // WS2812 Data Pin on ESP32-C3 SuperMini (GPIO 2)
-  #define ONBOARD_LED_PIN   8      // ESP32-C3 SuperMini LED (GPIO 8, Active LOW)
-  #define DS1302_CLK_PIN    4      // RTC SCLK -> GPIO 4
-  #define DS1302_DAT_PIN    5      // RTC DAT / IO -> GPIO 5
-  #define DS1302_RST_PIN    3      // RTC RST / CE -> GPIO 3
-#else
-  #define LED_PIN           15     // WS2812 Data Pin on ESP32-S3 Zero (GPIO 15)
-  #define ONBOARD_RGB_PIN   21     // Waveshare ESP32-S3 Zero On-board RGB (GPIO 21)
-  #define DS1302_CLK_PIN    4      // RTC SCLK -> GPIO 4
-  #define DS1302_DAT_PIN    5      // RTC DAT / IO -> GPIO 5
-  #define DS1302_RST_PIN    6      // RTC RST / CE -> GPIO 6
-#endif
+#define LED_PIN           2      // WS2813 Data Pin on ESP32-C3 SuperMini (GPIO 2, Hardware SPI MOSI)
+#define ONBOARD_LED_PIN   8      // ESP32-C3 SuperMini LED (GPIO 8, Active LOW)
+#define DS1302_CLK_PIN    4      // RTC SCLK -> GPIO 4
+#define DS1302_DAT_PIN    5      // RTC DAT / IO -> GPIO 5
+#define DS1302_RST_PIN    3      // RTC RST / CE -> GPIO 3
 
 #define NUM_DIGITS        4      // 4 Digits total (2 for Team 1, 2 for Team 2)
 #define LEDS_PER_SEGMENT  4      // 4 LEDs per segment
@@ -294,10 +284,6 @@ bool doScan = true;
 // Hardware Instances
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-#if !defined(CONFIG_IDF_TARGET_ESP32C3)
-Adafruit_NeoPixel onboardLed(1, ONBOARD_RGB_PIN, NEO_GRB + NEO_KHZ800);
-#endif
-
 // ==============================================================================
 // 7-Segment Font Table
 // Segment Order per Digit:
@@ -333,13 +319,8 @@ const byte numbers[16][7] = {
 // Helper & Display Functions
 // ==============================================================================
 void setStatusLed(uint8_t r, uint8_t g, uint8_t b) {
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
   pinMode(ONBOARD_LED_PIN, OUTPUT);
   digitalWrite(ONBOARD_LED_PIN, (r > 0 || g > 0 || b > 0) ? LOW : HIGH);
-#else
-  onboardLed.setPixelColor(0, onboardLed.Color(r, g, b));
-  onboardLed.show();
-#endif
 }
 
 int getDigitBaseLed(int digitIndex) {
@@ -518,8 +499,9 @@ void drawColonInGamesSets(bool showColon, uint32_t color) {
 }
 
 // ==============================================================================
-// Hardware SPI DMA WS2812 Driver (ESP32-C3)
+// Hardware SPI DMA WS2813 Driver (ESP32-C3)
 // 100% immune to BLE / CPU preemption glitches. Hardware DMA pushes bits autonomously.
+// Tailored for WS2813: 300ns T0H / 900ns T1H, dual-signal line, >=280us LOW reset pulse.
 // ==============================================================================
 bool bleInitialized = false;
 
@@ -1021,7 +1003,7 @@ void splashText(const char* text, uint32_t color) {
   int len = strlen(text);
 
   // Power budget governor for 4-digit full text splashes (e.g. "SPEL"):
-  // Lighting 72+ WS2812/WS2813 LEDs simultaneously in multi-channel colors (Cyan/White)
+  // Lighting 72+ WS2813 LEDs simultaneously in multi-channel colors (Cyan/White)
   // draws >2.4A. Cap total RGB channel sum to <= 270 (matching pure Red) to maintain 
   // rock-solid 5V power stability across all USB cables and battery packs.
   uint8_t r = (uint8_t)((color >> 16) & 0xFF);
@@ -2901,10 +2883,6 @@ void setup() {
   pixels.setBrightness(BRIGHTNESS);
   pixels.clear();
 
-#if !defined(CONFIG_IDF_TARGET_ESP32C3)
-  onboardLed.begin();
-  onboardLed.setBrightness(50);
-#endif
   setStatusLed(0, 0, 50); // Blue: Booting & scanning
 
   // 1. Initialize BLE Stack as "Padel Display"
@@ -3098,12 +3076,7 @@ void loop() {
   if (!connected && millis() - lastScanBlink > 500) {
     lastScanBlink = millis();
     scanBlinkState = !scanBlinkState;
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
     digitalWrite(ONBOARD_LED_PIN, scanBlinkState ? LOW : HIGH);
-#else
-    onboardLed.setPixelColor(0, scanBlinkState ? onboardLed.Color(0, 0, 40) : 0);
-    onboardLed.show();
-#endif
   }
 
   // ── Long-press proactive check (fires while button is still held) ─────────

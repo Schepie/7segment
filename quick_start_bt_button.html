@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quick Start Guide - Bluetooth Remote Clicker</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.4;
+      font-size: 11pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .container {
+      width: 100%;
+      max-width: 190mm;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2.5px solid #0f172a;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+    .header-title h1 {
+      font-size: 20pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-title p {
+      font-size: 10pt;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .badge-chip {
+      background: #e0f2fe;
+      color: #0284c7;
+      font-size: 8.5pt;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+    }
+
+    /* Section 1: Pairing Steps */
+    .steps-banner {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .step-item {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      background: #0284c7;
+      color: #fff;
+      font-size: 9.5pt;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text h4 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .step-text p {
+      font-size: 8.5pt;
+      color: #475569;
+      line-height: 1.25;
+    }
+
+    /* Main Section: Remote & Actions */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 62mm 1fr;
+      gap: 14px;
+      margin-bottom: 12px;
+      align-items: start;
+    }
+
+    /* Remote Illustration Box */
+    .remote-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px 10px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .remote-card h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .remote-card .sub {
+      font-size: 8pt;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    /* SVG Remote */
+    .svg-container {
+      display: flex;
+      justify-content: center;
+      margin: 4px 0 6px;
+    }
+
+    /* Table Styles */
+    .section-title {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .table-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      text-align: left;
+    }
+    thead {
+      background: #f1f5f9;
+    }
+    th {
+      padding: 7px 10px;
+      font-weight: 700;
+      color: #334155;
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 6.5px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      color: #1e293b;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    /* Badges */
+    .btn-badge {
+      display: inline-block;
+      font-size: 8pt;
+      font-weight: 700;
+      padding: 2.5px 6.5px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .badge-big {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .badge-small {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .badge-either {
+      background: #f3e8ff;
+      color: #7e22ce;
+      border: 1px solid #e9d5ff;
+    }
+
+    .action-tag {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Bottom 2 Columns: Counter Mode & Battery / Tips */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .info-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 12px;
+    }
+    .info-card h4 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .info-card ul {
+      list-style: none;
+      font-size: 8.5pt;
+      color: #334155;
+    }
+    .info-card li {
+      margin-bottom: 3.5px;
+      line-height: 1.3;
+      padding-left: 12px;
+      position: relative;
+    }
+    .info-card li::before {
+      content: "•";
+      color: #0284c7;
+      font-weight: bold;
+      position: absolute;
+      left: 0;
+    }
+
+    /* Footer Note */
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #64748b;
+    }
+    .highlight-green {
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <h1>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m7 7 10 10-5 5V2l5 5L7 17"></path>
+        </svg>
+        Bluetooth Remote Clicker
+      </h1>
+      <p>ESP32 7-Segment Padel Scoreboard • Quick Start Reference Guide</p>
+    </div>
+    <div style="text-align: right;">
+      <span class="badge-chip">XYLY01 / XiaoYi_RC</span>
+    </div>
+  </div>
+
+  <!-- 3-Step Setup -->
+  <div class="steps-banner">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <h4>Power On Display</h4>
+        <p>Connect 5V power to scoreboard. The status LED will blink red/orange while scanning.</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <h4>Wake Up Remote</h4>
+        <p>Click either button once. The remote wakes from deep sleep and advertises BLE.</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <h4>Auto-Pair & Ready</h4>
+        <p>Display flashes <span class="highlight-green">CONN</span> in green. MAC is saved in flash memory.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Content: Visual Remote + Padel Table -->
+  <div class="main-grid">
+    
+    <!-- Remote Graphic -->
+    <div class="remote-card">
+      <h3>Remote Layout</h3>
+      <div class="sub">Xiaomi XYLY01 BLE Clicker</div>
+      
+      <div class="svg-container">
+        <svg width="170" height="225" viewBox="0 0 170 225" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Remote Body -->
+          <rect x="25" y="10" width="120" height="205" rx="35" fill="#1e293b" stroke="#334155" stroke-width="2.5"/>
+          <rect x="30" y="15" width="110" height="195" rx="30" fill="#0f172a"/>
+          
+          <!-- Lanyard loop at bottom -->
+          <rect x="73" y="208" width="24" height="6" rx="3" fill="#334155"/>
+          <circle cx="85" cy="211" r="2" fill="#0f172a"/>
+
+          <!-- Top Status LED -->
+          <circle cx="85" cy="28" r="3.5" fill="#38bdf8"/>
+          <text x="85" y="22" font-size="7" fill="#94a3b8" text-anchor="middle" font-weight="600">LED</text>
+
+          <!-- BIG BUTTON (Top / Shutter) -->
+          <g>
+            <circle cx="85" cy="78" r="32" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+            <circle cx="85" cy="78" r="27" fill="#0284c7"/>
+            <!-- Camera / Shutter Icon -->
+            <circle cx="85" cy="78" r="14" fill="#0369a1" stroke="#ffffff" stroke-width="2.5"/>
+            <circle cx="85" cy="78" r="6" fill="#ffffff"/>
+            
+            <text x="85" y="122" font-size="8.5" fill="#38bdf8" text-anchor="middle" font-weight="700">BIG BUTTON</text>
+            <text x="85" y="132" font-size="7" fill="#cbd5e1" text-anchor="middle">Team 1 (Left / Blue)</text>
+          </g>
+
+          <!-- Divider Accent -->
+          <line x1="50" y1="140" x2="120" y2="140" stroke="#334155" stroke-width="1" stroke-dasharray="2 2"/>
+
+          <!-- SMALL BUTTON (Bottom / Mode) -->
+          <g>
+            <rect x="62" y="150" width="46" height="34" rx="8" fill="#1e293b" stroke="#f87171" stroke-width="2"/>
+            <rect x="66" y="154" width="38" height="26" rx="5" fill="#dc2626"/>
+            <!-- Mode Icon -->
+            <polygon points="80,161 92,167 80,173" fill="#ffffff"/>
+            
+            <text x="85" y="194" font-size="8.5" fill="#f87171" text-anchor="middle" font-weight="700">SMALL BUTTON</text>
+            <text x="85" y="203" font-size="7" fill="#cbd5e1" text-anchor="middle">Team 2 (Right / Red)</text>
+          </g>
+        </svg>
+      </div>
+      <div style="font-size: 7.5pt; color: #64748b; line-height: 1.2;">
+        Wear on wrist lanyard or clip via 3D printed holder
+      </div>
+    </div>
+
+    <!-- Padel Mode Actions Table -->
+    <div>
+      <div class="section-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m10 15 5-3-5-3v6Z"></path>
+        </svg>
+        Padel Scoreboard Controls (Default Mode)
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 25%;">Trigger</th>
+              <th style="width: 28%;">Button</th>
+              <th>Action & Display Reaction</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="action-tag">Single Click</span></td>
+              <td><span class="btn-badge badge-big">● Big Button</span></td>
+              <td>
+                <strong>+1 Point Team 1 (Left / Blue)</strong><br>
+                <span style="font-size: 8pt; color: #64748b;">Advances 0 → 15 → 30 → 40 → Game / Tiebreak</span>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="action-tag">Single Click</span></td>
+              <td><span class="btn-badge badge-small">■ Small Button</span></td>
+              <td>
+                <strong>+1 Point Team 2 (Right / Red)</strong><br>
+                <span style="font-size: 8pt; color: #64748b;">Advances 0 → 15 → 30 → 40 → Game / Tiebreak</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="action-tag">Double Click</span><br>
+                <span style="font-size: 7.5pt; color: #64748b;">Within 380ms</span>
+              </td>
+              <td><span class="btn-badge badge-either">Either Button</span></td>
+              <td>
+                <strong>UNDO Last Point</strong><br>
+                <span style="font-size: 8pt; color: #64748b;">Reverts point instantly; games module flashes</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="action-tag">Long Press</span><br>
+                <span style="font-size: 7.5pt; color: #64748b;">Hold &ge; 1.5s (at 0-0)</span>
+              </td>
+              <td><span class="btn-badge badge-either">Either Button</span></td>
+              <td>
+                <strong>Swap Court Sides</strong><br>
+                <span style="font-size: 8pt; color: #64748b;">Swaps Team 1 ↔ Team 2 sides & colors before start</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="action-tag">Long Press</span><br>
+                <span style="font-size: 7.5pt; color: #64748b;">Hold &ge; 1.5s (during match)</span>
+              </td>
+              <td><span class="btn-badge badge-either">Either Button</span></td>
+              <td>
+                <strong>Clock Mode Toggle</strong><br>
+                <span style="font-size: 8pt; color: #64748b;">Displays current real-time clock (HH:MM)</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span class="action-tag">Any Click</span><br>
+                <span style="font-size: 7.5pt; color: #64748b;">While in Clock Mode</span>
+              </td>
+              <td><span class="btn-badge badge-either">Either Button</span></td>
+              <td>
+                <strong>Wake back to Scoreboard</strong><br>
+                <span style="font-size: 8pt; color: #64748b;">Restores match score intact (does NOT score point)</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Cards: Counter Mode & Battery / Troubleshooting -->
+  <div class="bottom-grid">
+    
+    <!-- Counter & Timer Mode -->
+    <div class="info-card">
+      <h4>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Gym / Timer Mode Controls
+      </h4>
+      <ul>
+        <li><strong>Single Timer (Up / Down):</strong>
+          <br>• <span class="btn-badge badge-big" style="font-size:7pt; padding:1px 4px;">Big</span> Toggle Start / Pause
+          <br>• <span class="btn-badge badge-small" style="font-size:7pt; padding:1px 4px;">Small</span> Step value (+1 / -1)
+          <br>• <span class="btn-badge badge-either" style="font-size:7pt; padding:1px 4px;">Double Click</span> Reset to zero / target
+        </li>
+        <li><strong>Dual Timers (Left & Right Clocks):</strong>
+          <br>• <span class="btn-badge badge-big" style="font-size:7pt; padding:1px 4px;">Big</span> Click = Start/Pause Left | Double Click = Reset Left
+          <br>• <span class="btn-badge badge-small" style="font-size:7pt; padding:1px 4px;">Small</span> Click = Start/Pause Right | Double Click = Reset Right
+        </li>
+      </ul>
+    </div>
+
+    <!-- Battery & Pro Tips -->
+    <div class="info-card">
+      <h4>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="16" height="10" rx="2" ry="2"></rect>
+          <line x1="22" y1="11" x2="22" y2="13"></line>
+        </svg>
+        Battery & Pro Tips
+      </h4>
+      <ul>
+        <li><strong>Coin Battery:</strong> Uses a standard <strong>CR1632</strong> 3V cell (lasts ~6–12 months). Twist open rear cap using a coin to replace.</li>
+        <li><strong>Deep Sleep:</strong> Remote enters sleep when unused. One click wakes it back up and re-links automatically.</li>
+        <li><strong>Undo Window:</strong> Double-click has a <strong>380ms</strong> threshold. Keep deliberate pace when scoring consecutive points.</li>
+        <li><strong>Score Persistence:</strong> Scores and paired remote MAC are preserved in NVS flash memory across power cycles.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>ESP32-C3 SuperMini • WS2813 7-Segment Master Rules Engine</span>
+    <span>Auto-Pairing via BLE HID Profile (Service 0x1812)</span>
+  </div>
+
+</div>
+
+</body>
+</html>

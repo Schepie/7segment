@@ -1,6 +1,6 @@
 # Xiaomi / YI Bluetooth Remote (XYLY01) Integration Manual
 
-This document details the hardware configuration, Bluetooth Low Energy (BLE) HID communication protocol, button mapping, and 7-segment display driver settings for the **Xiaomi / YI Action Camera Remote (Model: XYLY01 / XiaoYi_RC)** communicating with an **ESP32-S3 Zero** (or Lolin S3 Mini).
+This document details the hardware configuration, Bluetooth Low Energy (BLE) HID communication protocol, button mapping, and 7-segment display driver settings for the **Xiaomi / YI Action Camera Remote (Model: XYLY01 / XiaoYi_RC)** communicating with an **ESP32-C3 SuperMini**.
 
 ---
 
@@ -8,27 +8,23 @@ This document details the hardware configuration, Bluetooth Low Energy (BLE) HID
 
 | Component | Specification |
 | :--- | :--- |
-| **Microcontroller** | Waveshare ESP32-S3 Zero (4MB Flash, DIO mode, USB CDC on boot) |
+| **Microcontroller** | ESP32-C3 SuperMini (RISC-V 160MHz, 4MB Flash, USB CDC on boot) |
 | **Bluetooth Remote** | Xiaomi / YI Remote (Model: `XYLY01`, Advertised Name: `XiaoYi_RC`) |
-| **Display Panel** | 2x Chained 7-Segment Modules (56 WS2812B LEDs total: 2 digits $\times$ 7 segments $\times$ 4 LEDs) |
-| **WS2812 DIN Pin** | **`GPIO 15`** |
-| **Onboard RGB Status LED** | **`GPIO 21`** (ESP32-S3 Zero onboard WS2812) |
+| **Display Panel** | 2x Chained 7-Segment Modules (56 WS2813 LEDs total: 2 digits $\times$ 7 segments $\times$ 4 LEDs) |
+| **WS2813 DIN Pin** | **`GPIO 2`** |
+| **Onboard Status LED** | **`GPIO 8`** (ESP32-C3 SuperMini onboard LED, active LOW) |
 | **LED Index Offset** | **`+1 LED`** (`#define LED_START_OFFSET 1`) for mechanical alignment inside diffusers |
 
 ---
 
 ## 2. PlatformIO Board Configuration (`platformio.ini`)
 
-Because the ESP32-S3 Zero features 4MB flash (rather than 8MB), `platformio.ini` requires the following explicit flash configuration:
+The ESP32-C3 SuperMini environment in `platformio.ini`:
 
 ```ini
-[env:esp32s3_zero]
+[env:esp32c3_supermini_button]
 platform = espressif32
-board = esp32-s3-devkitc-1
-board_build.mcu = esp32s3
-board_build.flash_mode = dio
-board_upload.flash_size = 4MB
-board_build.partitions = default.csv
+board = esp32-c3-devkitm-1
 framework = arduino
 build_flags = 
 	-DARDUINO_USB_CDC_ON_BOOT=1
@@ -50,7 +46,7 @@ lib_deps =
 ### B. Security & Connection Parameters
 - The remote operates with **Just Works / Auto-confirm** bonding:
   ```cpp
-  NimBLEDevice::init("ESP32-S3-Scoreboard");
+  NimBLEDevice::init("Padel Display");
   NimBLEDevice::setSecurityAuth(true, true, true); // Bonding + MITM + Secure Connections
   NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
   NimBLEDevice::setPower(ESP_PWR_LVL_P9);
@@ -109,21 +105,19 @@ The remote transmits **3-byte notification payloads** to Characteristic `0x2A4D`
 
 ---
 
-## 6. Onboard Status LED Codes (GPIO 21)
+## 6. Onboard Status LED (GPIO 8)
 
-| LED Color | Meaning |
-| :--- | :--- |
-| **Blue** | Booting & scanning for remote |
-| **Orange** | Establishing connection & exchanging BLE keys |
-| **Green** | Successfully connected and actively receiving scores |
-| **Red** | Connection error / link lost (auto-resumes scanning) |
+The onboard status LED on GPIO 8 indicates connectivity states:
+- **Blinking:** Booting, scanning, or awaiting Bluetooth connection.
+- **Solid ON:** Successfully connected to remote / app and actively receiving scores.
+- **OFF:** Idle or disconnected.
 
 ---
 
 ## 7. 7-Segment Wiring & Offsets
 
 ```cpp
-#define LED_PIN           15     // GPIO 15
+#define LED_PIN           2      // ESP32-C3 SuperMini GPIO 2
 #define NUM_DIGITS        2      // 2 Digits
 #define LEDS_PER_SEGMENT  4      // 4 LEDs per segment
 #define LEDS_PER_DIGIT    28     // 7 segments * 4 = 28 LEDs per digit

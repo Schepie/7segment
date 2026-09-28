@@ -1,8 +1,10 @@
 # 🎾 ESP32 7-Segment Padel Scoreboard & Digital Clock
 
-A professional, modular, high-visibility electronic scoreboard and real-time clock system built with **ESP32**, **WS2812B addressable LEDs (up to 136 LEDs)**, **Bluetooth Low Energy (BLE)**, **Web Bluetooth API**, and snap-fit 3D-printed 7-segment displays.
+A professional, modular, high-visibility electronic scoreboard and real-time clock system built with **ESP32**, **WS2813 addressable LEDs (dual-signal backup line, up to 136 LEDs)**, **Bluetooth Low Energy (BLE)**, **Web Bluetooth API**, and snap-fit 3D-printed 7-segment displays.
 
 The scoreboard acts as the **Master Rules Engine** and single source of truth for the entire match ecosystem, synchronizing in real time with the **Wear OS smartwatch app**, a physical **Xiaomi Bluetooth clicker remote**, and the **companion spectator mobile web app**.
+
+📊 **Interactive Development Presentation Deck:** Open [**`presentation.html`**](presentation.html) in your browser (or view the [Presentation Notes](PRESENTATION.md)) for an interactive slide-by-slide walkthrough detailing how the hardware, 3D CAD, firmware SPI DMA drivers, and companion web apps were built.
 
 ---
 
@@ -51,7 +53,7 @@ To avoid confusion between players, spectators, and hardware displays, all compo
 | Component | Team 1 (Left / Serving) | Team 2 (Right / Receiving) | Sets Indicator |
 | :--- | :---: | :---: | :---: |
 | **Color** | **BLUE** | **RED** | **GOLD / YELLOW** |
-| **ESP32 WS2812B RGB** | `RGB(0, 180, 255)` | `RGB(255, 0, 0)` | `RGB(255, 180, 0)` |
+| **ESP32 WS2813 RGB** | `RGB(0, 180, 255)` | `RGB(255, 0, 0)` | `RGB(255, 180, 0)` |
 | **Web Controller (`settings.html`)** | `#00d2ff` | `#ff3366` | `#ffb300` |
 | **Wear OS Watch App** | `#1E88E5` | `#E53935` | `#FFB300` |
 | **Spectator Mobile Web App** | `#3b82f6` | `#ef4444` | `#eab308` |
@@ -70,7 +72,7 @@ The ultimate tournament firmware with simultaneous multi-device connectivity and
 * **24-LED Games & Sets Module (LEDs 56..79):**
   * Left column (Team 1 Blue): 9 Game LEDs (bottom-to-top) + 2 Set LEDs.
   * Right column (Team 2 Red): 2 Set LEDs + 9 Game LEDs (top-to-bottom).
-* **Hardware SPI DMA Driver (ESP32-C3):** Pushes WS2812 bitstreams via hardware SPI MOSI (`GPIO 2`) with DMA buffering. Completely immune to BLE radio interrupts, preemption, or flicker.
+* **Hardware SPI DMA Driver (ESP32-C3):** Pushes WS2813 bitstreams via hardware SPI MOSI (`GPIO 2`) with DMA buffering. Completely immune to BLE radio interrupts, preemption, or flicker. Features >= 280us LOW reset pulse timing and dual-signal line compatibility.
 * **NVS Flash Persistence (`padel_cfg`):** Remembers match settings, LED brightness, idle timeouts, and paired remote MAC across power cuts.
 * **Inactivity Idle Timer:** Automatically fades to Digital Clock mode after a configurable idle period (e.g. 5 minutes without activity).
 * **Official Rules Engine:**
@@ -227,30 +229,26 @@ ESP32 DIN (GPIO 2) ──> [ Digit 0 ] ──> [ Digit 1 ] ──> [ Games & Set
   * LED 70 (Index 14): Blank spacer
   * LEDs 71..79 (Indices 15..23): Games G9 down to G1
 
-### 4. Microcontroller Pinout Table
+### 4. Microcontroller Pinout Table (ESP32-C3 SuperMini)
 
-| Function | ESP32-C3 SuperMini *(Recommended)* | Waveshare ESP32-S3 Zero |
-| :--- | :---: | :---: |
-| **WS2812 DIN Data Pin** | **`GPIO 2`** (Hardware SPI MOSI) | **`GPIO 15`** |
-| **Status LED** | `GPIO 8` (Active LOW) | `GPIO 21` (WS2812 RGB) |
-| **Mode / Boot Button** | `GPIO 9` | `GPIO 0` |
-| **RTC DS1302 CLK (SCLK)** | `GPIO 4` | `GPIO 4` |
-| **RTC DS1302 DAT (I/O)** | `GPIO 5` | `GPIO 5` |
-| **RTC DS1302 RST (CE)** | `GPIO 3` | `GPIO 6` |
+| Function | ESP32-C3 SuperMini Pin | Description |
+| :--- | :---: | :--- |
+| **WS2813 DIN Data Pin** | **`GPIO 2`** | Hardware SPI MOSI (high speed, accurate WS2813 timing) |
+| **Status LED** | `GPIO 8` | Blue Onboard LED (Active LOW) |
+| **Mode / Boot Button** | `GPIO 9` | Onboard Button / External score control |
+| **RTC DS1302 CLK (SCLK)** | `GPIO 4` | Clock line for DS1302 Real-Time Clock module |
+| **RTC DS1302 DAT (I/O)** | `GPIO 5` | Bi-directional data line for DS1302 |
+| **RTC DS1302 RST (CE)** | `GPIO 3` | Chip enable / reset line for DS1302 |
 
 ---
 
 ## ⚡ Building & Uploading (PlatformIO)
 
-The project includes preconfigured environments in [`platformio.ini`](platformio.ini):
+The project targets the ESP32-C3 SuperMini configured in [`platformio.ini`](platformio.ini):
 
 | Target Microcontroller | Firmware Feature Set | PlatformIO Environment |
 | :--- | :--- | :--- |
 | **ESP32-C3 SuperMini** | **Flagship (Sets & Match + Module)** | `esp32c3_supermini_button` |
-| ESP32-C3 SuperMini | Unified 3-in-1 (Clock / Score / Remote) | `esp32c3_supermini_combined` |
-| ESP32-C3 SuperMini | Standalone Clock | `esp32c3_supermini_clock` |
-| **ESP32-S3 Zero** | Flagship (Sets & Match + Module) | `esp32s3_zero_button` |
-| ESP32-S3 Zero | Unified 3-in-1 (Clock / Score / Remote) | `esp32s3_zero_combined` |
 
 ### CLI Build & Flash:
 ```powershell
@@ -278,10 +276,11 @@ All enclosure, digit, bracket, and mounting files are open-source OpenSCAD desig
 * `remote_strap_holder.scad`: Ergonomic clip for wearing the Xiaomi Shutter remote on a wristband or racket lanyard.
 * `games_sets_u_bracket.scad`: **Unified 3-Panel U-Profile Bridge Bracket** (continuous 84 mm rigid bridge spanning across the central Games & Sets module and both adjacent digits; U-profile channel clamps both the front face and rear backplate across all 4 M3 corner screw positions to permanently eliminate joint flexing and bending; integrated front-lip cutout provides full clearance for the frontplate "SETS" text; 100% support-free 3D printing; fits both top and bottom rims).
   * STLs: `3d_models/games_sets_u_bracket.stl`, `3d_models/games_sets_u_bracket_pair.stl`.
-* `panel_seam_u_bracket.scad`: **2-Panel Digit Seam U-Profile Joining Bracket & Padel Court Hook** (rigid 28 mm U-channel bracket clamping across adjacent 7-segment digit panels [Digit 1 + Digit 2] or [Digit 3 + Digit 4] on a 12.0 mm screw pitch; straight square top corners):
-  * **Standard Clean U-Bracket** (`part=1`, `part=2`, `part=3`): Clamps top or bottom seam with zero support needed.
-  * **Extended Padel Mesh Hook Version** (`part=3`, `part=4`, `part=5`): Features an integrated front-facing mounting hook (Ø 5.6 mm throat for standard Ø 4.0 - 4.2 mm steel wire) with a 16.0 mm downward retention lip and 45° lead-in mouth. Hangs the scoreboard **safely behind** the 50x50 mm wire mesh of a padel court so incoming balls hit the metal wire rather than the display panels. Prints flat on its side for 100% tensile layer-line alignment and zero support material.
-  * STLs: `3d_models/panel_seam_u_bracket.stl`, `3d_models/panel_seam_u_hook_bracket.stl`, `3d_models/panel_seam_u_hook_bracket_pair.stl`, `3d_models/panel_seam_u_bracket_set4_hook.stl`.
+* `panel_seam_u_bracket.scad`: **2-Panel Digit Seam U-Profile Joining Bracket, Padel Court Hook & Carrying Strap Mount** (rigid 28 mm U-channel bracket clamping across adjacent 7-segment digit panels [Digit 1 + Digit 2] or [Digit 3 + Digit 4] on a 12.0 mm screw pitch; straight square top corners):
+  * **Standard Clean U-Bracket** (`part=1`, `part=2`): Clamps top or bottom seam with zero support needed.
+  * **Extended Padel Mesh Hook Version** (`part=3`, `part=4`, `part=5`): Features an integrated front-facing mounting hook (Ø 5.6 mm throat for standard Ø 3.5 - 5.0 mm steel wire) with +5.5 mm clearance for the vertical fence wire (offsetting the horizontal wire ~11.8 mm from the panel face), a 16.0 mm downward retention lip, and 45° flared entry mouth. Hangs the scoreboard **safely behind** the 50x50 mm wire mesh of a padel court so incoming balls hit the metal fence rather than the display panels. Prints flat on its side for 100% tensile layer-line strength and zero support.
+  * **Integrated Carrying Strap System** (`part=6`, `part=7`, `part=8`): Two snap-fit hinge knuckles on the top web (20.0 mm span) accommodate a movable 3D-printed triangular strap eye (`triangular_strap_eye`). Uses split-spring pivot pins for 100% tool-free snap-in installation; swivels freely >180° so the strap pulls straight up for shoulder-sling carrying, and folds flat against the bracket when hanging on the court fence.
+  * STLs: `3d_models/panel_seam_u_bracket.stl`, `3d_models/panel_seam_u_hook_bracket.stl`, `3d_models/panel_seam_u_hook_bracket_pair.stl`, `3d_models/panel_seam_u_bracket_set4_hook.stl`, `3d_models/panel_seam_triangular_strap_eye.stl`, `3d_models/panel_seam_triangular_strap_eye_pair.stl`.
 * `games_sets_pogo_snap_individual_dots.scad`: Middle module housing for the 24-LED column array.
 
 ---
