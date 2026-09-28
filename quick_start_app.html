@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quick Start Guide - Padel Scoreboard Mobile App</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.4;
+      font-size: 11pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .container {
+      width: 100%;
+      max-width: 190mm;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2.5px solid #0f172a;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+    .header-title h1 {
+      font-size: 20pt;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-title p {
+      font-size: 10pt;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .badge-chip {
+      background: #e0f2fe;
+      color: #0284c7;
+      font-size: 8.5pt;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+    }
+
+    /* Section 1: Pairing Steps */
+    .steps-banner {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .step-item {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      background: #0284c7;
+      color: #fff;
+      font-size: 9.5pt;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-text h4 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .step-text p {
+      font-size: 8.5pt;
+      color: #475569;
+      line-height: 1.25;
+    }
+
+    /* Main Section: App Visual + Feature Table */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 62mm 1fr;
+      gap: 14px;
+      margin-bottom: 12px;
+      align-items: start;
+    }
+
+    /* App Preview Card */
+    .app-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .app-card h3 {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 2px;
+    }
+    .app-card .sub {
+      font-size: 7.5pt;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    /* SVG Phone */
+    .svg-container {
+      display: flex;
+      justify-content: center;
+      margin: 2px 0 6px;
+    }
+
+    /* QR Box inside left card */
+    .qr-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+    }
+    .qr-img {
+      width: 48px;
+      height: 48px;
+      display: block;
+      border-radius: 4px;
+      background: #ffffff;
+      padding: 2px;
+      border: 1px solid #cbd5e1;
+      flex-shrink: 0;
+    }
+    .qr-info h5 {
+      font-size: 8pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .qr-info p {
+      font-size: 7pt;
+      color: #64748b;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+
+    /* Table Styles */
+    .section-title {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .table-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      text-align: left;
+    }
+    thead {
+      background: #f1f5f9;
+    }
+    th {
+      padding: 6px 9px;
+      font-weight: 700;
+      color: #334155;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 5.5px 9px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      color: #1e293b;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    /* Badges */
+    .tab-badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .badge-court {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+    .badge-rules {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+    .badge-timer {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .badge-clock {
+      background: #f3e8ff;
+      color: #7e22ce;
+      border: 1px solid #e9d5ff;
+    }
+    .badge-display {
+      background: #ffedd5;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
+    }
+    .badge-info {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    .feature-name {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Bottom 2 Columns: Compatibility & Sync */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .info-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 12px;
+    }
+    .info-card h4 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .info-card ul {
+      list-style: none;
+      font-size: 8.5pt;
+      color: #334155;
+    }
+    .info-card li {
+      margin-bottom: 3.5px;
+      line-height: 1.3;
+      padding-left: 12px;
+      position: relative;
+    }
+    .info-card li::before {
+      content: "•";
+      color: #0284c7;
+      font-weight: bold;
+      position: absolute;
+      left: 0;
+    }
+
+    /* Footer Note */
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #64748b;
+    }
+    .highlight-green {
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+    .highlight-blue {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <h1>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+          <path d="M12 18h.01"/>
+        </svg>
+        Padel Scoreboard Mobile App
+      </h1>
+      <p>Web Bluetooth Controller & Live Spectator Hub • Quick Start Guide</p>
+    </div>
+    <div style="text-align: right;">
+      <span class="badge-chip">PWA • schepie.github.io/7segment</span>
+    </div>
+  </div>
+
+  <!-- 3-Step Setup -->
+  <div class="steps-banner">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-text">
+        <h4>Launch the App</h4>
+        <p>Scan the QR code or visit <span class="highlight-blue">schepie.github.io/7segment</span> in Chrome or Edge.</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-text">
+        <h4>Connect Bluetooth</h4>
+        <p>Tap <strong style="color:#0284c7;">"Connect"</strong> in the top bar. Select <strong>"Padel Display"</strong> in the pairing popup.</p>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-text">
+        <h4>Install to Phone (PWA)</h4>
+        <p>Tap browser menu <strong style="color:#0284c7;">⋮</strong> → <strong>"Add to Home Screen"</strong> for a full-screen, offline app.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Content: Visual Phone Preview + Features Table -->
+  <div class="main-grid">
+    
+    <!-- Phone Graphic Card -->
+    <div class="app-card">
+      <h3>Live Controller UI</h3>
+      <div class="sub">Mobile & Tablet Companion App</div>
+      
+      <div class="svg-container">
+        <svg width="170" height="225" viewBox="0 0 170 225" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Phone Outer Frame -->
+          <rect x="20" y="5" width="130" height="215" rx="22" fill="#080c14" stroke="#334155" stroke-width="2"/>
+          <!-- Screen Area -->
+          <rect x="25" y="10" width="120" height="205" rx="18" fill="#101726"/>
+          
+          <!-- Top Notch & Speaker -->
+          <rect x="65" y="14" width="40" height="4" rx="2" fill="#1e293b"/>
+          <circle cx="95" cy="16" r="1.5" fill="#38bdf8"/>
+
+          <!-- Top Status Bar in App -->
+          <rect x="28" y="24" width="114" height="16" rx="4" fill="#1e293b"/>
+          <circle cx="36" cy="32" r="3" fill="#00e676"/>
+          <text x="43" y="35" font-size="6.5" fill="#f0f4f8" font-weight="700">CONNECTED</text>
+          <text x="134" y="35" font-size="6.5" fill="#38bdf8" text-anchor="end" font-weight="600">BLE 98%</text>
+
+          <!-- Score Card Area -->
+          <!-- Team 1 (Left - Blue) -->
+          <g>
+            <rect x="30" y="44" width="52" height="66" rx="6" fill="#0c2340" stroke="#00d2ff" stroke-width="1.2"/>
+            <text x="56" y="55" font-size="6.5" fill="#93c5fd" text-anchor="middle" font-weight="700">TEAM 1</text>
+            <text x="56" y="85" font-size="24" fill="#00d2ff" text-anchor="middle" font-weight="900" font-family="monospace">30</text>
+            <rect x="38" y="93" width="36" height="12" rx="3" fill="#0284c7"/>
+            <text x="56" y="101" font-size="7" fill="#ffffff" text-anchor="middle" font-weight="700">+ POINT</text>
+          </g>
+
+          <!-- Team 2 (Right - Red) -->
+          <g>
+            <rect x="88" y="44" width="52" height="66" rx="6" fill="#3b0d1a" stroke="#ff3366" stroke-width="1.2"/>
+            <text x="114" y="55" font-size="6.5" fill="#fca5a5" text-anchor="middle" font-weight="700">TEAM 2</text>
+            <text x="114" y="85" font-size="24" fill="#ff3366" text-anchor="middle" font-weight="900" font-family="monospace">15</text>
+            <rect x="96" y="93" width="36" height="12" rx="3" fill="#e11d48"/>
+            <text x="114" y="101" font-size="7" fill="#ffffff" text-anchor="middle" font-weight="700">+ POINT</text>
+          </g>
+
+          <!-- Match Status Pill (Games & Sets) -->
+          <rect x="30" y="114" width="110" height="20" rx="4" fill="#1e293b"/>
+          <text x="44" y="127" font-size="7" fill="#94a3b8" font-weight="600">GAMES</text>
+          <text x="70" y="128" font-size="8.5" fill="#ffb300" font-weight="800">2 - 1</text>
+          <text x="96" y="127" font-size="7" fill="#94a3b8" font-weight="600">SETS</text>
+          <text x="122" y="128" font-size="8.5" fill="#00e676" font-weight="800">1 - 0</text>
+
+          <!-- Quick Action Buttons -->
+          <g>
+            <rect x="30" y="138" width="34" height="15" rx="3" fill="#334155"/>
+            <text x="47" y="148.5" font-size="6.5" fill="#cbd5e1" text-anchor="middle" font-weight="600">↩ Undo</text>
+
+            <rect x="68" y="138" width="34" height="15" rx="3" fill="#334155"/>
+            <text x="85" y="148.5" font-size="6.5" fill="#cbd5e1" text-anchor="middle" font-weight="600">⇄ Swap</text>
+
+            <rect x="106" y="138" width="34" height="15" rx="3" fill="#0284c7"/>
+            <text x="123" y="148.5" font-size="6.5" fill="#ffffff" text-anchor="middle" font-weight="700">🖥 Big Screen</text>
+          </g>
+
+          <!-- Bottom App Nav Tabs -->
+          <rect x="25" y="185" width="120" height="30" fill="#080c14"/>
+          <line x1="25" y1="185" x2="145" y2="185" stroke="#1e293b" stroke-width="1"/>
+          <text x="36" y="196" font-size="7.5" text-anchor="middle">🎾</text>
+          <text x="36" y="204" font-size="5" fill="#00d2ff" text-anchor="middle" font-weight="700">Court</text>
+          <text x="56" y="196" font-size="7.5" text-anchor="middle">⚙️</text>
+          <text x="56" y="204" font-size="5" fill="#64748b" text-anchor="middle">Rules</text>
+          <text x="76" y="196" font-size="7.5" text-anchor="middle">⏱️</text>
+          <text x="76" y="204" font-size="5" fill="#64748b" text-anchor="middle">Counter</text>
+          <text x="96" y="196" font-size="7.5" text-anchor="middle">🕒</text>
+          <text x="96" y="204" font-size="5" fill="#64748b" text-anchor="middle">Clock</text>
+          <text x="116" y="196" font-size="7.5" text-anchor="middle">💡</text>
+          <text x="116" y="204" font-size="5" fill="#64748b" text-anchor="middle">Display</text>
+          <text x="134" y="196" font-size="7.5" text-anchor="middle">📋</text>
+          <text x="134" y="204" font-size="5" fill="#64748b" text-anchor="middle">Info</text>
+        </svg>
+      </div>
+
+      <!-- Compact QR Scan Box -->
+      <div class="qr-box">
+        <img class="qr-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUoAAAFKAQAAAABTUiuoAAACcUlEQVR4nO1aTY7rMAj+IJG6TKQeYI6S3GyuVt8oXj4pESPAbjObqm8zthRYOP5hgcCYDwIJPqTEn3ICwcqhLMR1QaZCKw79jDjNCo3hMOjkyRjECMgjRLaD5IFBgGkHFjvaupE1WIHiPdMOoi8RpFm1knVPPW8NZfV4XQaRBw7CYs6kvvXHArwlxtVZx/Miz8CyHWX2NwJwsOI/rSW+mHZdDkK2l9ZxByY9y6HXbjRg+I8IyDeHGli2Qehbn8NkR3M3sl6blX5lx8dYlv4SDufAlZrLysEKdSZabdBH0PCfYkIRUWOpqzlE5FAWGt8slFTLZtsgBgc9//Kl7H4gj+aycrDCA5VoquVAUB0saxhTSnSTiFu9XBe4Gz2mMpjdCk37r1NuLSsHKwwTWmHQPUqBoZvMY9mhe1En7Oa61Gjl1UGjfKvVQSUvbXAPsl6bdQTyfddBaNnuEOSDymAIXrF8WoceZOVghdP0TyvvcBhvO44tHLxbxZBDWWh8s2APXsmtrKpriEIXFrwMwesTKYEy0Eu+tbhRit08ZFm0cpNFvtWNtTZ7+irA0N+PJSc2f3NXC9/qxVov79EES4dCnoPZXuRbvVjLDKXT4lHyBPRGpQ9AIm6hubXG2n6hizyDMJU0iwqCv9cZt5aVL8+KcxJcO2ZeEPGVNkv4FvrqeXIaBEmbal7PYdQyeux5ykRIXwVlWD8N0fysRnEfsn5EfAHWSfRv5LPnyU1WqxroS9b3xBdgzeX9M7shuVsdFN2fnSF4pYoyCraoKONZjeLWsnKw4tzzpEPNjr0QZc2g8X+ry56nd5Say8rBilDWx9RcWT//bodR3cvBwQAAAABJRU5ErkJggg==" alt="Scan App QR">
+        <div class="qr-info">
+          <h5>Scan to Open App</h5>
+          <p>schepie.github.io/7segment</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Tabs & Features Table -->
+    <div>
+      <div class="section-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="9" x="3" y="3" rx="1"/>
+          <rect width="7" height="5" x="14" y="3" rx="1"/>
+          <rect width="7" height="9" x="14" y="12" rx="1"/>
+          <rect width="7" height="5" x="3" y="16" rx="1"/>
+        </svg>
+        App Tabs & Navigation Guide
+      </div>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 22%;">Tab</th>
+              <th style="width: 26%;">Key Controls</th>
+              <th>Description & Function</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tab-badge badge-court">🎾 Court</span></td>
+              <td><span class="feature-name">+Point, Undo, Swap</span></td>
+              <td>
+                <strong>Live Match Scoring:</strong> Tap team score to add points. Quick undo button reverts points. Swap button flips court sides & LED colors.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tab-badge badge-court">🎾 Big Screen</span></td>
+              <td><span class="feature-name">Fullscreen View</span></td>
+              <td>
+                <strong>Spectator Display:</strong> Opens clean high-contrast scoreboard for audience phones, court-side tablets, or club TV monitors.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tab-badge badge-rules">⚙️ Rules</span></td>
+              <td><span class="feature-name">Golden Point, Sets</span></td>
+              <td>
+                <strong>Match Rules Configuration:</strong> Toggle Golden Point (No-Ad) vs Deuce, best of 1 / 3 / 5 sets, 6-game sets, and tiebreak (7 or 10 pts).
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tab-badge badge-timer">⏱️ Counter</span></td>
+              <td><span class="feature-name">Timers & Stopwatch</span></td>
+              <td>
+                <strong>Gym & Fitness Modes:</strong> Run Single Count-Up / Countdown timer or Dual independent clocks with customizable round intervals.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tab-badge badge-clock">🕒 Clock</span></td>
+              <td><span class="feature-name">Sync Phone Time</span></td>
+              <td>
+                <strong>Real-Time Clock Sync:</strong> One-tap button pushes phone's exact time to scoreboard hardware DS3231 RTC. Customize clock LED color.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tab-badge badge-display">💡 Display</span></td>
+              <td><span class="feature-name">Brightness & Sleep</span></td>
+              <td>
+                <strong>Hardware Power & LEDs:</strong> Adjust panel brightness (0–100%), set idle sleep timeout (5–30 min), or enable Night Mode palette.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="tab-badge badge-info">📋 Info</span></td>
+              <td><span class="feature-name">Diagnostics & MAC</span></td>
+              <td>
+                <strong>Status & Diagnostics:</strong> View battery voltage, paired remote MAC, Bluetooth signal strength, and firmware version.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Cards: Compatibility & Ecosystem Sync -->
+  <div class="bottom-grid">
+    
+    <!-- Browser Compatibility -->
+    <div class="info-card">
+      <h4>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+        Browser & OS Compatibility
+      </h4>
+      <ul>
+        <li><strong>Android / Windows / Mac:</strong> Use <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>. Web Bluetooth works out-of-the-box without extra apps.</li>
+        <li><strong>iPhone & iPad (iOS):</strong> Apple Safari blocks Web Bluetooth. Install the free <strong>Bluefy</strong> or <strong>WebBLE</strong> browser app from the App Store.</li>
+        <li><strong>Offline Ready (PWA):</strong> The app caches automatically. It opens and works at the court even without an active internet connection.</li>
+      </ul>
+    </div>
+
+    <!-- Live Ecosystem Sync -->
+    <div class="info-card">
+      <h4>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m7 7 10 10-5 5V2l5 5L7 17"></path>
+        </svg>
+        Seamless Ecosystem Sync
+      </h4>
+      <ul>
+        <li><strong>Master Rules Engine:</strong> The ESP32 scoreboard serves as the single source of truth. Phone, physical clicker, and smartwatch stay 100% in sync.</li>
+        <li><strong>Instant Multi-Device Feedback:</strong> A point clicked on the physical Bluetooth remote updates the web app and watch in milliseconds.</li>
+        <li><strong>Remote MAC Management:</strong> Paired Xiaomi clicker MAC is viewable and configurable under the <em>Info</em> tab.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>ESP32-C3 SuperMini • Progressive Web App (PWA) • Web Bluetooth BLE</span>
+    <span>Full Match Control • RTC Sync • Custom Rules & Brightness</span>
+  </div>
+
+</div>
+
+</body>
+</html>
