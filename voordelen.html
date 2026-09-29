@@ -1,0 +1,2837 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PadelPulse 7-Segment — De Voordelen van het Ultieme Padel Scorebord</title>
+    <meta name="description" content="Ontdek alle voordelen van het modulaire 7-segment padel scorebord: splitsbaar in 2 delen, 5V powerbank voeding, veilig hekwerksysteem, Bluetooth app, automatische kantwissel en meer.">
+    <meta name="keywords" content="padel scorebord, 7 segment display, padel score, mobiel scorebord, ESP32 padel, bluetooth scorebord, padel accessoires">
+    
+    <meta property="og:title" content="PadelPulse 7-Segment — Het Slimme Padel Scorebord">
+    <meta property="og:description" content="Nooit meer discussie over de stand. Lichtgewicht, splitsbaar, hele dag padel op een powerbank en slimme bediening via app & racket-remote.">
+    <meta property="og:image" content="Images/full_scoreboard_preview.png">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Anti-flash Theme Initializer (Defaults to light or saved preference) -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('padelTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            } catch(e) {}
+        })();
+    </script>
+
+    <style>
+        :root {
+            --bg-deep: #06090e;
+            --bg-base: #0b111c;
+            --bg-surface: #111a2c;
+            --bg-card: rgba(17, 26, 44, 0.82);
+            --bg-card-hover: rgba(23, 36, 61, 0.95);
+            
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-highlight: rgba(0, 210, 255, 0.35);
+            --border-glow: rgba(0, 210, 255, 0.5);
+
+            /* Thuis & Bezoekers Team Kleuren */
+            --team-red: #ff2a5f;
+            --team-red-glow: rgba(255, 42, 95, 0.45);
+            --team-blue: #00d2ff;
+            --team-blue-glow: rgba(0, 210, 255, 0.45);
+
+            /* Accenten */
+            --accent-green: #00e676;
+            --accent-green-glow: rgba(0, 230, 118, 0.4);
+            --accent-yellow: #ffd600;
+            --accent-yellow-glow: rgba(255, 214, 0, 0.5);
+            --accent-amber: #ff9100;
+            --clock-neon: #00ff66;
+
+            --text-main: #f0f4f8;
+            --text-muted: #94a3b8;
+            --text-sub: #64748b;
+
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 22px;
+            --radius-xl: 32px;
+
+            --font-display: 'Orbitron', monospace;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            
+            --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ── LIGHT THEME OVERRIDES ── */
+        [data-theme="light"] {
+            --bg-deep: #f5f7fb;
+            --bg-base: #ffffff;
+            --bg-surface: #e9eef6;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --bg-card-hover: #ffffff;
+            
+            --border-subtle: rgba(15, 23, 42, 0.08);
+            --border-highlight: rgba(0, 160, 255, 0.4);
+            --border-glow: rgba(0, 160, 255, 0.25);
+
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-sub: #64748b;
+        }
+
+        [data-theme="light"] body {
+            background-color: #f4f7fb;
+            background-image: 
+                radial-gradient(ellipse 90% 60% at 50% -10%, rgba(0, 180, 255, 0.12) 0%, transparent 65%),
+                radial-gradient(ellipse 70% 50% at 90% 40%, rgba(255, 42, 95, 0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 10% 75%, rgba(0, 200, 110, 0.06) 0%, transparent 55%);
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .site-nav {
+            background: rgba(255, 255, 255, 0.92);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="light"] .brand-name {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .gradient-title {
+            background: linear-gradient(135deg, #0f172a 35%, #0088ff 75%, #ff2a5f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        [data-theme="light"] .hero-desc {
+            color: #475569;
+        }
+
+        [data-theme="light"] .btn-hero-secondary {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.14);
+            color: #0f172a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="light"] .btn-hero-secondary:hover {
+            background: #f8fafc;
+            border-color: rgba(15, 23, 42, 0.22);
+        }
+
+        [data-theme="light"] .highlight-item {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="light"] .highlight-item:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 160, 255, 0.35);
+        }
+
+        [data-theme="light"] .highlight-title {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .sim-container {
+            background: linear-gradient(180deg, #ffffff, #f7f9fd);
+            border-color: rgba(15, 23, 42, 0.09);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        /* The physical scoreboard frame keeps its sleek hardware black contrast so the LED digits pop */
+        [data-theme="light"] .board-housing {
+            background: #090e18;
+            border-color: #1e2c44;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+        }
+
+        [data-theme="light"] .sim-controls-panel {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.09);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="light"] .sim-btn.subtle {
+            background: #f1f5f9;
+            border-color: rgba(15, 23, 42, 0.1);
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .sim-btn.subtle:hover {
+            background: #e2e8f0;
+            border-color: rgba(15, 23, 42, 0.2);
+        }
+
+        [data-theme="light"] .feature-card {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="light"] .feature-card:hover {
+            background: #ffffff;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+            border-color: rgba(0, 160, 255, 0.35);
+        }
+
+        [data-theme="light"] .card-title {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .card-num-badge {
+            background: #f1f5f9;
+            border-color: rgba(15, 23, 42, 0.08);
+            color: #475569;
+        }
+
+        [data-theme="light"] .sub-points-list {
+            border-top-color: rgba(15, 23, 42, 0.06);
+        }
+
+        [data-theme="light"] .sub-points-list li {
+            color: #334155;
+        }
+
+        [data-theme="light"] .card-media-box {
+            background: #f8fafc;
+            border-color: rgba(15, 23, 42, 0.06);
+        }
+
+        [data-theme="light"] .pillar-title {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .pillar-header {
+            border-bottom-color: rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .section-headline {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .battery-calc-card {
+            background: linear-gradient(135deg, #ffffff, #f1f9f5);
+            border-color: rgba(0, 180, 90, 0.35);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="light"] .calc-title {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .battery-slider {
+            background: #dbe4ee;
+        }
+
+        [data-theme="light"] .calc-results-row {
+            border-top-color: rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .calc-stat-box {
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        [data-theme="light"] .comparison-section {
+            background: #f8fafc;
+            border-top-color: rgba(15, 23, 42, 0.08);
+            border-bottom-color: rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .comparison-table {
+            background: #ffffff;
+        }
+
+        [data-theme="light"] .comparison-table th {
+            background: #edf2f9;
+            color: #475569;
+        }
+
+        [data-theme="light"] .comparison-table th,
+        [data-theme="light"] .comparison-table td {
+            border-bottom-color: rgba(15, 23, 42, 0.06);
+            color: #1e293b;
+        }
+
+        [data-theme="light"] .comparison-table th.highlight-col,
+        [data-theme="light"] .comparison-table td.highlight-col {
+            background: rgba(0, 160, 255, 0.04);
+            border-left-color: rgba(0, 160, 255, 0.2);
+            border-right-color: rgba(0, 160, 255, 0.2);
+        }
+
+        [data-theme="light"] .cta-inner-card {
+            background: radial-gradient(circle at 50% 0%, rgba(0, 160, 255, 0.12), transparent 70%),
+                        linear-gradient(180deg, #ffffff, #f4f7fb);
+            border-color: rgba(0, 160, 255, 0.3);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="light"] .cta-inner-card h2 {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .site-footer {
+            background: #f1f5f9;
+            border-top-color: rgba(15, 23, 42, 0.08);
+            color: #64748b;
+        }
+
+        [data-theme="light"] .footer-links a {
+            color: #475569;
+        }
+
+        [data-theme="light"] .footer-links a:hover {
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .btn-nav-ota {
+            background: #f1f5f9;
+            border-color: rgba(15, 23, 42, 0.1);
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .btn-nav-ota:hover {
+            background: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(ellipse 90% 60% at 50% -15%, rgba(0, 210, 255, 0.16) 0%, transparent 65%),
+                radial-gradient(ellipse 70% 50% at 90% 40%, rgba(255, 42, 95, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 10% 75%, rgba(0, 230, 118, 0.09) 0%, transparent 55%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── Scrollbar Styling ── */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e2c47;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2b3e63;
+        }
+
+        /* ── Sticky Top Nav ── */
+        .site-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(11, 17, 28, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .brand-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #00d2ff, #0066ff);
+            box-shadow: 0 0 16px rgba(0, 210, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 900;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .brand-text-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            color: #fff;
+        }
+
+        .brand-tag {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-nav-ota {
+            padding: 7px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            text-decoration: none;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-nav-ota:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-nav-primary {
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, #00d2ff, #0077ff);
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(0, 210, 255, 0.3);
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-nav-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.45);
+        }
+
+        /* ── Theme Toggle Button ── */
+        .btn-theme-toggle {
+            padding: 7px 13px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition-smooth);
+            font-family: var(--font-sans);
+        }
+
+        .btn-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        [data-theme="light"] .btn-theme-toggle {
+            background: #f1f5f9;
+            border-color: rgba(15, 23, 42, 0.12);
+            color: #0f172a;
+        }
+
+        [data-theme="light"] .btn-theme-toggle:hover {
+            background: #e2e8f0;
+            border-color: rgba(15, 23, 42, 0.2);
+        }
+
+        /* ── Container ── */
+        .container {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Section Header Components ── */
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            color: var(--team-blue);
+            margin-bottom: 16px;
+        }
+
+        .badge-pill.red {
+            background: rgba(255, 42, 95, 0.1);
+            border-color: rgba(255, 42, 95, 0.3);
+            color: var(--team-red);
+        }
+
+        .badge-pill.yellow {
+            background: rgba(255, 214, 0, 0.1);
+            border-color: rgba(255, 214, 0, 0.3);
+            color: var(--accent-yellow);
+        }
+
+        .badge-pill.green {
+            background: rgba(0, 230, 118, 0.1);
+            border-color: rgba(0, 230, 118, 0.3);
+            color: var(--accent-green);
+        }
+
+        .section-headline {
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+
+        .section-subtext {
+            font-size: 16px;
+            color: var(--text-muted);
+            max-width: 680px;
+            line-height: 1.6;
+        }
+
+        /* ── HERO SECTION ── */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: clamp(34px, 5.5vw, 56px);
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .gradient-title {
+            background: linear-gradient(135deg, #ffffff 30%, #00d2ff 75%, #ff2a5f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            font-size: clamp(16px, 2vw, 19px);
+            color: var(--text-muted);
+            max-width: 760px;
+            margin: 0 auto 34px;
+            line-height: 1.6;
+        }
+
+        .hero-cta-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+
+        .btn-hero-primary {
+            padding: 14px 30px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d2ff, #0066ff);
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 0 8px 24px rgba(0, 210, 255, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 210, 255, 0.55);
+        }
+
+        .btn-hero-secondary {
+            padding: 14px 26px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* ── Highlights Bar ── */
+        .highlights-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-top: 10px;
+        }
+
+        .highlight-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            text-align: left;
+            backdrop-filter: blur(12px);
+            transition: var(--transition-smooth);
+        }
+
+        .highlight-item:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-2px);
+            background: var(--bg-card-hover);
+        }
+
+        .highlight-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .highlight-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .highlight-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* ── VIRTUAL SIMULATOR SECTION ── */
+        .simulator-section {
+            padding: 80px 0;
+            position: relative;
+        }
+
+        .sim-container {
+            background: linear-gradient(180deg, rgba(17, 26, 44, 0.95), rgba(11, 17, 28, 0.98));
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: 40px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+        }
+
+        .sim-header {
+            text-align: center;
+            margin-bottom: 34px;
+        }
+
+        /* Physical Display Frame (Scoreboard Housing) */
+        .board-housing {
+            background: #080d16;
+            border: 3px solid #1a253a;
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.9),
+                0 10px 40px rgba(0, 0, 0, 0.7);
+            position: relative;
+            max-width: 980px;
+            margin: 0 auto 30px;
+        }
+
+        [data-theme="light"] .board-housing {
+            background: #f1f5f9;
+            border: 2px solid rgba(15, 23, 42, 0.12);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.08),
+                0 4px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .housing-top-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 14px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        [data-theme="light"] .housing-top-strip {
+            border-bottom-color: rgba(15, 23, 42, 0.08);
+            color: #475569;
+        }
+
+        .housing-mode-badge {
+            background: rgba(0, 210, 255, 0.12);
+            color: var(--team-blue);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+
+        /* Het Fysieke Scorebord SVG Paneel */
+        .physical-board-wrap {
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 
+                0 14px 40px rgba(0, 0, 0, 0.65),
+                0 2px 6px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #fbf8ea;
+            position: relative;
+        }
+
+        [data-theme="light"] .physical-board-wrap {
+            box-shadow: 
+                0 16px 36px rgba(0, 0, 0, 0.16),
+                0 2px 8px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .physical-board-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 1024 / 426;
+        }
+
+        .board-bezel-frame {
+            fill: #fbf8ea;
+            stroke: #ded8c3;
+            stroke-width: 2;
+        }
+
+        .board-inner-face {
+            fill: #151d2b;
+            stroke: #0d131c;
+            stroke-width: 2;
+        }
+
+        /* 7-Segment Diffusers & Polygons (Real Physical Hardware Appearance) */
+        .phys-seg {
+            fill: #222b39;
+            fill-opacity: 0.85;
+            stroke: #334155;
+            stroke-width: 1.5;
+            transition: fill 0.15s ease, stroke 0.15s ease, filter 0.15s ease;
+        }
+
+        .phys-seg.lit-red {
+            fill: #ff2a5f;
+            fill-opacity: 1;
+            stroke: #ff7597;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 10px #ff2a5f) drop-shadow(0 0 24px rgba(255, 42, 95, 0.95));
+        }
+
+        .phys-seg.lit-blue {
+            fill: #00d2ff;
+            fill-opacity: 1;
+            stroke: #6ee6ff;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 10px #00d2ff) drop-shadow(0 0 24px rgba(0, 210, 255, 0.95));
+        }
+
+        .phys-seg.lit-green {
+            fill: #00ff66;
+            fill-opacity: 1;
+            stroke: #66ffaa;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 10px #00ff66) drop-shadow(0 0 24px rgba(0, 255, 102, 0.95));
+        }
+
+        .phys-seg.lit-yellow {
+            fill: #ffd600;
+            fill-opacity: 1;
+            stroke: #ffea70;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 10px #ffd600) drop-shadow(0 0 24px rgba(255, 214, 0, 0.95));
+        }
+
+        /* Middenmodule: 2x2 Sets LEDs + 2x9 Games LEDs */
+        .phys-dot {
+            fill: #222b39;
+            fill-opacity: 0.85;
+            stroke: #334155;
+            stroke-width: 1.5;
+            transition: fill 0.15s ease, stroke 0.15s ease, filter 0.15s ease;
+        }
+
+        .phys-dot.lit-red {
+            fill: #ff2a5f;
+            fill-opacity: 1;
+            stroke: #ff7597;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 6px #ff2a5f) drop-shadow(0 0 14px rgba(255, 42, 95, 0.95));
+        }
+
+        .phys-dot.lit-blue {
+            fill: #00d2ff;
+            fill-opacity: 1;
+            stroke: #6ee6ff;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 6px #00d2ff) drop-shadow(0 0 14px rgba(0, 210, 255, 0.95));
+        }
+
+        .phys-dot.lit-green {
+            fill: #00ff66;
+            fill-opacity: 1;
+            stroke: #66ffaa;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 6px #00ff66);
+        }
+
+        .phys-dot.lit-yellow {
+            fill: #ffd600;
+            fill-opacity: 1;
+            stroke: #ffea70;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 6px #ffd600) drop-shadow(0 0 14px rgba(255, 214, 0, 0.95));
+        }
+
+        .phys-dot.lit-serve {
+            animation: serveDotBlink 0.9s steps(1, end) infinite;
+        }
+
+        @keyframes serveDotBlink {
+            0%, 55% {
+                fill: #ffd600;
+                fill-opacity: 1;
+                stroke: #ffffff;
+                stroke-width: 2;
+                filter: drop-shadow(0 0 10px #ffd600) drop-shadow(0 0 22px rgba(255, 214, 0, 0.95));
+                opacity: 1;
+            }
+            56%, 100% {
+                fill: #16202e;
+                fill-opacity: 0.25;
+                stroke: #334155;
+                stroke-width: 1;
+                filter: none;
+                opacity: 0.2;
+            }
+        }
+
+        /* Housing Bottom Info Bar */
+        .housing-footer-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(15, 23, 42, 0.08);
+            font-size: 13px;
+        }
+
+        [data-theme="dark"] .housing-footer-bar {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .live-explainer-badge {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #f59e0b;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #0f172a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            max-width: 100%;
+        }
+
+        [data-theme="dark"] .live-explainer-badge {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            color: #f1f5f9;
+            box-shadow: none;
+        }
+
+        /* Interactive Controls Pad */
+        .sim-controls-panel {
+            margin-top: 24px;
+            background: rgba(11, 17, 28, 0.85);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 22px 24px;
+        }
+
+        [data-theme="light"] .sim-controls-panel {
+            background: #ffffff;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="light"] .sim-btn.subtle {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            color: #1e293b;
+        }
+
+        [data-theme="light"] .sim-btn.subtle:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .sim-controls-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .sim-btn {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+        }
+
+        .sim-btn.red {
+            background: rgba(255, 42, 95, 0.15);
+            border-color: rgba(255, 42, 95, 0.35);
+            color: #ff6b8d;
+        }
+
+        .sim-btn.red:hover {
+            background: rgba(255, 42, 95, 0.28);
+            border-color: var(--team-red);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .sim-btn.blue {
+            background: rgba(0, 210, 255, 0.15);
+            border-color: rgba(0, 210, 255, 0.35);
+            color: #66e2ff;
+        }
+
+        .sim-btn.blue:hover {
+            background: rgba(0, 210, 255, 0.28);
+            border-color: var(--team-blue);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .sim-btn.yellow {
+            background: rgba(255, 214, 0, 0.12);
+            border-color: rgba(255, 214, 0, 0.35);
+            color: #ffd600;
+        }
+
+        .sim-btn.yellow:hover {
+            background: rgba(255, 214, 0, 0.25);
+            border-color: var(--accent-yellow);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .sim-btn.purple {
+            background: rgba(187, 134, 252, 0.15);
+            border-color: rgba(187, 134, 252, 0.35);
+            color: #d1a8ff;
+        }
+
+        .sim-btn.purple:hover {
+            background: rgba(187, 134, 252, 0.25);
+            border-color: #bb86fc;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .sim-btn.subtle {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-subtle);
+            color: var(--text-main);
+        }
+
+        .sim-btn.subtle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* ── DE 14 VOORDELEN SECTIE ── */
+        .features-section {
+            padding: 80px 0;
+        }
+
+        .pillar-block {
+            margin-bottom: 70px;
+        }
+
+        .pillar-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .pillar-title-group {
+            max-width: 700px;
+        }
+
+        .pillar-num {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--team-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .pillar-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.4px;
+        }
+
+        .pillar-desc {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Kaarten Grid */
+        .cards-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .cards-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-highlight);
+            transform: translateY(-3px);
+            background: var(--bg-card-hover);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-num-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+        }
+
+        .card-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 18px;
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            color: var(--team-blue);
+        }
+
+        .card-icon-wrap.red {
+            background: rgba(255, 42, 95, 0.1);
+            border-color: rgba(255, 42, 95, 0.25);
+            color: var(--team-red);
+        }
+
+        .card-icon-wrap.yellow {
+            background: rgba(255, 214, 0, 0.1);
+            border-color: rgba(255, 214, 0, 0.25);
+            color: var(--accent-yellow);
+        }
+
+        .card-icon-wrap.green {
+            background: rgba(0, 230, 118, 0.1);
+            border-color: rgba(0, 230, 118, 0.25);
+            color: var(--accent-green);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .card-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            flex-grow: 1;
+        }
+
+        .sub-points-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .sub-points-list li {
+            font-size: 13px;
+            color: #d1d9e2;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .sub-bullet {
+            color: var(--team-blue);
+            font-weight: 800;
+        }
+
+        .card-media-box {
+            margin-top: 18px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: rgba(6, 9, 14, 0.6);
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+            padding: 10px;
+        }
+
+        .card-media-box img {
+            max-width: 100%;
+            height: auto;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+            transition: var(--transition-smooth);
+        }
+
+        .feature-card:hover .card-media-box img {
+            transform: scale(1.02);
+        }
+
+        /* ── INTERACTIVE BATTERY CALCULATOR ── */
+        .battery-calc-card {
+            background: linear-gradient(135deg, rgba(17, 26, 44, 0.95), rgba(11, 24, 40, 0.95));
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            margin-top: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .calc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .calc-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calc-slider-box {
+            margin: 20px 0;
+        }
+
+        .calc-slider-box label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        .battery-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #1a273e;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .battery-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            cursor: pointer;
+            box-shadow: 0 0 12px var(--accent-green);
+            border: 2px solid #fff;
+        }
+
+        .calc-results-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .calc-stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            text-align: center;
+        }
+
+        .calc-stat-val {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--accent-green);
+        }
+
+        .calc-stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── VERGELIJKINGSTABEL ── */
+        .comparison-section {
+            padding: 80px 0;
+            background: rgba(10, 15, 24, 0.5);
+            border-top: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 36px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            background: var(--bg-card);
+            font-size: 14px;
+        }
+
+        .comparison-table th, 
+        .comparison-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .comparison-table th {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            background: rgba(17, 26, 44, 0.95);
+        }
+
+        .comparison-table th.highlight-col,
+        .comparison-table td.highlight-col {
+            background: rgba(0, 210, 255, 0.05);
+            border-left: 1px solid rgba(0, 210, 255, 0.2);
+            border-right: 1px solid rgba(0, 210, 255, 0.2);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .check-yes {
+            color: var(--accent-green);
+            font-weight: 800;
+        }
+
+        .check-no {
+            color: #ff4757;
+            font-weight: 800;
+        }
+
+        /* ── CTA & DOWNLOAD BANNER ── */
+        .cta-banner {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-inner-card {
+            background: radial-gradient(circle at 50% 0%, rgba(0, 210, 255, 0.18), transparent 70%),
+                        linear-gradient(180deg, var(--bg-surface), var(--bg-base));
+            border: 1px solid var(--border-highlight);
+            border-radius: var(--radius-xl);
+            padding: 50px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .cta-btn-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border-subtle);
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition-smooth);
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        /* ── RESPONSIVE TWEAKS ── */
+        @media (max-width: 768px) {
+            .site-nav {
+                padding: 12px 16px;
+            }
+            .nav-links {
+                display: none;
+            }
+            .board-display-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .middle-ladder-pod {
+                width: 100%;
+            }
+            .hero {
+                padding: 50px 0 40px;
+            }
+            .sim-container {
+                padding: 24px 16px;
+            }
+            .board-housing {
+                padding: 16px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- STICKY TOP NAVIGATIE -->
+    <header class="site-nav">
+        <a href="#hero" class="nav-brand">
+            <div class="brand-badge">7</div>
+            <div class="brand-text-block">
+                <span class="brand-name">PadelPulse 7-Segment</span>
+                <span class="brand-tag">Slim Scorebord & Wandklok</span>
+            </div>
+        </a>
+
+        <nav class="nav-links">
+            <a href="#simulator"><span>🎮</span> Simulator</a>
+            <a href="#voordelen"><span>⭐</span> Voordelen</a>
+            <a href="#mobiliteit"><span>🧳</span> Mobiliteit</a>
+            <a href="#voeding"><span>🔋</span> 5V Voeding</a>
+            <a href="#app"><span>📱</span> Slimme App</a>
+            <a href="#display"><span>🔢</span> 5-Segment Display</a>
+            <a href="#vergelijking"><span>📊</span> Vergelijking</a>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="badge-pill">
+                <span>🎾</span> Dé Game-Changer op het Padelveld
+            </div>
+
+            <h1 class="hero-title">
+                Alle Voordelen van het <br>
+                <span class="gradient-title">7-Segment Padel Scorebord</span>
+            </h1>
+
+            <p class="hero-desc">
+                Nooit meer discussie over de stand, sets of wie aan de opslag is. Ontworpen met ultralichte materialen, 
+                in twee helften splitsbaar met de hand, gevoed door een gewone 5V powerbank en standaard uitgerust met 
+                ophangsysteem voor het hekwerk én uitklapbare voetjes.
+            </p>
+
+            <div class="hero-cta-row">
+                <a href="#simulator" class="btn-hero-primary">
+                    <span>🎮 Probeer de Live Simulator</span>
+                </a>
+                <a href="#voordelen" class="btn-hero-secondary">
+                    <span>✨ Bekijk alle Voordelen</span>
+                </a>
+            </div>
+
+            <!-- Snelle Voordelen Strip -->
+            <div class="highlights-strip">
+                <div class="highlight-item">
+                    <div class="highlight-icon">🧳</div>
+                    <div class="highlight-title">Splitsbaar in 2 Helften</div>
+                    <div class="highlight-desc">2 handschroeven losdraaien en past in je sporttas. Inclusief draagriem!</div>
+                </div>
+
+                <div class="highlight-item">
+                    <div class="highlight-icon">🛡️</div>
+                    <div class="highlight-title">100% Smashproof Heksysteem</div>
+                    <div class="highlight-desc">Hangt veilig achter het 50x50mm staalgaas. Geen schade door harde ballen.</div>
+                </div>
+
+                <div class="highlight-item">
+                    <div class="highlight-icon">🔋</div>
+                    <div class="highlight-title">Hele Dag Spelen op 5V</div>
+                    <div class="highlight-desc">20.000 mAh powerbank volstaat voor een hele dag padel. Geïntegreerde houder!</div>
+                </div>
+
+                <div class="highlight-item">
+                    <div class="highlight-icon">🔄</div>
+                    <div class="highlight-title">Auto Kantwissel & Gele LED</div>
+                    <div class="highlight-desc">Blauw wordt Rood bij kantwissel. Felle gele LED toont altijd de serveerder.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIEVE LIVE DISPLAY SIMULATOR -->
+    <section class="simulator-section" id="simulator">
+        <div class="container">
+            <div class="sim-container">
+                <div class="sim-header">
+                    <div class="badge-pill green">
+                        <span>⚡</span> Virtueel 5-Segmenten Display
+                    </div>
+                    <h2 class="section-headline">Ervaar het Scorebord in Actie</h2>
+                    <p class="section-subtext" style="margin: 0 auto;">
+                        Test hieronder direct de unieke eigenschappen: Thuis in <strong>Rood</strong>, Bezoekers in <strong>Blauw</strong>, 
+                        de <strong>gele opslag-LED</strong>, de <strong>automatische kantwissel</strong>, 
+                        de <strong>match start splash (26Ad)</strong> en de <strong>30-seconden SPEL viering</strong>!
+                    </p>
+                </div>
+
+                <!-- Het Virtuele Fysieke Paneel -->
+                <div class="board-housing">
+                    <div class="housing-top-strip">
+                        <div>
+                            <span style="color: var(--accent-green);">● LIVE</span>
+                            <span style="margin-left: 8px;">PADEL PULSE // 5-SEGMENT DISPLAY // ESP32 MASTER</span>
+                        </div>
+                        <div class="housing-mode-badge" id="simModeBadge">SCOREBORD MODUS</div>
+                    </div>
+
+
+                    <!-- Het Echte Fysieke Scorebord SVG -->
+                    <div class="physical-board-wrap">
+                        <svg class="physical-board-svg" viewBox="0 0 1024 426" preserveAspectRatio="xMidYMid meet" id="physicalBoardSvg">
+                            <!-- Fysieke Behuizing & Rand (zoals de echte hardware foto) -->
+                            <rect width="1024" height="426" rx="16" class="board-bezel-frame" />
+                            <rect x="36" y="34" width="952" height="358" rx="6" class="board-inner-face" />
+
+
+                            <!-- Module 1: Digit 0 (Thuis Tientallen) -->
+                            <g id="svgDig0" transform="translate(60, 57)">
+                                <polygon id="d0_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                                <polygon id="d0_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                                <polygon id="d0_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                                <polygon id="d0_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                                <polygon id="d0_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                                <polygon id="d0_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                                <polygon id="d0_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                            </g>
+
+                            <!-- Module 2: Digit 1 (Thuis Eenheden) -->
+                            <g id="svgDig1" transform="translate(276, 57)">
+                                <polygon id="d1_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                                <polygon id="d1_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                                <polygon id="d1_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                                <polygon id="d1_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                                <polygon id="d1_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                                <polygon id="d1_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                                <polygon id="d1_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                            </g>
+
+                            <!-- Middenmodule: 2x2 LEDs voor Sets + 2x9 LEDs voor Games -->
+                            <g id="svgCenterLadder">
+                                <!-- Header: SETS (2x2 LEDs) -->
+                                <text x="511.5" y="52" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" letter-spacing="2">SETS</text>
+                                <!-- Set 1 (Row 0) -->
+                                <circle id="dot_L_0" class="phys-dot" cx="494" cy="70" r="8.7" />
+                                <text x="511.5" y="73" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">1</text>
+                                <circle id="dot_R_0" class="phys-dot" cx="529" cy="70" r="8.7" />
+
+                                <!-- Set 2 (Row 1) -->
+                                <circle id="dot_L_1" class="phys-dot" cx="494" cy="96" r="8.7" />
+                                <text x="511.5" y="99" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">2</text>
+                                <circle id="dot_R_1" class="phys-dot" cx="529" cy="96" r="8.7" />
+
+                                <!-- Header: GAMES (2x9 LEDs) in the vertical gap -->
+                                <text x="511.5" y="132" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" letter-spacing="2">GAMES</text>
+
+                                <!-- Game 9 (Row 2) -->
+                                <circle id="dot_L_2" class="phys-dot" cx="494" cy="148" r="8.7" />
+                                <text x="511.5" y="151.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">9</text>
+                                <circle id="dot_R_2" class="phys-dot" cx="529" cy="148" r="8.7" />
+
+                                <!-- Game 8 (Row 3) -->
+                                <circle id="dot_L_3" class="phys-dot" cx="494" cy="174" r="8.7" />
+                                <text x="511.5" y="177.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">8</text>
+                                <circle id="dot_R_3" class="phys-dot" cx="529" cy="174" r="8.7" />
+
+                                <!-- Game 7 (Row 4) -->
+                                <circle id="dot_L_4" class="phys-dot" cx="494" cy="200" r="8.7" />
+                                <text x="511.5" y="203.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">7</text>
+                                <circle id="dot_R_4" class="phys-dot" cx="529" cy="200" r="8.7" />
+
+                                <!-- Game 6 (Row 5) -->
+                                <circle id="dot_L_5" class="phys-dot" cx="494" cy="226" r="8.7" />
+                                <text x="511.5" y="229.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">6</text>
+                                <circle id="dot_R_5" class="phys-dot" cx="529" cy="226" r="8.7" />
+
+                                <!-- Game 5 (Row 6) -->
+                                <circle id="dot_L_6" class="phys-dot" cx="494" cy="252" r="8.7" />
+                                <text x="511.5" y="255.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">5</text>
+                                <circle id="dot_R_6" class="phys-dot" cx="529" cy="252" r="8.7" />
+
+                                <!-- Game 4 (Row 7) -->
+                                <circle id="dot_L_7" class="phys-dot" cx="494" cy="278" r="8.7" />
+                                <text x="511.5" y="281.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">4</text>
+                                <circle id="dot_R_7" class="phys-dot" cx="529" cy="278" r="8.7" />
+
+                                <!-- Game 3 (Row 8) -->
+                                <circle id="dot_L_8" class="phys-dot" cx="494" cy="304" r="8.7" />
+                                <text x="511.5" y="307.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">3</text>
+                                <circle id="dot_R_8" class="phys-dot" cx="529" cy="304" r="8.7" />
+
+                                <!-- Game 2 (Row 9) -->
+                                <circle id="dot_L_9" class="phys-dot" cx="494" cy="330" r="8.7" />
+                                <text x="511.5" y="333.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">2</text>
+                                <circle id="dot_R_9" class="phys-dot" cx="529" cy="330" r="8.7" />
+
+                                <!-- Game 1 (Row 10) -->
+                                <circle id="dot_L_10" class="phys-dot" cx="494" cy="356" r="8.7" />
+                                <text x="511.5" y="359.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">1</text>
+                                <circle id="dot_R_10" class="phys-dot" cx="529" cy="356" r="8.7" />
+                            </g>
+
+                            <!-- Module 4: Digit 2 (Bezoekers Tientallen) -->
+                            <g id="svgDig2" transform="translate(579, 57)">
+                                <polygon id="d2_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                                <polygon id="d2_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                                <polygon id="d2_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                                <polygon id="d2_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                                <polygon id="d2_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                                <polygon id="d2_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                                <polygon id="d2_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                            </g>
+
+                            <!-- Module 5: Digit 3 (Bezoekers Eenheden) -->
+                            <g id="svgDig3" transform="translate(795, 57)">
+                                <polygon id="d3_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                                <polygon id="d3_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                                <polygon id="d3_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                                <polygon id="d3_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                                <polygon id="d3_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                                <polygon id="d3_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                                <polygon id="d3_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Bottom Status Bar -->
+                    <div class="housing-footer-bar">
+                        <div class="live-explainer-badge" id="simExplainerText">
+                            💡 Tip: Klik op <strong>+ Punt Thuis</strong> of <strong>Wissel van Kant</strong> om de automatische logica te testen.
+                        </div>
+                        <div style="font-family: var(--font-mono); font-size: 12px; color: var(--text-sub);">
+                            Regel: <strong style="color: var(--accent-yellow);" id="ruleBadge">2 Sets • 6 Games • Voordeel (26Ad)</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactief Knoppenpaneel -->
+                <div class="sim-controls-panel">
+                    <div class="sim-controls-title">
+                        <span>🎮 Bedieningspaneel Simulator</span>
+                        <span style="font-size: 11px; color: var(--text-sub);">Klik om alle functies en voordelen te testen</span>
+                    </div>
+
+                    <div class="btn-controls-grid">
+                        <button type="button" class="sim-btn red" id="btnScoreHome">
+                            <span>🔴 + Punt Thuis</span>
+                        </button>
+
+                        <button type="button" class="sim-btn blue" id="btnScoreAway">
+                            <span>🔵 + Punt Bezoekers</span>
+                        </button>
+
+                        <button type="button" class="sim-btn yellow" id="btnToggleServe">
+                            <span>🎾 Wissel Opslag (Gele LED)</span>
+                        </button>
+
+                        <button type="button" class="sim-btn purple" id="btnSideSwap">
+                            <span>🔄 Wissel van Kant (Kleuren!)</span>
+                        </button>
+
+                        <button type="button" class="sim-btn subtle" id="btnStartSplash">
+                            <span>▶ Toon Start Splash (26Ad)</span>
+                        </button>
+
+                        <button type="button" class="sim-btn subtle" id="btnSimSpel">
+                            <span>🏆 Simuleer Winnaar ("SPEL")</span>
+                        </button>
+
+                        <button type="button" class="sim-btn subtle" id="btnToggleClock">
+                            <span>🕒 Klokmodus (Ruststand)</span>
+                        </button>
+
+                        <button type="button" class="sim-btn subtle" id="btnResetMatch">
+                            <span>⟲ Reset Wedstrijd</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ALLE 14 VOORDELEN SECTIE -->
+    <section class="features-section" id="voordelen">
+        <div class="container">
+
+            <div style="text-align: center; margin-bottom: 60px;">
+                <div class="badge-pill">
+                    <span>⭐</span> Uitgebreid Overzicht
+                </div>
+                <h2 class="section-headline">De Belangrijkste Voordelen & Features</h2>
+                <p class="section-subtext" style="margin: 0 auto;">
+                    Van doordacht mechanisch 3D-ontwerp tot geavanceerde Bluetooth firmware en officiële FIP-wedstrijdregels. 
+                    Ontdek waarom dit scorebord onmisbaar is op elke padelclub.
+                </p>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- MOBILITEIT & MONTAGE                          -->
+            <!-- ============================================== -->
+            <div class="pillar-block" id="mobiliteit">
+                <div class="pillar-header">
+                    <div class="pillar-title-group">
+                        <div class="pillar-num">Mobiliteit & Montage</div>
+                        <h3 class="pillar-title">Mobiliteit, Splitsbaar & Handige Montage</h3>
+                        <p class="pillar-desc">
+                            Vederlicht, met de hand in tweeën te splitsen, voorzien van uitklapbare voetjes en 100% smashproof hekwerkophanging.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="cards-grid-3">
+                    <!-- Lichtgewicht & Splitsbaar -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap">
+                            <span>🧳</span>
+                        </div>
+                        <h4 class="card-title">Lichtgewicht & Makkelijk Mee te Nemen</h4>
+                        <p class="card-text">
+                            Het hele paneel weegt slechts een fractie van traditionele scoreborden en is speciaal ontwikkeld voor moeiteloos transport naar elke baan.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Met de hand in 2 splitsen:</strong> Draai 2 handschroeven aan de achterkant los (geen gereedschap nodig!) en neem het paneel compact mee in een zakje.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Meegeleverde draagriem:</strong> Bevestig de draagriem aan het paneel en draag het comfortabel over je schouder naar het veld.</span>
+                            </li>
+                        </ul>
+                        <div class="card-media-box">
+                            <img src="Images/panel_thumbscrew_assembled.png" alt="Handschroeven om paneel in 2 te splitsen" loading="lazy">
+                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 4px;">Handschroeven achterzijde & draagriembevestiging</div>
+                        </div>
+                    </div>
+
+                    <!-- Ingebouwde Voetjes -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap yellow">
+                            <span>📐</span>
+                        </div>
+                        <h4 class="card-title">Ingebouwde Voetjes (Grond of Tafel)</h4>
+                        <p class="card-text">
+                            Het paneel heeft standaard geïntegreerde, uiterst stabiele voetjes waardoor je het in één handomdraai overal neerzet.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Op de grond:</strong> Plaats het bord stabiel naast het net op het kunstgras zonder omwaaigevaar.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Op een tafel of bank:</strong> Perfecte kijkhoek dankzij de ingebouwde 8° kanteling voor scheidsrechters en toeschouwers.</span>
+                            </li>
+                        </ul>
+                        <div class="card-media-box">
+                            <img src="Images/display_stand_assembly_preview.png" alt="Ingebouwde voetjes voor grond of tafel" loading="lazy">
+                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 4px;">Geïntegreerde kantelvoeten voor grond of tafel</div>
+                        </div>
+                    </div>
+
+                    <!-- Ophangen aan Hekwerk -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap red">
+                            <span>🛡️</span>
+                        </div>
+                        <h4 class="card-title">Ophangen aan het IJzeren Hekwerk</h4>
+                        <p class="card-text">
+                            Standaard uitgerust met een robuust U-haaksysteem dat naadloos inhaakt op het 50x50 mm staaldraad hekwerk van het padelterrein.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>100% Smashproof:</strong> Het paneel hangt veilig <em>achter</em> het hek. Kogelharde smashes (120+ km/u) vangen op het hekwerk op, niet op het display!</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Optimale lichtdoorlaat:</strong> De felle WS2813 LED's stralen helder door de mazen van het gaas.</span>
+                            </li>
+                        </ul>
+                        <div class="card-media-box">
+                            <img src="Images/padel_mesh_hook_assembly.png" alt="U-haak voor hekwerk padelveld" loading="lazy">
+                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 4px;">Padel mesh hook: veilige hekmontage</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- 5V VOEDING & ACCU                              -->
+            <!-- ============================================== -->
+            <div class="pillar-block" id="voeding">
+                <div class="pillar-header">
+                    <div class="pillar-title-group">
+                        <div class="pillar-num">Voeding & Batterij</div>
+                        <h3 class="pillar-title">5V Voeding & Ingebouwde Batterijhouder</h3>
+                        <p class="pillar-desc">
+                            Geen gevaarlijke 230V kabels over de natte baan. Werkt op een gewone powerbank of USB-adapter.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="cards-grid-2">
+                    <!-- 5V Voeding & 20.000 mAh -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap green">
+                            <span>🔋</span>
+                        </div>
+                        <h4 class="card-title">Gevoed door 5V Power Supply (Hele Dag Spelen)</h4>
+                        <p class="card-text">
+                            Het paneel werkt op een universele 5V voeding. Een 20.000 mAh powerbank is goed voor een hele dag én meer onafgebroken padel spelen. Het bord kan daarnaast ook gewoon door een 5V USB poweradapter gevoed worden.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>20.000 mAh capaciteit:</strong> Ruim 10 tot 14 uur non-stop wedstrijdplezier op één powerbank.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Flexibel:</strong> Sluit aan op elke gangbare powerbank of 5V USB-oplader.</span>
+                            </li>
+                        </ul>
+
+                        <!-- Batterij Calculator Widget -->
+                        <div class="battery-calc-card">
+                            <div class="calc-header">
+                                <div class="calc-title">
+                                    <span>⚡</span> Batterijduur Calculator
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 13px; color: var(--accent-green);" id="calcCapacityDisplay">20.000 mAh</span>
+                            </div>
+                            <div class="calc-slider-box">
+                                <label>
+                                    <span>Capaciteit Powerbank:</span>
+                                    <span id="sliderValText">20.000 mAh</span>
+                                </label>
+                                <input type="range" min="5000" max="30000" step="5000" value="20000" class="battery-slider" id="batterySlider">
+                            </div>
+                            <div class="calc-results-row">
+                                <div class="calc-stat-box">
+                                    <div class="calc-stat-val" id="calcHours">~12.5 uur</div>
+                                    <div class="calc-stat-label">Actieve Speeltijd</div>
+                                </div>
+                                <div class="calc-stat-box">
+                                    <div class="calc-stat-val" id="calcMatches">8 - 10</div>
+                                    <div class="calc-stat-label">Volledige Wedstrijden</div>
+                                </div>
+                                <div class="calc-stat-box">
+                                    <div class="calc-stat-val" id="calcStandby">~36 uur</div>
+                                    <div class="calc-stat-label">Stand-by Kloktijd</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingebouwde Batterijhouder -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap">
+                            <span>🧲</span>
+                        </div>
+                        <h4 class="card-title">Ingebouwde Houder voor de Batterij</h4>
+                        <p class="card-text">
+                            Geen losse powerbank die bungelt aan een kabeltje of op de grond valt. Het paneel heeft aan de achterzijde een speciaal ingebouwde houder waarin de accu muurvast klikt.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Naadloos geïntegreerd:</strong> De batterij schuift stevig in de houder op de achterkant van het frame.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Korte veilige kabelgeleiding:</strong> Geen gevaar voor lostrillen of struikelen op de baan.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Snel verwisselbaar:</strong> Binnen enkele seconden een verse powerbank inklikken tijdens lange tornooien.</span>
+                            </li>
+                        </ul>
+                        <div class="card-media-box" style="margin-top: 24px;">
+                            <img src="Images/padel_battery_holder_vesa_assembly.png" alt="Geïntegreerde batterijhouder" loading="lazy">
+                            <div style="font-size: 11px; color: var(--text-sub); margin-top: 4px;">Stevige ingebouwde batterijhouder op de achterkant</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- DE SLIMME APP & UPDATES                        -->
+            <!-- ============================================== -->
+            <div class="pillar-block" id="app">
+                <div class="pillar-header">
+                    <div class="pillar-title-group">
+                        <div class="pillar-num">Companion App & Firmware</div>
+                        <h3 class="pillar-title">De Slimme Companion App & Draadloze Updates</h3>
+                        <p class="pillar-desc">
+                            Geen app store download vereist: stel eenvoudig alle spelregels in, update draadloos via Bluetooth en gebruik je scherm als extra scorebord.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="cards-grid-2">
+                    <!-- Makkelijk Instelbaar via App -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap">
+                            <span>⚙️</span>
+                        </div>
+                        <h4 class="card-title">Makkelijk Instelbaar via de Meegeleverde App</h4>
+                        <p class="card-text">
+                            Alle instellingen configureer je vliegensvlug via de app op je smartphone. Voorkeuren worden automatisch bewaard in het interne geheugen (NVS).
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Wedstrijdregels instellen & opslaan:</strong> Aantal sets, games, Golden Point (GP) vs Voordeel (Tiebreak) direct configureerbaar.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Tijd laten zien:</strong> Het paneel kan de actuele tijd laten zien (ambient klok via DS1302 RTC) indien er geen match bezig is.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Helderheid & Sleep time:</strong> De helderheid is instelbaar (voor felle zon of binnenbanen) zowel als de sleep time (automatische standby).</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Draadloos Updaten via BT -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap green">
+                            <span>📡</span>
+                        </div>
+                        <h4 class="card-title">Nieuwe FW Draadloos via BT Updaten</h4>
+                        <p class="card-text">
+                            Nieuwe firmware kan 100% draadloos via Bluetooth worden geüpdatet op het paneel. Nooit meer kabels aansluiten of de behuizing openschroeven.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Over-The-Air (OTA):</strong> Open gewoon de ingebouwde browserflasher (<a href="ota.html" style="color: var(--accent-green); text-decoration: underline; font-weight: 700;">ota.html</a>) op je telefoon of laptop.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Veilig & Snel:</strong> Binnen 60 seconden de nieuwste functies en spelregels geïnstalleerd.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- App Checkt voor Nieuwe Versies -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap yellow">
+                            <span>🔄</span>
+                        </div>
+                        <h4 class="card-title">De App Checkt Zelf voor Nieuwe Versies</h4>
+                        <p class="card-text">
+                            Zodra je de app opent, controleert deze automatisch online of er een nieuwere software- of firmwareversie beschikbaar is.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Automatische notificatie:</strong> Je krijgt direct een subtiele melding wanneer er een update klaarstaat.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Altijd up-to-date:</strong> Met 1 tik installeer je de update zonder handmatig bestanden te hoeven downloaden.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Score & Opslag in de App -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap red">
+                            <span>📺</span>
+                        </div>
+                        <h4 class="card-title">Score & Opslag in de App (+ Grote Scherm Modus)</h4>
+                        <p class="card-text">
+                            In de app kan je tijdens het spelen realtime de score bijhouden en zie je exact welk team aan de beurt is voor de service.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Score & opslagindicatie:</strong> Live synchroon met het display op de baan, inclusief visuele opslag-indicator.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Grote Score Modus:</strong> Er is ook een modus waarmee de scores groot worden getoond zodat dit ook als extra toeschouwersscherm (bijvoorbeeld op een iPad of tablet langs de baan) kan worden gebruikt!</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- HET 5-SEGMENTEN DISPLAY & LOGICA               -->
+            <!-- ============================================== -->
+            <div class="pillar-block" id="display">
+                <div class="pillar-header">
+                    <div class="pillar-title-group">
+                        <div class="pillar-num">Display & Matchlogica</div>
+                        <h3 class="pillar-title">Het 5-Segmenten Display & Intelligente Matchlogica</h3>
+                        <p class="pillar-desc">
+                            Helder overzicht met gescheiden teamkleuren, instelling-splash (26Ad), gele serveer-LED, automatische kantwissel en 30s SPEL-afsluiting.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="cards-grid-3">
+                    <!-- Het 5-Segmenten Paneel -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap red">
+                            <span>🔢</span>
+                        </div>
+                        <h4 class="card-title">Het 5-Segmenten Paneel (Rood & Blauw)</h4>
+                        <p class="card-text">
+                            Het paneel is opgebouwd uit 5 modulaire segmenten voor een ongeëvenaard overzicht over de hele baan:
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Segment 1 & 2:</strong> Geeft de score van <em>Thuis</em> weer in <strong>Rood</strong>.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Segment 4 & 5:</strong> Geeft de score van de <em>Bezoekers</em> weer in <strong>Blauw</strong>.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Segment 3 (Midden):</strong> Geeft de <em>games en sets</em> overzichtelijk weer via een 24-LED ladder.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Start Match Instelling Weergave -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap">
+                            <span>🎯</span>
+                        </div>
+                        <h4 class="card-title">Start Match Instelling Weergave (bv. 26Ad)</h4>
+                        <p class="card-text">
+                            Bij de start van een match laat het paneel gedurende enkele seconden de gekozen spelinstelling zien op de grote cijfers.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Voorbeeld 26Ad:</strong> Betekent 2 sets van 6 games met voordeel (Advantage).</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Voorbeeld 26GP:</strong> Betekent 2 sets van 6 games met Golden Point (Punto de Oro).</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Voorbeeld 36tb:</strong> Betekent 3 sets van 6 games met Tiebreak. Iedereen op de baan is direct mee!</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Gele LED Opslag-indicatie -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap yellow">
+                            <span>🎾</span>
+                        </div>
+                        <h4 class="card-title">Gele LED Opslag-indicatie</h4>
+                        <p class="card-text">
+                            Het paneel laat door een duidelijke gele LED zien wie er aan de opslag is. Nooit meer discussie of twijfel wie moet serveren.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Direct zichtbaar:</strong> De felle gele LED brandt aan de zijde van het serverende team.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Automatische service-rotatie:</strong> Wisselt automatisch na elke game en volgt de officiële tiebreak-volgorde.</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Automatische Kantwissel -->
+                    <div class="feature-card">
+                        <div class="card-icon-wrap">
+                            <span>🔄</span>
+                        </div>
+                        <h4 class="card-title">Automatische Kantwissel (Side Swap)</h4>
+                        <p class="card-text">
+                            Wanneer de teams van kant dienen te wisselen, verandert ook het paneel automatisch van kant: <strong>Blauw wordt Rood en Rood wordt Blauw</strong>.
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Kleur volgt het team:</strong> De kleur op het bord matcht altijd met het team op die specifieke speelhelft van de baan.</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span>Geen vergissingen meer bij het aflezen van de score na oneven games!</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Match Gedaan: SPEL -->
+                    <div class="feature-card" style="grid-column: span 2;">
+                        <div class="card-icon-wrap green">
+                            <span>🏆</span>
+                        </div>
+                        <h4 class="card-title">Match Gedaan: 30s "SPEL" & Setstanden Weergave</h4>
+                        <p class="card-text">
+                            Wanneer de match gedaan is, start het display automatisch de officiële feestelijke overwinningscyclus:
+                        </p>
+                        <ul class="sub-points-list">
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>30 seconden "SPEL":</strong> Er komt <strong>S P E L</strong> op het display te staan gedurende 30 seconden in de kleur van het winnende team (Rood of Blauw).</span>
+                            </li>
+                            <li>
+                                <span class="sub-bullet">✓</span>
+                                <span><strong>Setstanden tonen:</strong> Na de 30 seconden worden de behaalde setstanden rustig getoond (bijv. 6-4, 7-5) zodat de uitslag genoteerd kan worden.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- VERGELIJKINGSTABEL -->
+    <section class="comparison-section" id="vergelijking">
+        <div class="container">
+            <div style="text-align: center;">
+                <div class="badge-pill yellow">
+                    <span>📊</span> Eerlijk Vergeleken
+                </div>
+                <h2 class="section-headline">Waarom Ons Paneel de Betere Keuze Is</h2>
+                <p class="section-subtext" style="margin: 0 auto;">
+                    Vergelijk het 7-segment display met handmatige draaibordjes en dure commerciële LED-panelen.
+                </p>
+            </div>
+
+            <div class="table-responsive">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Eigenschap / Voordeel</th>
+                            <th class="highlight-col" style="color: var(--team-blue); font-weight: 800;">Ons 7-Segment Paneel</th>
+                            <th>Traditionele Draaibordjes</th>
+                            <th>Dure Commerciële Schermen (€500+)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Mobiliteit</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Splitsbaar in 2 + Draagriem</span></td>
+                            <td>Vaak onhandig & waait om</td>
+                            <td>Zwaar, vereist vaste koffer</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Voeding & Batterij</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ 5V Powerbank (20.000 mAh hele dag)</span></td>
+                            <td>Geen stroom nodig</td>
+                            <td><span class="check-no">✗ 230V stopcontact op baan</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Veiligheid tegen Smashes</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Hangt achter 50x50 hek (100% veilig)</span></td>
+                            <td>Staat op netpaal, wordt omvergeslagen</td>
+                            <td>Kwetsbaar glasfront aan binnenzijde</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Automatische Kantwissel</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Kleuren wisselen automatisch van kant</span></td>
+                            <td><span class="check-no">✗ Handmatig omdraaien</span></td>
+                            <td>Vaak alleen vaste posities</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Opslag Indicatie</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Duidelijke gele serveer-LED</span></td>
+                            <td><span class="check-no">✗ Geen indicatie</span></td>
+                            <td>Soms klein stipje</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Draadloze Updates</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Bluetooth OTA in browser</span></td>
+                            <td><span class="check-no">✗ Niet mogelijk</span></td>
+                            <td>Kabel of fabrieksservice</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Klokmodus & Ruststand</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Automatische 24uurs wandklok (RTC)</span></td>
+                            <td><span class="check-no">✗ Nee</span></td>
+                            <td>Alleen zwart scherm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prijs & Zelfvoorzienend</strong></td>
+                            <td class="highlight-col"><span class="check-yes">✓ Modulair, betaalbaar & 3D geprint</span></td>
+                            <td>Goedkoop, maar gebrekkig</td>
+                            <td><span class="check-no">✗ Extreem duur (€500 - €1200)</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- CALL TO ACTION BANNER -->
+    <section class="cta-banner">
+        <div class="container">
+            <div class="cta-inner-card">
+                <div class="badge-pill green">
+                    <span>🚀</span> Direct Klaar Voor Gebruik
+                </div>
+                <h2 style="font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin-bottom: 14px;">
+                    Ervaar het Ultieme Gemak op de Padelbaan
+                </h2>
+                <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                    Verbind direct via Web Bluetooth met je smartphone, configureer je matchregels en speel zonder onderbrekingen.
+                </p>
+
+                <div class="cta-btn-group">
+                    <a href="index.html" class="btn-hero-primary">
+                        <span>📱 Open Web Bluetooth App</span>
+                    </a>
+                    <a href="ota.html" class="btn-hero-secondary">
+                        <span>⚡ Firmware Flasher (OTA)</span>
+                    </a>
+                    <a href="Quick_Start_App.pdf" target="_blank" class="btn-hero-secondary">
+                        <span>📖 Handleiding PDF</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="#simulator">Simulator</a>
+                <a href="#voordelen">Alle Voordelen</a>
+                <a href="index.html">Live App</a>
+                <a href="ota.html">OTA Flasher</a>
+                <a href="showcase.html">Engineering Showcase</a>
+            </div>
+            <p>© 2026 PadelPulse • 7-Segment ESP32 Scorebord & Companion Ecosysteem • Versie 1.7.9</p>
+        </div>
+    </footer>
+
+    <!-- INTERACTIEVE LOGICA & SIMULATOR JAVASCRIPT -->
+    <script>
+        // Match & Display State
+        const state = {
+            pointsHome: 0,
+            pointsAway: 0,
+            gamesHome: 0,
+            gamesAway: 0,
+            setsHome: 0,
+            setsAway: 0,
+            server: 'home', // 'home' of 'away'
+            sideSwapped: false, // true wanneer kanten gewisseld zijn
+            isClockMode: false,
+            isSpelMode: false,
+            ruleMode: '26Ad', // 2 sets, 6 games, Advantage
+            spelTimer: null
+        };
+
+        const tennisPoints = ['00', '15', '30', '40'];
+
+        // Elements
+        const elSimModeBadge = document.getElementById('simModeBadge');
+        const elExplainer = document.getElementById('simExplainerText');
+        const elRuleBadge = document.getElementById('ruleBadge');
+
+        // Battery Calculator Elements
+        const batterySlider = document.getElementById('batterySlider');
+        const calcCapacityDisplay = document.getElementById('calcCapacityDisplay');
+        const sliderValText = document.getElementById('sliderValText');
+        const calcHours = document.getElementById('calcHours');
+        const calcMatches = document.getElementById('calcMatches');
+        const calcStandby = document.getElementById('calcStandby');
+
+        // 7-Segment Lookup Table for all characters
+        const SEG_MAP = {
+            '0': ['a', 'b', 'c', 'd', 'e', 'f'],
+            '1': ['b', 'c'],
+            '2': ['a', 'b', 'g', 'e', 'd'],
+            '3': ['a', 'b', 'g', 'c', 'd'],
+            '4': ['f', 'g', 'b', 'c'],
+            '5': ['a', 'f', 'g', 'c', 'd'],
+            '6': ['a', 'f', 'e', 'd', 'c', 'g'],
+            '7': ['a', 'b', 'c'],
+            '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+            '9': ['a', 'b', 'c', 'd', 'f', 'g'],
+            'A': ['a', 'b', 'c', 'e', 'f', 'g'],
+            'd': ['b', 'c', 'd', 'e', 'g'],
+            'S': ['a', 'f', 'g', 'c', 'd'],
+            'P': ['a', 'b', 'e', 'f', 'g'],
+            'E': ['a', 'd', 'e', 'f', 'g'],
+            'L': ['d', 'e', 'f'],
+            ' ': [],
+            '-': ['g']
+        };
+
+        function setDigit(digitIdx, char, colorClass) {
+            const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+            const active = SEG_MAP[char] || [];
+            segs.forEach(s => {
+                const el = document.getElementById(`d${digitIdx}_${s}`);
+                if (el) {
+                    el.className.baseVal = 'phys-seg' + (active.includes(s) ? ` ${colorClass}` : '');
+                }
+            });
+        }
+
+        function setScoreboardDigits(c0, c1, colorLeft, c2, c3, colorRight) {
+            setDigit(0, c0, colorLeft);
+            setDigit(1, c1, colorLeft);
+            setDigit(2, c2, colorRight);
+            setDigit(3, c3, colorRight);
+        }
+
+        function updateSvgLadder() {
+            // Reset all dots to unlit
+            for (let i = 0; i <= 10; i++) {
+                const dL = document.getElementById(`dot_L_${i}`);
+                const dR = document.getElementById(`dot_R_${i}`);
+                if (dL) dL.className.baseVal = 'phys-dot';
+                if (dR) dR.className.baseVal = 'phys-dot';
+            }
+
+            if (state.isClockMode) {
+                // In clock mode, blink the top dots green like digital clock colon
+                const blink = Math.floor(Date.now() / 500) % 2 === 0;
+                if (blink) {
+                    ['dot_L_0', 'dot_R_0', 'dot_L_1', 'dot_R_1'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.className.baseVal = 'phys-dot lit-green';
+                    });
+                }
+                return;
+            }
+
+            // Determine left/right colors and scores depending on side swap
+            const colorLeft = state.sideSwapped ? 'lit-blue' : 'lit-red';
+            const colorRight = state.sideSwapped ? 'lit-red' : 'lit-blue';
+
+            const setsLeft = state.sideSwapped ? state.setsAway : state.setsHome;
+            const setsRight = state.sideSwapped ? state.setsHome : state.setsAway;
+
+            const gamesLeft = state.sideSwapped ? state.gamesAway : state.gamesHome;
+            const gamesRight = state.sideSwapped ? state.gamesHome : state.gamesAway;
+
+            // Sets (Rows 0 and 1)
+            if (setsLeft >= 1) {
+                const d = document.getElementById('dot_L_0');
+                if (d) d.className.baseVal = `phys-dot ${colorLeft}`;
+            }
+            if (setsLeft >= 2) {
+                const d = document.getElementById('dot_L_1');
+                if (d) d.className.baseVal = `phys-dot ${colorLeft}`;
+            }
+
+            if (setsRight >= 1) {
+                const d = document.getElementById('dot_R_0');
+                if (d) d.className.baseVal = `phys-dot ${colorRight}`;
+            }
+            if (setsRight >= 2) {
+                const d = document.getElementById('dot_R_1');
+                if (d) d.className.baseVal = `phys-dot ${colorRight}`;
+            }
+
+            // Bepaal wie aan de opslag is op Left / Right
+            const serverIsOnLeft = (!state.sideSwapped && state.server === 'home') || 
+                                   (state.sideSwapped && state.server === 'away');
+
+            // Games Ladder (Rijen 10 t/m 2 voor games 1 t/m 9)
+            // Real Display Logica: De eerstvolgende vrije game-LED knippert in het GEEL bij het serverende team!
+            for (let g = 1; g <= 9; g++) {
+                const row = 11 - g; // g=1 -> 10, g=2 -> 9, ..., g=9 -> 2
+
+                // Linker kolom
+                const dL = document.getElementById(`dot_L_${row}`);
+                if (dL) {
+                    if (g <= gamesLeft) {
+                        dL.className.baseVal = `phys-dot ${colorLeft}`;
+                    } else if (serverIsOnLeft && g === gamesLeft + 1) {
+                        // Eerstvolgende vrije game-LED knippert geel voor de serveerder links!
+                        dL.className.baseVal = 'phys-dot lit-serve';
+                    } else {
+                        dL.className.baseVal = 'phys-dot';
+                    }
+                }
+
+                // Rechter kolom
+                const dR = document.getElementById(`dot_R_${row}`);
+                if (dR) {
+                    if (g <= gamesRight) {
+                        dR.className.baseVal = `phys-dot ${colorRight}`;
+                    } else if (!serverIsOnLeft && g === gamesRight + 1) {
+                        // Eerstvolgende vrije game-LED knippert geel voor de serveerder rechts!
+                        dR.className.baseVal = 'phys-dot lit-serve';
+                    } else {
+                        dR.className.baseVal = 'phys-dot';
+                    }
+                }
+            }
+        }
+
+        // Render function
+        function updateDisplay() {
+            if (state.isClockMode) {
+                renderClock();
+                return;
+            }
+
+            if (state.isSpelMode) {
+                return; // SPEL animation is running
+            }
+
+            elSimModeBadge.textContent = 'SCOREBORD MODUS';
+            elSimModeBadge.style.color = 'var(--team-blue)';
+
+            const ptHome = formatPoint(state.pointsHome, state.pointsAway);
+            const ptAway = formatPoint(state.pointsAway, state.pointsHome);
+
+            // Bepaal wie op welke helft staat
+            const serverIsOnLeft = (!state.sideSwapped && state.server === 'home') || 
+                                   (state.sideSwapped && state.server === 'away');
+
+            // Side swap visual representation (Kleur en display cijfers volgen de speelhelft van de baan)
+            if (state.sideSwapped) {
+                // Display cijfers: links Bezoekers (Blauw), rechts Thuis (Rood)
+                setScoreboardDigits(
+                    ptAway[0] || '0', ptAway[1] || '0', 'lit-blue',
+                    ptHome[0] || '0', ptHome[1] || '0', 'lit-red'
+                );
+            } else {
+                // Display cijfers: links Thuis (Rood), rechts Bezoekers (Blauw)
+                setScoreboardDigits(
+                    ptHome[0] || '0', ptHome[1] || '0', 'lit-red',
+                    ptAway[0] || '0', ptAway[1] || '0', 'lit-blue'
+                );
+            }
+
+            updateSvgLadder();
+        }
+
+        function formatPoint(p1, p2) {
+            if (p1 >= 3 && p2 >= 3) {
+                if (p1 === p2) return '40'; // Deuce
+                if (p1 > p2) return 'Ad';  // Advantage
+                return '40';
+            }
+            return tennisPoints[p1] || '00';
+        }
+
+        function addPoint(team) {
+            if (state.isClockMode || state.isSpelMode) {
+                state.isClockMode = false;
+                state.isSpelMode = false;
+                if (state.spelTimer) clearTimeout(state.spelTimer);
+                if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            }
+
+            let gameJustWon = false;
+            let gameWinner = '';
+
+            if (team === 'home') {
+                state.pointsHome++;
+                if (checkGameWon(state.pointsHome, state.pointsAway)) {
+                    state.pointsHome = 0;
+                    state.pointsAway = 0;
+                    state.gamesHome++;
+                    gameJustWon = true;
+                    gameWinner = 'Thuis';
+                } else {
+                    const serverName = (state.server === 'home') ? 'Thuis' : 'Bezoekers';
+                    const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                    elExplainer.innerHTML = `🔴 <strong>Punt voor Thuis!</strong> Stand: <strong>${formatPoint(state.pointsHome, state.pointsAway)} - ${formatPoint(state.pointsAway, state.pointsHome)}</strong> • Opslag: <strong>${serverName}</strong> (volgende vrije game-LED knippert geel)`;
+                }
+            } else {
+                state.pointsAway++;
+                if (checkGameWon(state.pointsAway, state.pointsHome)) {
+                    state.pointsHome = 0;
+                    state.pointsAway = 0;
+                    state.gamesAway++;
+                    gameJustWon = true;
+                    gameWinner = 'Bezoekers';
+                } else {
+                    const serverName = (state.server === 'home') ? 'Thuis' : 'Bezoekers';
+                    const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                    elExplainer.innerHTML = `🔵 <strong>Punt voor Bezoekers!</strong> Stand: <strong>${formatPoint(state.pointsHome, state.pointsAway)} - ${formatPoint(state.pointsAway, state.pointsHome)}</strong> • Opslag: <strong>${serverName}</strong> (volgende vrije game-LED knippert geel)`;
+                }
+            }
+
+            if (gameJustWon) {
+                // 1. Opslag wisselt ALTIJD na afloop van een game
+                state.server = (state.server === 'home') ? 'away' : 'home';
+                const nextServer = (state.server === 'home') ? 'Thuis' : 'Bezoekers';
+
+                // 2. Controleer of de set gewonnen is
+                const setRes = checkSetWon();
+
+                if (setRes.won) {
+                    const totalSetGames = setRes.totalGames;
+                    // In padel wisselen teams van kant na set-einde als het aantal games ONEVEN was
+                    if (totalSetGames % 2 !== 0) {
+                        state.sideSwapped = !state.sideSwapped;
+                        const leftTeam = state.sideSwapped ? 'Bezoekers (Blauw)' : 'Thuis (Rood)';
+                        const rightTeam = state.sideSwapped ? 'Thuis (Rood)' : 'Bezoekers (Blauw)';
+                        const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                        elExplainer.innerHTML = `🏆 <strong>Set gewonnen door ${setRes.winner}!</strong> (Setstand: ${state.setsHome} - ${state.setsAway})<br>🔄 <strong>Automatische Kantwissel!</strong> De set eindigde na ${totalSetGames} games (oneven). Teams wisselen van speelhelft.<br>Het scorebord wisselt direct mee: <strong>Links: ${leftTeam} | Rechts: ${rightTeam}</strong>. 🎾 Opslag: ${nextServer} (volgende vrije game-LED knippert geel ${serverSide}).`;
+                    } else {
+                        const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                        elExplainer.innerHTML = `🏆 <strong>Set gewonnen door ${setRes.winner}!</strong> (Setstand: ${state.setsHome} - ${state.setsAway})<br>🎾 <strong>Nieuwe set gestart!</strong> De set eindigde na ${totalSetGames} games (even). Teams blijven op hun huidige helft. 🎾 Opslag: ${nextServer} (volgende vrije game-LED knippert geel ${serverSide}).`;
+                    }
+                } else {
+                    // Set loopt door: controleer officiële padel regel kantwissel na oneven aantal gespeelde games in de set
+                    const totalGamesInSet = state.gamesHome + state.gamesAway;
+                    if (totalGamesInSet % 2 !== 0) {
+                        // ONEVEN (1, 3, 5, 7, 9...): Automatische kantwissel!
+                        state.sideSwapped = !state.sideSwapped;
+                        const leftTeam = state.sideSwapped ? 'Bezoekers (Blauw)' : 'Thuis (Rood)';
+                        const rightTeam = state.sideSwapped ? 'Thuis (Rood)' : 'Bezoekers (Blauw)';
+                        const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                        elExplainer.innerHTML = `🎉 <strong>Game voor ${gameWinner}!</strong> (Stand: ${state.gamesHome} - ${state.gamesAway})<br>🔄 <strong>Automatische Kantwissel (Game ${totalGamesInSet})!</strong> Oneven aantal games gespeeld: teams wisselen van speelhelft.<br>Het display wisselt automatisch mee: <strong>Links: ${leftTeam} | Rechts: ${rightTeam}</strong>.<br>🎾 De <strong>eerstvolgende vrije game-LED knippert geel</strong> bij <strong>${nextServer}</strong> (${serverSide}) voor de opslag.`;
+                    } else {
+                        // EVEN (2, 4, 6...): Geen kantwissel
+                        const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                        elExplainer.innerHTML = `🎉 <strong>Game voor ${gameWinner}!</strong> (Stand: ${state.gamesHome} - ${state.gamesAway})<br>🎾 <strong>Opslag wisselt</strong> naar <strong>${nextServer}</strong>. De volgende vrije game-LED (${serverSide}) knippert geel. Even aantal games (${totalGamesInSet}), dus teams blijven op hun speelhelft.`;
+                    }
+                }
+            }
+
+            updateDisplay();
+        }
+
+        function checkGameWon(pLead, pTrail) {
+            if (pLead >= 4 && pLead - pTrail >= 2) return true;
+            return false;
+        }
+
+        function checkSetWon() {
+            let won = false;
+            let winner = '';
+            let totalGames = 0;
+
+            if ((state.gamesHome >= 6 && state.gamesHome - state.gamesAway >= 2) || state.gamesHome === 7) {
+                won = true;
+                winner = 'Thuis';
+                totalGames = state.gamesHome + state.gamesAway;
+                state.setsHome++;
+                state.gamesHome = 0;
+                state.gamesAway = 0;
+                if (state.setsHome >= 2) {
+                    triggerSpel('home');
+                }
+            } else if ((state.gamesAway >= 6 && state.gamesAway - state.gamesHome >= 2) || state.gamesAway === 7) {
+                won = true;
+                winner = 'Bezoekers';
+                totalGames = state.gamesHome + state.gamesAway;
+                state.setsAway++;
+                state.gamesHome = 0;
+                state.gamesAway = 0;
+                if (state.setsAway >= 2) {
+                    triggerSpel('away');
+                }
+            }
+            return { won, winner, totalGames };
+        }
+
+        function toggleServer() {
+            state.server = (state.server === 'home') ? 'away' : 'home';
+            const serverName = (state.server === 'home') ? 'Thuis' : 'Bezoekers';
+            const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+            elExplainer.innerHTML = `🎾 <strong>Opslag gewisseld:</strong> Opslag is nu bij <strong>${serverName}</strong>. De <strong>volgende vrije game-LED in de middenladder (${serverSide}) knippert geel</strong>!`;
+            updateDisplay();
+        }
+
+        // Automatische kantwissel simulatie
+        function toggleSideSwap() {
+            state.sideSwapped = !state.sideSwapped;
+            const leftTeamName = state.sideSwapped ? 'Bezoekers (Blauw)' : 'Thuis (Rood)';
+            const rightTeamName = state.sideSwapped ? 'Thuis (Rood)' : 'Bezoekers (Blauw)';
+            const serverName = (state.server === 'home') ? 'Thuis' : 'Bezoekers';
+            const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+            elExplainer.innerHTML = `🔄 <strong>Handmatige Kantwissel:</strong> Posities op het bord gewisseld: <strong>Links: ${leftTeamName} | Rechts: ${rightTeamName}</strong>.<br>Opslag bij <strong>${serverName}</strong> (volgende vrije game-LED knippert geel aan de ${serverSide}erkant).`;
+            updateDisplay();
+        }
+
+        // Match Start Splash Weergave (26Ad)
+        function triggerStartSplash() {
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            state.isClockMode = false;
+            state.isSpelMode = false;
+            elSimModeBadge.textContent = 'START-UP SPLASH';
+            elSimModeBadge.style.color = 'var(--accent-yellow)';
+
+            // Digits in yellow: 26Ad
+            setScoreboardDigits('2', '6', 'lit-yellow', 'A', 'd', 'lit-yellow');
+
+            for (let i = 0; i <= 10; i++) {
+                const dL = document.getElementById(`dot_L_${i}`);
+                const dR = document.getElementById(`dot_R_${i}`);
+                if (dL) dL.className.baseVal = 'phys-dot';
+                if (dR) dR.className.baseVal = 'phys-dot';
+            }
+
+            elExplainer.innerHTML = '▶ <strong>Match Start Splash (26Ad):</strong> Het fysieke display toont bij inschakeling "26Ad" = 2 sets, 6 games, met voordeel (Advantage).';
+
+            setTimeout(() => {
+                updateDisplay();
+            }, 3000);
+        }
+
+        // "SPEL" (30 seconden) + Setstanden
+        function triggerSpel(winner = 'home') {
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            state.isClockMode = false;
+            state.isSpelMode = true;
+            elSimModeBadge.textContent = 'MATCH WON • VIERING';
+            elSimModeBadge.style.color = 'var(--accent-green)';
+
+            const winColor = (winner === 'home')
+                ? (state.sideSwapped ? 'lit-blue' : 'lit-red')
+                : (state.sideSwapped ? 'lit-red' : 'lit-blue');
+
+            // Show S P E L on the 4 digits
+            setScoreboardDigits('S', 'P', winColor, 'E', 'L', winColor);
+
+            let countdown = 30;
+            const winnerName = (winner === 'home') ? 'Team Thuis' : 'Bezoekers';
+            elExplainer.innerHTML = `🏆 <strong>SPEL!</strong> ${winnerName} wint de wedstrijd! Het fysieke display toont 30s "SPEL" in de teamkleur (${countdown}s resterend)...`;
+
+            if (state.spelTimer) clearInterval(state.spelTimer);
+
+            state.spelTimer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    elExplainer.innerHTML = `🏆 <strong>SPEL!</strong> Het fysieke display toont 30s "SPEL" (${countdown}s resterend)...`;
+                } else {
+                    clearInterval(state.spelTimer);
+                    state.isSpelMode = false;
+                    elExplainer.innerHTML = '🏁 <strong>30s SPEL afgelopen:</strong> Het paneel toont nu de stand.';
+                    updateDisplay();
+                }
+            }, 1000);
+        }
+
+        // Klokmodus (DS1302 RTC)
+        function toggleClock() {
+            state.isClockMode = !state.isClockMode;
+            if (state.isClockMode) {
+                state.isSpelMode = false;
+                if (state.spelTimer) clearInterval(state.spelTimer);
+
+                elSimModeBadge.textContent = 'KLOKMODUS (RUSTSTAND)';
+                elSimModeBadge.style.color = 'var(--accent-green)';
+                elExplainer.innerHTML = '🕒 <strong>Klokmodus Actief:</strong> Display toont actuele tijd via de interne DS1302 RTC chip in ruststand.';
+                
+                renderClock();
+                if (state.clockTimer) clearInterval(state.clockTimer);
+                state.clockTimer = setInterval(renderClock, 1000);
+            } else {
+                if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+                updateDisplay();
+            }
+        }
+
+        function renderClock() {
+            const now = new Date();
+            const hrs = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+
+            setScoreboardDigits(hrs[0], hrs[1], 'lit-green', mins[0], mins[1], 'lit-green');
+            updateSvgLadder();
+        }
+
+        function resetMatch() {
+            if (state.spelTimer) clearInterval(state.spelTimer);
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            state.pointsHome = 0;
+            state.pointsAway = 0;
+            state.gamesHome = 0;
+            state.gamesAway = 0;
+            state.setsHome = 0;
+            state.setsAway = 0;
+            state.server = 'home';
+            state.sideSwapped = false;
+            state.isClockMode = false;
+            state.isSpelMode = false;
+
+            elExplainer.innerHTML = '⟲ <strong>Wedstrijd Gereset:</strong> Stand is 00-00. Team Thuis start aan de opslag (knipperende gele LED brandt links).';
+            updateDisplay();
+        }
+
+        // Event Listeners Knoppen
+        document.getElementById('btnScoreHome').addEventListener('click', () => addPoint('home'));
+        document.getElementById('btnScoreAway').addEventListener('click', () => addPoint('away'));
+        document.getElementById('btnToggleServe').addEventListener('click', toggleServer);
+        document.getElementById('btnSideSwap').addEventListener('click', toggleSideSwap);
+        document.getElementById('btnStartSplash').addEventListener('click', triggerStartSplash);
+        document.getElementById('btnSimSpel').addEventListener('click', () => triggerSpel('home'));
+        document.getElementById('btnToggleClock').addEventListener('click', toggleClock);
+        document.getElementById('btnResetMatch').addEventListener('click', resetMatch);
+
+        // Batterijduur Calculator Slider
+        batterySlider.addEventListener('input', (e) => {
+            const mah = parseInt(e.target.value);
+            calcCapacityDisplay.textContent = mah.toLocaleString('nl-NL') + ' mAh';
+            sliderValText.textContent = mah.toLocaleString('nl-NL') + ' mAh';
+
+            // Berekening: gem. stroomverbruik ca. 1.6A bij medium/high brightness
+            const hours = (mah / 1600).toFixed(1);
+            const matches = Math.floor(hours / 1.3);
+            const standbyHours = Math.floor(mah / 550);
+
+            calcHours.textContent = `~${hours} uur`;
+            calcMatches.textContent = `${matches} - ${matches + 2}`;
+            calcStandby.textContent = `~${standbyHours} uur`;
+        });
+
+        // Initialize Display
+        resetMatch();
+
+        // Theme Toggle Handler
+        const btnThemeToggle = document.getElementById('btnThemeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeLabel = document.getElementById('themeLabel');
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            try { localStorage.setItem('padelTheme', theme); } catch(e) {}
+            if (theme === 'light') {
+                themeIcon.textContent = '🌙';
+                themeLabel.textContent = 'Donker';
+            } else {
+                themeIcon.textContent = '☀️';
+                themeLabel.textContent = 'Licht';
+            }
+        }
+
+        if (btnThemeToggle) {
+            btnThemeToggle.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'light' ? 'dark' : 'light';
+                applyTheme(next);
+            });
+            // Sync initial button text/icon
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            applyTheme(currentTheme);
+        }
+    </script>
+</body>
+</html>

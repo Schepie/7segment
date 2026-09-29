@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 426" width="1024" height="426">
+  <rect width="1024" height="426" fill="#fbf8ea" />
+  <rect x="36" y="34" width="952" height="358" rx="8" fill="#161e2b" />
+  <g transform="translate(36, 34)">
+    <g id="dig_0" transform="translate(26, 23)">
+      <polygon id="dig_0_a" points="15,12 27,24 141,24 153,12 141,0 27,0" fill="#b6beca" />
+      <polygon id="dig_0_b" points="155,16 143,28 143,140 156,152 168,140 168,28" fill="#b6beca" />
+      <polygon id="dig_0_c" points="155,159 143,171 143,284 156,296 168,284 168,171" fill="#b6beca" />
+      <polygon id="dig_0_d" points="15,299 26,311 141,311 152,300 140,287 28,287" fill="#b6beca" />
+      <polygon id="dig_0_e" points="12,159 0,171 0,285 11,296 24,284 24,171" fill="#b6beca" />
+      <polygon id="dig_0_f" points="12,15 0,27 0,141 12,153 24,141 24,27" fill="#b6beca" />
+      <polygon id="dig_0_g" points="15,156 27,168 140,168 152,155 141,144 27,144" fill="#b6beca" />
+    </g>
+    <g id="dig_1" transform="translate(242, 23)">
+      <polygon id="dig_1_a" points="15,12 27,24 141,24 153,12 141,0 27,0" fill="#b6beca" />
+      <polygon id="dig_1_b" points="155,16 143,28 143,140 156,152 168,140 168,28" fill="#b6beca" />
+      <polygon id="dig_1_c" points="155,159 143,171 143,284 156,296 168,284 168,171" fill="#b6beca" />
+      <polygon id="dig_1_d" points="15,299 26,311 141,311 152,300 140,287 28,287" fill="#b6beca" />
+      <polygon id="dig_1_e" points="12,159 0,171 0,285 11,296 24,284 24,171" fill="#b6beca" />
+      <polygon id="dig_1_f" points="12,15 0,27 0,141 12,153 24,141 24,27" fill="#b6beca" />
+      <polygon id="dig_1_g" points="15,156 27,168 140,168 152,155 141,144 27,144" fill="#b6beca" />
+    </g>
+    <g id="dig_2" transform="translate(545, 23)">
+      <polygon id="dig_2_a" points="15,12 27,24 141,24 153,12 141,0 27,0" fill="#b6beca" />
+      <polygon id="dig_2_b" points="155,16 143,28 143,140 156,152 168,140 168,28" fill="#b6beca" />
+      <polygon id="dig_2_c" points="155,159 143,171 143,284 156,296 168,284 168,171" fill="#b6beca" />
+      <polygon id="dig_2_d" points="15,299 26,311 141,311 152,300 140,287 28,287" fill="#b6beca" />
+      <polygon id="dig_2_e" points="12,159 0,171 0,285 11,296 24,284 24,171" fill="#b6beca" />
+      <polygon id="dig_2_f" points="12,15 0,27 0,141 12,153 24,141 24,27" fill="#b6beca" />
+      <polygon id="dig_2_g" points="15,156 27,168 140,168 152,155 141,144 27,144" fill="#b6beca" />
+    </g>
+    <g id="dig_3" transform="translate(761, 23)">
+      <polygon id="dig_3_a" points="15,12 27,24 141,24 153,12 141,0 27,0" fill="#b6beca" />
+      <polygon id="dig_3_b" points="155,16 143,28 143,140 156,152 168,140 168,28" fill="#b6beca" />
+      <polygon id="dig_3_c" points="155,159 143,171 143,284 156,296 168,284 168,171" fill="#b6beca" />
+      <polygon id="dig_3_d" points="15,299 26,311 141,311 152,300 140,287 28,287" fill="#b6beca" />
+      <polygon id="dig_3_e" points="12,159 0,171 0,285 11,296 24,284 24,171" fill="#b6beca" />
+      <polygon id="dig_3_f" points="12,15 0,27 0,141 12,153 24,141 24,27" fill="#b6beca" />
+      <polygon id="dig_3_g" points="15,156 27,168 140,168 152,155 141,144 27,144" fill="#b6beca" />
+    </g>
+    <g id="ladder">
+      <circle id="lad_L_0" cx="458" cy="35.5" r="8" fill="#b6beca" />
+      <circle id="lad_R_0" cx="493" cy="35.5" r="8" fill="#b6beca" />
+      <circle id="lad_L_1" cx="458" cy="62.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_1" cx="493" cy="62.0" r="8" fill="#b6beca" />
+      <circle id="lad_L_2" cx="458" cy="113.5" r="8" fill="#b6beca" />
+      <circle id="lad_R_2" cx="493" cy="113.5" r="8" fill="#b6beca" />
+      <circle id="lad_L_3" cx="458" cy="139.5" r="8" fill="#b6beca" />
+      <circle id="lad_R_3" cx="493" cy="139.5" r="8" fill="#b6beca" />
+      <circle id="lad_L_4" cx="458" cy="166.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_4" cx="493" cy="166.0" r="8" fill="#b6beca" />
+      <circle id="lad_L_5" cx="458" cy="192.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_5" cx="493" cy="192.0" r="8" fill="#b6beca" />
+      <circle id="lad_L_6" cx="458" cy="218.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_6" cx="493" cy="218.0" r="8" fill="#b6beca" />
+      <circle id="lad_L_7" cx="458" cy="243.5" r="8" fill="#b6beca" />
+      <circle id="lad_R_7" cx="493" cy="243.5" r="8" fill="#b6beca" />
+      <circle id="lad_L_8" cx="458" cy="270.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_8" cx="493" cy="270.0" r="8" fill="#b6beca" />
+      <circle id="lad_L_9" cx="458" cy="296.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_9" cx="493" cy="296.0" r="8" fill="#b6beca" />
+      <circle id="lad_L_10" cx="458" cy="322.0" r="8" fill="#b6beca" />
+      <circle id="lad_R_10" cx="493" cy="322.0" r="8" fill="#b6beca" />
+    </g>
+  </g>
+</svg>
