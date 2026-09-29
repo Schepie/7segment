@@ -1,8 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quick Start Guide - Bluetooth Remote Clicker</title>
+  <meta name="theme-color" content="#f2f2f7">
+  <script>
+    (function() {
+      try {
+        const p = new URLSearchParams(window.location.search).get('theme');
+        const t = p || localStorage.getItem('appTheme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#080c14' : '#f2f2f7');
+      } catch (e) { }
+    })();
+  </script>
   <style>
     @page {
       size: A4 portrait;
@@ -26,6 +39,176 @@
       width: 100%;
       max-width: 190mm;
       margin: 0 auto;
+    }
+
+    /* ── On-Screen Toolbar (Hidden in Print) ── */
+    .top-actions {
+      width: 100%;
+      max-width: 190mm;
+      margin: 12px auto 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-action:hover {
+      background: #f8fafc;
+    }
+    .btn-print-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: #0284c7;
+      border: 1px solid #0369a1;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-print-cta:hover {
+      background: #0369a1;
+    }
+
+    /* ── Screen Dark Theme ── */
+    @media screen {
+      [data-theme="dark"] body {
+        background: #080c14;
+        color: #f0f4f8;
+      }
+      [data-theme="dark"] .top-actions {
+        background: #101726;
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      [data-theme="dark"] .btn-action {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #f0f4f8;
+      }
+      [data-theme="dark"] .btn-action:hover {
+        background: rgba(255, 255, 255, 0.14);
+      }
+      [data-theme="dark"] .header {
+        border-bottom-color: rgba(255, 255, 255, 0.15);
+      }
+      [data-theme="dark"] .header-title h1 {
+        color: #ffffff;
+      }
+      [data-theme="dark"] .header-title p {
+        color: #94a3b8;
+      }
+      [data-theme="dark"] .steps-banner {
+        background: #101726;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+      [data-theme="dark"] .step-text h4 {
+        color: #ffffff;
+      }
+      [data-theme="dark"] .step-text p {
+        color: #94a3b8;
+      }
+      [data-theme="dark"] .remote-card,
+      [data-theme="dark"] .table-card,
+      [data-theme="dark"] .info-card {
+        background: #101726;
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+      [data-theme="dark"] .remote-card h3 {
+        color: #ffffff;
+      }
+      [data-theme="dark"] .remote-card .sub {
+        color: #94a3b8;
+      }
+      [data-theme="dark"] .section-title {
+        color: #ffffff;
+      }
+      [data-theme="dark"] thead {
+        background: #162032;
+      }
+      [data-theme="dark"] th {
+        color: #cbd5e1;
+        border-bottom-color: rgba(255, 255, 255, 0.12);
+      }
+      [data-theme="dark"] td {
+        color: #e2e8f0;
+        border-bottom-color: rgba(255, 255, 255, 0.06);
+      }
+      [data-theme="dark"] tr:nth-child(even) td {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      [data-theme="dark"] .info-card h4 {
+        color: #ffffff;
+      }
+      [data-theme="dark"] .info-card li {
+        color: #cbd5e1;
+      }
+      [data-theme="dark"] .footer {
+        color: #64748b;
+        border-top-color: rgba(255, 255, 255, 0.1);
+      }
+      [data-theme="dark"] .badge-chip {
+        background: rgba(2, 132, 199, 0.2);
+        color: #38bdf8;
+      }
+      [data-theme="dark"] .action-tag {
+        color: #ffffff;
+      }
+    }
+
+    /* ── Print Overrides: Pure Clean White Sheet ── */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #1e293b !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .container {
+        max-width: 100% !important;
+        margin: 0 !important;
+      }
+      .remote-card, .table-card, .info-card, .steps-banner {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        border-color: #e2e8f0 !important;
+      }
+      thead {
+        background: #f1f5f9 !important;
+      }
+      th {
+        color: #334155 !important;
+      }
+      td {
+        color: #1e293b !important;
+      }
+      .step-text h4, .header-title h1, .section-title, .info-card h4 {
+        color: #0f172a !important;
+      }
+      .step-text p, .header-title p, .remote-card .sub, .info-card li {
+        color: #475569 !important;
+      }
     }
 
     /* Header */
@@ -278,6 +461,21 @@
 </head>
 <body>
 
+<!-- On-Screen Action Bar (Hidden in Print) -->
+<div class="top-actions no-print">
+  <a href="index.html" class="btn-action" id="btnBackToApp">
+    <span>←</span> Scoreboard App
+  </a>
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <button type="button" id="btnThemeToggle" class="btn-action" title="Toggle Theme">
+      <span id="themeToggleIcon">🌙</span> <span id="themeToggleText">Dark</span>
+    </button>
+    <button type="button" onclick="window.print()" class="btn-print-cta">
+      🖨️ Print / Save PDF
+    </button>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Header -->
@@ -514,6 +712,52 @@
   </div>
 
 </div>
+
+<script>
+  function getTargetTheme() {
+    const p = new URLSearchParams(window.location.search).get('theme');
+    let saved = 'light';
+    try { saved = localStorage.getItem('appTheme'); } catch (e) { }
+    return p || saved || 'light';
+  }
+
+  function applyGuideTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('appTheme', theme); } catch (e) { }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#080c14' : '#f2f2f7');
+    const icon = document.getElementById('themeToggleIcon');
+    const text = document.getElementById('themeToggleText');
+    if (icon) icon.textContent = theme === 'light' ? '🌙' : '☀️';
+    if (text) text.textContent = theme === 'light' ? 'Dark' : 'Light';
+    const btnBack = document.getElementById('btnBackToApp');
+    if (btnBack) {
+      btnBack.setAttribute('href', `index.html?theme=${encodeURIComponent(theme)}`);
+    }
+  }
+
+  const initialTheme = getTargetTheme();
+  applyGuideTheme(initialTheme);
+
+  const btnThemeToggle = document.getElementById('btnThemeToggle');
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener('click', () => {
+      const curr = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = curr === 'light' ? 'dark' : 'light';
+      applyGuideTheme(next);
+    });
+  }
+
+  const btnBack = document.getElementById('btnBackToApp');
+  if (btnBack) {
+    btnBack.addEventListener('click', (e) => {
+      if (window.history.length > 1) {
+        e.preventDefault();
+        window.history.back();
+      }
+    });
+  }
+</script>
 
 </body>
 </html>

@@ -1,16 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Remote Guide - Padel Scoreboard</title>
   <meta name="description" content="Mobile Quick Start Guide for the Bluetooth Remote Clicker of the ESP32 Padel Scoreboard.">
-  <meta name="theme-color" content="#080c14">
+  <meta name="theme-color" content="#f2f2f7">
   <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      try {
+        const p = new URLSearchParams(window.location.search).get('theme');
+        const t = p || localStorage.getItem('appTheme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', t === 'dark' ? '#080c14' : '#f2f2f7');
+      } catch (e) { }
+    })();
+  </script>
   <style>
     :root {
       --bg-base: #080c14;
@@ -89,6 +100,27 @@
     }
     .btn-back:hover, .btn-back:active {
       background: rgba(255, 255, 255, 0.16);
+    }
+
+    .btn-theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .btn-theme-toggle:active {
+      transform: scale(0.92);
     }
 
     .top-badge {
@@ -329,6 +361,94 @@
       font-weight: 800;
       white-space: nowrap;
     }
+
+    /* ── Light Theme Overrides ── */
+    [data-theme="light"] {
+      --bg-base: #f2f2f7;
+      --bg-surface: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-border: rgba(0, 0, 0, 0.08);
+      --team1-blue: #007aff;
+      --team1-glow: rgba(0, 122, 255, 0.25);
+      --team2-red: #ff3b30;
+      --team2-glow: rgba(255, 59, 48, 0.25);
+      --accent-green: #34c759;
+      --accent-gold: #ff9500;
+      --text-main: #1c1c1e;
+      --text-muted: #6c6c70;
+    }
+    [data-theme="light"] body {
+      background: radial-gradient(circle at 50% 0%, #e8eaf0 0%, #f2f2f7 85%);
+      color: var(--text-main);
+    }
+    [data-theme="light"] .top-bar {
+      background: rgba(255, 255, 255, 0.92);
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    [data-theme="light"] .btn-back,
+    [data-theme="light"] .btn-theme-toggle {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.10);
+      color: var(--text-main);
+    }
+    [data-theme="light"] .btn-back:hover,
+    [data-theme="light"] .btn-theme-toggle:hover {
+      background: rgba(0, 0, 0, 0.09);
+    }
+    [data-theme="light"] .hero-card {
+      background: linear-gradient(135deg, rgba(0, 122, 255, 0.10), rgba(255, 59, 48, 0.08));
+      border-color: rgba(0, 122, 255, 0.25);
+    }
+    [data-theme="light"] .hero-title,
+    [data-theme="light"] .step-info h4,
+    [data-theme="light"] .action-trigger {
+      color: #1c1c1e;
+    }
+    [data-theme="light"] .section-title {
+      color: #6c6c70;
+    }
+    [data-theme="light"] .step-card,
+    [data-theme="light"] .remote-visual-card,
+    [data-theme="light"] .action-card {
+      background: #ffffff;
+      border-color: rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    [data-theme="light"] code {
+      background: rgba(0, 0, 0, 0.06);
+      color: #007aff;
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    [data-theme="light"] .badge-t1 {
+      background: rgba(0, 122, 255, 0.10);
+      border-color: rgba(0, 122, 255, 0.35);
+      color: #007aff;
+    }
+    [data-theme="light"] .badge-t2 {
+      background: rgba(255, 59, 48, 0.10);
+      border-color: rgba(255, 59, 48, 0.35);
+      color: #ff3b30;
+    }
+    [data-theme="light"] .badge-both {
+      background: rgba(255, 149, 0, 0.12);
+      border-color: rgba(255, 149, 0, 0.35);
+      color: #d97706;
+    }
+    [data-theme="light"] .tip-card {
+      background: rgba(255, 149, 0, 0.06);
+      border-color: rgba(255, 149, 0, 0.25);
+    }
+    [data-theme="light"] .print-switch-card {
+      background: rgba(0, 0, 0, 0.02);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+    [data-theme="light"] .btn-print-link {
+      background: rgba(0, 122, 255, 0.10);
+      border-color: rgba(0, 122, 255, 0.35);
+      color: #007aff;
+    }
   </style>
 </head>
 <body>
@@ -341,8 +461,13 @@
         <span>←</span>
         <span>Scoreboard App</span>
       </a>
-      <div class="top-badge">
-        <span>🔘 Bluetooth Remote</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="btn-theme-toggle" id="btnThemeToggle" title="Toggle theme">
+          <span id="themeToggleIcon">🌙</span>
+        </button>
+        <div class="top-badge">
+          <span>🔘 Bluetooth Remote</span>
+        </div>
       </div>
     </header>
 
@@ -557,7 +682,47 @@
   </div>
 
   <script>
-    // Smooth back button navigation
+    // Theme Manager
+    function getTargetTheme() {
+      const p = new URLSearchParams(window.location.search).get('theme');
+      let saved = 'light';
+      try { saved = localStorage.getItem('appTheme'); } catch (e) { }
+      return p || saved || 'light';
+    }
+
+    function applyGuideTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try { localStorage.setItem('appTheme', theme); } catch (e) { }
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', theme === 'dark' ? '#080c14' : '#f2f2f7');
+      const icon = document.getElementById('themeToggleIcon');
+      if (icon) icon.textContent = theme === 'light' ? '🌙' : '☀️';
+      // Sync print link URL param
+      const printLink = document.querySelector('.btn-print-link');
+      if (printLink) {
+        const base = printLink.getAttribute('href').split('?')[0];
+        printLink.setAttribute('href', `${base}?theme=${encodeURIComponent(theme)}`);
+      }
+      // Sync back button
+      const btnBack = document.getElementById('btnBack');
+      if (btnBack) {
+        btnBack.setAttribute('href', `index.html?theme=${encodeURIComponent(theme)}`);
+      }
+    }
+
+    const initialTheme = getTargetTheme();
+    applyGuideTheme(initialTheme);
+
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener('click', () => {
+        const curr = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = curr === 'light' ? 'dark' : 'light';
+        applyGuideTheme(next);
+      });
+    }
+
+    // Back button behavior
     const btnBack = document.getElementById('btnBack');
     if (btnBack) {
       btnBack.addEventListener('click', (e) => {
