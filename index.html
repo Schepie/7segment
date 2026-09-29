@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -8,9 +8,9 @@
     <title>Padel Scoreboard - Mobile Controller</title>
     <meta name="description"
         content="Mobile-first Web Bluetooth companion app for ESP32 7-segment Padel Scoreboard. Control live score, brightness, sleep timeout, RTC time sync, and match rules directly from your phone.">
-    <meta name="theme-color" content="#080c14">
+    <meta name="theme-color" content="#f2f2f7">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Padel Score">
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -23,7 +23,7 @@
         rel="stylesheet">
     <!-- Anti-flash & Visual Viewport Height Manager: applied before first paint -->
     <script>
-        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme') || 'dark'); } catch (e) { }
+        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme') || 'light'); } catch (e) { }
         function syncAppHeight() {
             const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             document.documentElement.style.setProperty('--app-height', h + 'px');
@@ -2985,7 +2985,7 @@
                     <div class="section-header">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.7.5</span>
+                            id="appVersionBadge">v1.7.6</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -3014,11 +3014,11 @@
                         <span>🎨 App Theme</span>
                     </div>
                     <div class="pills-row" id="pillsTheme" style="grid-template-columns: 1fr 1fr;">
-                        <button type="button" class="pill-select pill-theme active" data-theme="dark" id="pillThemeDark"
+                        <button type="button" class="pill-select pill-theme" data-theme="dark" id="pillThemeDark"
                             style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
                             🌑 Dark
                         </button>
-                        <button type="button" class="pill-select pill-theme" data-theme="light" id="pillThemeLight"
+                        <button type="button" class="pill-select pill-theme active" data-theme="light" id="pillThemeLight"
                             style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
                             ☀️ Light
                         </button>
@@ -4913,7 +4913,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.7.5';
+        const CURRENT_APP_VERSION = '1.7.6';
         let swRegistration = null;
         let isRefreshing = false;
 
@@ -5103,7 +5103,7 @@
         // Theme Manager (Dark / Light)
         // -------------------------------------------------------
         (function initTheme() {
-            const saved = localStorage.getItem('appTheme') || 'dark';
+            const saved = localStorage.getItem('appTheme') || 'light';
             applyTheme(saved);
         })();
 

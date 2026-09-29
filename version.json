@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T12:57:00Z",
-  "notes": "Fixed scroll-card flexbox min-height bug and visualViewport height tracking to guarantee bottom navigation is always visible.",
-  "version": "1.7.5"
+  "buildTime": "2026-09-29T13:15:00Z",
+  "notes": "Default to Light theme and Simple layout upon first install.",
+  "version": "1.7.6"
 }
