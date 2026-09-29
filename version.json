@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T10:01:00Z",
-  "notes": "Fixed navigation bar DOM nesting and improved icon bar sizing, width, touch targets, and typography.",
-  "version": "1.6.9"
+  "buildTime": "2026-09-29T11:55:00Z",
+  "notes": "Added service indicator (gold pulse on games ladder & tiebreak dots), remote 0-0 serve toggle, and Quick Start Guide links in Info tab.",
+  "version": "1.7.1"
 }

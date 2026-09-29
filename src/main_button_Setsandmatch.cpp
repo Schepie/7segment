@@ -99,6 +99,8 @@ struct ScoreState {
   bool betweenSets;
   int compSetG1, compSetG2;
   bool courtInverted;
+  int server;
+  int tbFirstSrv;
 };
 
 #define SCORE_HISTORY_DEPTH 30
@@ -127,6 +129,29 @@ bool cfgTiebreak    = true;  // true = Tiebreak at 6-6 (or 8-8)
 bool inTiebreak = false;
 int tiebreakPoints1 = 0;
 int tiebreakPoints2 = 0;
+
+// Service Tracking (1 = Team 1 Left/Blue, 2 = Team 2 Right/Red)
+int currentServer = 1;
+int tbFirstServer = 1;
+
+int getTiebreakCurrentServer() {
+  int tot = tiebreakPoints1 + tiebreakPoints2;
+  if (tot == 0) return tbFirstServer;
+  int pair = (tot - 1) / 2;
+  return (pair % 2 == 0) ? (tbFirstServer == 1 ? 2 : 1) : tbFirstServer;
+}
+
+int getTiebreakServeCount() {
+  int tot = tiebreakPoints1 + tiebreakPoints2;
+  if (tot == 0) return 1;
+  return ((tot - 1) % 2) + 1; // 1 or 2
+}
+
+bool isAtMatchStart() {
+  return (team1Point == POINT_0 && team2Point == POINT_0 &&
+          team1Games == 0 && team2Games == 0 &&
+          team1Sets == 0 && team2Sets == 0 && !matchWon && !inTiebreak);
+}
 
 // Historical set games tracking for match summary
 int set1Games1 = 0, set1Games2 = 0;
@@ -465,6 +490,47 @@ void drawGamesAndSets(int games1, int sets1, int games2, int sets2, bool swapped
   for (int g = 0; g < 9; g++) {
     int ledIdx = base + 23 - g; // g=0 (Game 1) -> LED 24, g=1 (Game 2) -> LED 23, etc.
     pixels.setPixelColor(ledIdx, (g < rightGames) ? rightColor : 0);
+  }
+
+  // --- Serve Indicator Overlay ---
+  if (!matchWon && !betweenSets) {
+    if (!inTiebreak) {
+      // Proposal 1: Next unearned game dot pulses Gold on serving team's column
+      uint32_t ms = millis() % 1400;
+      float pulse = (ms < 700) ? (0.25f + 0.75f * ((float)ms / 700.0f)) : (1.0f - 0.75f * (((float)ms - 700.0f) / 700.0f));
+      uint32_t goldPulse = scaleColor(pixels.Color(255, 215, 0), pulse * brightnessFactor);
+
+      int activeServer = currentServer; // 1 or 2
+      bool isLeftServer = (!swapped && activeServer == 1) || (swapped && activeServer == 2);
+
+      if (isLeftServer) {
+        if (leftGames < 9) {
+          pixels.setPixelColor(base + leftGames, goldPulse);
+        }
+      } else {
+        if (rightGames < 9) {
+          pixels.setPixelColor(base + 23 - rightGames, goldPulse);
+        }
+      }
+    } else {
+      // Proposal 4: Tiebreak serve tracking (1 dot for 1st serve, 2 dots for 2nd serve in Gold)
+      int activeTbServer = getTiebreakCurrentServer();
+      int serveCount = getTiebreakServeCount(); // 1 or 2
+      bool isLeftTbServer = (!swapped && activeTbServer == 1) || (swapped && activeTbServer == 2);
+      uint32_t goldSolid = scaleColor(pixels.Color(255, 215, 0), brightnessFactor);
+
+      if (isLeftTbServer) {
+        pixels.setPixelColor(base + 0, goldSolid);
+        if (serveCount >= 2) {
+          pixels.setPixelColor(base + 1, goldSolid);
+        }
+      } else {
+        pixels.setPixelColor(base + 23, goldSolid);
+        if (serveCount >= 2) {
+          pixels.setPixelColor(base + 22, goldSolid);
+        }
+      }
+    }
   }
 }
 
@@ -1550,6 +1616,8 @@ void saveScoreState() {
     scoreHistory[SCORE_HISTORY_DEPTH - 1].compSetG1 = completedSetGames1;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].compSetG2 = completedSetGames2;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].courtInverted = courtSideInverted;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].server = currentServer;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].tbFirstSrv = tbFirstServer;
   }
 }
 
@@ -1578,6 +1646,8 @@ bool undoScoreState() {
   completedSetGames1 = scoreHistory[historyCount].compSetG1;
   completedSetGames2 = scoreHistory[historyCount].compSetG2;
   courtSideInverted  = scoreHistory[historyCount].courtInverted;
+  currentServer      = scoreHistory[historyCount].server;
+  tbFirstServer      = scoreHistory[historyCount].tbFirstSrv;
   if (!matchWon) {
     matchWonPhase = MATCH_PHASE_NONE;
   }
@@ -1675,6 +1745,7 @@ void addPadelPoint(int team) {
         team2Games++;
         team2Sets++;
       }
+      currentServer = (tbFirstServer == 1) ? 2 : 1; // Team that received in point 1 of tiebreak serves game 1 of next set
 
       // Record this completed set's final games (e.g. 7-6 or 9-8):
       if (totalSetsPlayed == 0) {
@@ -1777,6 +1848,8 @@ void addPadelPoint(int team) {
       inTiebreak = true;
       tiebreakPoints1 = 0;
       tiebreakPoints2 = 0;
+      tbFirstServer = (currentServer == 1) ? 2 : 1;
+      currentServer = tbFirstServer;
       triggerTiebreakIntroAnimation = true; // Show tb indicator once at start
       betweenGames = true;
       betweenSets = false;
@@ -1785,6 +1858,9 @@ void addPadelPoint(int team) {
       notifyWatchScore();
       return;
     }
+
+    // Normal game won - rotate server to opponent:
+    currentServer = (currentServer == 1) ? 2 : 1;
 
     // Check Set Won condition:
     // Win set at cfgGamesPerSet (6 or 9) with >=2 lead, or advantage sets if tiebreak disabled
@@ -1889,16 +1965,17 @@ void notifyWatchScore() {
   }
   bool isSuperTb = (inTiebreak && cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1);
   int tbMode = inTiebreak ? (isSuperTb ? 2 : 1) : 0;
+  int effectiveServer = inTiebreak ? getTiebreakCurrentServer() : currentServer;
 
   char buf[48];
   if (!currentCourtSwapped) {
-    snprintf(buf, sizeof(buf), "%c%c%c%c,0,%d,%d,%d,%d,%d",
+    snprintf(buf, sizeof(buf), "%c%c%c%c,0,%d,%d,%d,%d,%d,%d",
              t1T, t1O, t2T, t2O,
-             team1Games, team2Games, team1Sets, team2Sets, tbMode);
+             team1Games, team2Games, team1Sets, team2Sets, tbMode, effectiveServer);
   } else {
-    snprintf(buf, sizeof(buf), "%c%c%c%c,1,%d,%d,%d,%d,%d",
+    snprintf(buf, sizeof(buf), "%c%c%c%c,1,%d,%d,%d,%d,%d,%d",
              t2T, t2O, t1T, t1O,
-             team2Games, team1Games, team2Sets, team1Sets, tbMode);
+             team2Games, team1Games, team2Sets, team1Sets, tbMode, (effectiveServer == 1 ? 2 : 1));
   }
   pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
   pWatchCharacteristic->notify();
@@ -1985,6 +2062,8 @@ void resetMatchScores() {
   matchWonPhase = MATCH_PHASE_NONE;
   courtSideInverted = false;
   currentCourtSwapped = false;
+  currentServer = 1;
+  tbFirstServer = 1;
   showingSettingsInfo = true;
   scoreNeedsUpdate = true;
   notifyWatchScore();
@@ -2337,6 +2416,21 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
         courtSideInverted = !courtSideInverted;
         currentCourtSwapped = isCourtSwapped();
         animateCourtSideSwap(currentCourtSwapped);
+        notifyWatchScore();
+        scoreNeedsUpdate = true;
+      } else if (cmd == "SRV,1" || cmd == "SRV=1") {
+        currentServer = 1;
+        tbFirstServer = 1;
+        notifyWatchScore();
+        scoreNeedsUpdate = true;
+      } else if (cmd == "SRV,2" || cmd == "SRV=2") {
+        currentServer = 2;
+        tbFirstServer = 2;
+        notifyWatchScore();
+        scoreNeedsUpdate = true;
+      } else if (cmd == "SRV,TOGGLE" || cmd == "TOGGLE_SRV") {
+        currentServer = (currentServer == 1) ? 2 : 1;
+        tbFirstServer = currentServer;
         notifyWatchScore();
         scoreNeedsUpdate = true;
       } else if (cmd.rfind("CTR,", 0) == 0) {
@@ -3135,7 +3229,18 @@ void loop() {
     if (currentMode == MODE_COUNTER) {
       handleCounterRemoteButton(lastPressedButton, true);
     } else {
-      if (undoScoreState()) {
+      if (isAtMatchStart()) {
+        currentServer = (currentServer == 1) ? 2 : 1;
+        tbFirstServer = currentServer;
+        showingSettingsInfo = false; // exit settings splash if shown
+        Serial.printf("[BUTTON] Double Click at 0-0 -> Toggled First Server! Team %d is now serving first.\n", currentServer);
+        // Quick flash on middle module
+        drawGamesAndSets(0, 0, 0, 0);
+        showPixelsSafe();
+        delay(60);
+        scoreNeedsUpdate = true;
+        notifyWatchScore();
+      } else if (undoScoreState()) {
         const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
         Serial.printf("[BUTTON] Double Click -> UNDO! Restored: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
                       pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
@@ -3329,6 +3434,14 @@ void loop() {
   if (scoreNeedsUpdate && currentMode == MODE_SCOREBOARD) {
     scoreNeedsUpdate = false;
     renderPadelScoreboard();
+  }
+
+  // Smooth breathing animation for the serving team's next game gold pulse (Proposal 1 & 4)
+  static uint32_t lastServePulseTime = 0;
+  if (currentMode == MODE_SCOREBOARD && !showingSettingsInfo && !matchWon && (millis() - lastServePulseTime >= 40)) {
+    lastServePulseTime = millis();
+    drawGamesAndSets(isCourtSwapped());
+    showPixelsSafe();
   }
 
   delay(20);

@@ -2422,7 +2422,7 @@
                     style="cursor: pointer;">
                     <div class="score-grid">
                         <div class="team-pod">
-                            <span class="team-pod-name t1" id="labelT1">Home</span>
+                            <span class="team-pod-name t1" id="labelT1">Home <span id="serveBall1" style="display:none; font-size:12px; margin-left:2px;">🎾</span></span>
                             <div class="lcd-digits t1" id="digitT1">00</div>
                         </div>
 
@@ -2436,7 +2436,7 @@
                         </div>
 
                         <div class="team-pod">
-                            <span class="team-pod-name t2" id="labelT2">Guests</span>
+                            <span class="team-pod-name t2" id="labelT2">Guests <span id="serveBall2" style="display:none; font-size:12px; margin-left:2px;">🎾</span></span>
                             <div class="lcd-digits t2" id="digitT2">00</div>
                         </div>
                     </div>
@@ -2444,6 +2444,10 @@
                     <div class="court-banner">
                         <span id="courtSideText">↔️ L: Home (Blue) | R: Guests (Red)</span>
                         <span id="tbBadge" class="badge-tb-indicator" style="display: none;">tb</span>
+                        <button type="button" class="btn-serve-badge" id="btnToggleServe" title="Tap to toggle serving team"
+                            style="border:none; background:rgba(255,215,0,0.15); color:#ffd700; border:1px solid rgba(255,215,0,0.3); padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; cursor:pointer;">
+                            🎾 <span id="serveSideName">Home</span>
+                        </button>
                         <span id="displayModeBadge"
                             style="font-size: 10px; font-weight: 800; color: var(--accent-green);">SCORE</span>
                     </div>
@@ -2944,7 +2948,7 @@
                     <div class="section-header" style="margin-top: 6px;">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.6.9</span>
+                            id="appVersionBadge">v1.7.1</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -2994,6 +2998,25 @@
                             <a href="https://www.tennisenpadelvlaanderen.be/padel/spelregels-padel" target="_blank"
                                 class="btn-qr-link">View Rules ↗</a>
                         </div>
+                    </div>
+
+                    <!-- Quick Start Guides Links -->
+                    <div class="section-header" style="margin-top: 10px;">
+                        <span>📄 Quick Start Guides</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">
+                        <a href="quick_start_app.html" target="_blank" class="qr-card" style="text-decoration: none; padding: 10px 8px; justify-content: center; gap: 4px;">
+                            <span style="font-size: 20px;">📱</span>
+                            <span style="font-size: 11px; font-weight: 800; color: var(--text-main);">App Guide</span>
+                            <span style="font-size: 9.5px; color: var(--text-muted); line-height: 1.2;">Mobile UI & WebBLE</span>
+                            <span class="btn-qr-link" style="margin-top: 4px; pointer-events: none;">View Guide ↗</span>
+                        </a>
+                        <a href="quick_start_bt_button.html" target="_blank" class="qr-card" style="text-decoration: none; padding: 10px 8px; justify-content: center; gap: 4px;">
+                            <span style="font-size: 20px;">🔘</span>
+                            <span style="font-size: 11px; font-weight: 800; color: var(--text-main);">Remote Guide</span>
+                            <span style="font-size: 9.5px; color: var(--text-muted); line-height: 1.2;">BT Clicker & Serves</span>
+                            <span class="btn-qr-link" style="margin-top: 4px; pointer-events: none;">View Guide ↗</span>
+                        </a>
                     </div>
 
                     <!-- Advanced Settings Toggle -->
@@ -3078,7 +3101,7 @@
             <div class="sb-team-side t1" id="sbTeamSideL" title="Tap to score +1 for Left team">
                 <div class="sb-team-header">
                     <span class="sb-team-badge" id="sbBadgeL">BLUE</span>
-                    <span class="sb-team-name" id="sbLabelL">HOME</span>
+                    <span class="sb-team-name" id="sbLabelL">HOME <span id="sbServeBallL" style="display:none; font-size:14px; margin-left:3px;">🎾</span></span>
                 </div>
                 <div class="sb-digit-wrap">
                     <div class="sb-digit" id="sbDigitL">00</div>
@@ -3105,7 +3128,7 @@
             <div class="sb-team-side t2" id="sbTeamSideR" title="Tap to score +1 for Right team">
                 <div class="sb-team-header">
                     <span class="sb-team-badge" id="sbBadgeR">RED</span>
-                    <span class="sb-team-name" id="sbLabelR">GUESTS</span>
+                    <span class="sb-team-name" id="sbLabelR">GUESTS <span id="sbServeBallR" style="display:none; font-size:14px; margin-left:3px;">🎾</span></span>
                 </div>
                 <div class="sb-digit-wrap">
                     <div class="sb-digit" id="sbDigitR">00</div>
@@ -3161,6 +3184,7 @@
             inTb: false,
             tbMode: 0,
             tbIntro: false,
+            servingTeam: 1,
             currentMode: 'SCORE'
         };
         window.boardState = boardState;
@@ -3511,6 +3535,9 @@
                     boardState.tbIntro = false;
                 }
             }
+            if (parts.length >= 8) {
+                boardState.servingTeam = parseInt(parts[7]) || 1;
+            }
 
             renderMirrorUI();
         }
@@ -3586,6 +3613,23 @@
                 if (sbBadgeR) sbBadgeR.textContent = 'Blue';
                 if (sbTeamSideL) { sbTeamSideL.classList.remove('t1'); sbTeamSideL.classList.add('t2'); }
                 if (sbTeamSideR) { sbTeamSideR.classList.remove('t2'); sbTeamSideR.classList.add('t1'); }
+            }
+
+            // Service Indicators (🎾)
+            const isLeftServing = (!boardState.isSwapped && boardState.servingTeam === 1) || (boardState.isSwapped && boardState.servingTeam === 2);
+            const serveBall1 = document.getElementById('serveBall1');
+            const serveBall2 = document.getElementById('serveBall2');
+            const sbServeBallL = document.getElementById('sbServeBallL');
+            const sbServeBallR = document.getElementById('sbServeBallR');
+            const serveSideName = document.getElementById('serveSideName');
+
+            if (serveBall1) serveBall1.style.display = isLeftServing ? 'inline' : 'none';
+            if (serveBall2) serveBall2.style.display = !isLeftServing ? 'inline' : 'none';
+            if (sbServeBallL) sbServeBallL.style.display = isLeftServing ? 'inline' : 'none';
+            if (sbServeBallR) sbServeBallR.style.display = !isLeftServing ? 'inline' : 'none';
+            if (serveSideName) {
+                const srvName = isLeftServing ? (boardState.isSwapped ? 'Guests' : 'Home') : (boardState.isSwapped ? 'Home' : 'Guests');
+                serveSideName.textContent = srvName;
             }
 
             if (boardState.tbIntro) {
@@ -3674,9 +3718,22 @@
         });
         btnCmdReset.addEventListener('click', () => {
             if (confirm('Reset match scores to 0-0?')) {
+                boardState.servingTeam = 1;
+                renderMirrorUI();
                 sendBleText('CMD,RESET');
             }
         });
+
+        const btnToggleServe = document.getElementById('btnToggleServe');
+        if (btnToggleServe) {
+            btnToggleServe.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newSrv = (boardState.servingTeam === 1) ? 2 : 1;
+                boardState.servingTeam = newSrv;
+                renderMirrorUI();
+                sendBleText(`CMD,SRV,${newSrv}`);
+            });
+        }
 
         btnCmdToggleMode.addEventListener('click', () => {
             if (boardState.currentMode === 'SCORE') {
@@ -4780,7 +4837,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.6.9';
+        const CURRENT_APP_VERSION = '1.7.1';
         let swRegistration = null;
         let isRefreshing = false;
 
