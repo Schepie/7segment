@@ -261,16 +261,6 @@ bool counterNeedsUpdate = true;
 uint32_t lastCounterRender = 0;
 uint32_t lastActivityTime = 0;
 uint8_t  cfgBrightness    = 180;             // LED brightness (0 - 255)
-
-// Hardware power governor & brightness manager
-inline void updateLedBrightness(uint8_t brt) {
-  cfgBrightness = brt; // Keep user's configured setting (e.g. 255) for flash and UI
-  // Cap actual hardware PWM brightness to 240 (94%).
-  // This avoids Adafruit_NeoPixel uint8_t overflow (255+1=0) which bypasses all scaling,
-  // and eliminates voltage droop / ground bounce between segments that causes ghosting.
-  uint8_t safeBrt = (brt > 240) ? 240 : brt;
-  pixels.setBrightness(safeBrt);
-}
 uint32_t cfgIdleTimeoutMs = 5 * 60 * 1000;   // Inactivity timeout in ms (0 = Never)
 uint8_t  cfgClockR        = 0;               // Clock Digit Color: Red component (Default Pure Green #00FF00)
 uint8_t  cfgClockG        = 255;             // Clock Digit Color: Green component
@@ -318,6 +308,16 @@ bool doScan = true;
 
 // Hardware Instances
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+// Hardware power governor & brightness manager
+inline void updateLedBrightness(uint8_t brt) {
+  cfgBrightness = brt; // Keep user's configured setting (e.g. 255) for flash and UI
+  // Cap actual hardware PWM brightness to 240 (94%).
+  // This avoids Adafruit_NeoPixel uint8_t overflow (255+1=0) which bypasses all scaling,
+  // and eliminates voltage droop / ground bounce between segments that causes ghosting.
+  uint8_t safeBrt = (brt > 240) ? 240 : brt;
+  pixels.setBrightness(safeBrt);
+}
 
 // ==============================================================================
 // 7-Segment Font Table
