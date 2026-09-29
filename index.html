@@ -126,9 +126,13 @@
         .btn-ctr-action,
         .btn-step-chip,
         .btn-ble-pill,
-        .color-chip,
-        .bottom-nav-btn {
+        .color-chip {
             box-shadow: none !important;
+        }
+
+        [data-theme="light"] .bottom-nav-btn.active {
+            background: #ffffff !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
         }
 
         [data-theme="light"] .btn-tool-chip:active {
@@ -1424,15 +1428,18 @@
 
         /* Bottom Fixed Navigation Bar */
         .bottom-nav {
+            width: 100%;
             display: flex;
-            gap: 2px;
+            gap: 3px;
             background: var(--bg-card);
             backdrop-filter: blur(16px);
-            padding: 4px 2px;
+            padding: 5px 4px;
             border-radius: var(--radius-xl);
             border: 1px solid var(--bg-card-border);
             flex-shrink: 0;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            min-height: 52px;
+            box-sizing: border-box;
         }
 
         .bottom-nav-btn {
@@ -1442,16 +1449,18 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
-            padding: 6px 1px;
-            font-size: 9.5px;
+            gap: 3px;
+            padding: 6px 2px;
+            font-size: 10.5px;
             font-weight: 700;
+            letter-spacing: -0.01em;
             border-radius: var(--radius-md);
             border: none;
             background: transparent;
             color: var(--text-muted);
             cursor: pointer;
             transition: all 0.15s ease;
+            white-space: nowrap;
         }
 
         .bottom-nav-btn.advanced-nav-btn {
@@ -1463,7 +1472,8 @@
         }
 
         .bottom-nav-btn span.icon {
-            font-size: 16px;
+            font-size: 19px;
+            line-height: 1.1;
         }
 
         .bottom-nav-btn.active {
@@ -2908,14 +2918,6 @@
                         <button type="button" class="pill-select" data-idle="0">Never</button>
                     </div>
 
-                    <div class="section-header" style="margin-top: 6px;">
-                        <span>💡 Display Hardware Layout</span>
-                    </div>
-                    <div class="pills-row" id="pillsLedLayout">
-                        <button type="button" class="pill-select active" data-layout="0">🎾 136 LEDs (Full)</button>
-                        <button type="button" class="pill-select" data-layout="1">⏰ 114 LEDs (+Colon)</button>
-                        <button type="button" class="pill-select" data-layout="2">🔢 112 LEDs (4 Digits)</button>
-                    </div>
                 </div>
             </div>
 
@@ -2942,7 +2944,7 @@
                     <div class="section-header" style="margin-top: 6px;">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.6.7</span>
+                            id="appVersionBadge">v1.6.9</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -3144,7 +3146,7 @@
             tb: 1,
             brt: 180,
             idle: 300000,
-            layout: parseInt(localStorage.getItem('padel_led_layout') || '0'),
+            layout: 0, // Fixed to 136 LEDs (Full padel scoreboard)
             clockColor: localStorage.getItem('padel_clock_color') || '#00FF00'
         };
 
@@ -3455,10 +3457,7 @@
             syncRulesPresetBadge();
             if (idleMatch) updatePillGroupUI('pillsIdleTimeout', parseInt(idleMatch[1]), 'idle');
             if (layMatch) {
-                const lay = parseInt(layMatch[1]);
-                appConfig.layout = lay;
-                updatePillGroupUI('pillsLedLayout', lay, 'layout');
-                try { localStorage.setItem('padel_led_layout', lay); } catch (e) { }
+                appConfig.layout = parseInt(layMatch[1]);
             }
 
             if (brtMatch) {
@@ -4148,15 +4147,6 @@
             }, 80);
         }
 
-        async function autoSaveBleLayout() {
-            try { localStorage.setItem('padel_led_layout', appConfig.layout || 0); } catch (e) { }
-            if (!watchChar) return;
-            const ok = await sendBleText(`CMD,LAY,${appConfig.layout || 0}`);
-            if (ok) {
-                log(`Display layout auto-saved: ${appConfig.layout}`, 'suc');
-            }
-        }
-
         function setupPillGroup(containerId, configKey, valAttr = 'val') {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -4172,8 +4162,6 @@
                         autoSaveBleRules();
                     } else if (configKey === 'idle') {
                         autoSaveBleIdle();
-                    } else if (configKey === 'layout') {
-                        autoSaveBleLayout();
                     }
                 });
             });
@@ -4196,8 +4184,6 @@
         setupPillGroup('toggleGames', 'games');
         setupPillGroup('toggleTb', 'tb');
         setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
-        setupPillGroup('pillsLedLayout', 'layout', 'layout');
-        updatePillGroupUI('pillsLedLayout', appConfig.layout, 'layout');
         updateSetsPillLabel();
         loadRulePresets();
         renderRuleShortcuts();
@@ -4794,7 +4780,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.6.7';
+        const CURRENT_APP_VERSION = '1.6.9';
         let swRegistration = null;
         let isRefreshing = false;
 

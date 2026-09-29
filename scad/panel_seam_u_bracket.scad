@@ -28,28 +28,33 @@
 //    - 45° flared entry mouth for effortless drop-on installation.
 //    - Designed to print flat on its side for 100% continuous tensile strength!
 //
-// 3. Integrated Carrying Strap Mount (Beweegbaar Driehoekig Oog):
-//    - Two sturdy snap-fit hinge lugs on top web (20.0 mm span, 3.4 mm bore).
-//    - Movable 3D-printable triangular carrying eye with flexible split-snap pivot pins.
-//    - Swivels >180°: pulls straight UP for shoulder strap carrying, folds flat back
-//      when hanging on the padel court fence.
-//    - 100% tool-free snap-in installation, accepts standard carabiner clips & 20-25mm straps!
+// 3. Integrated Carrying Strap Mount (Top-Facing vs Rear-Facing):
+//    - Top-Facing Eye ("top", Picture 1): Monolithic triangular strap eye on top roof.
+//    - Rear-Facing Eye ("rear", Picture 2): Monolithic strap eye extending horizontally
+//      from the back of the bracket with dual 45° transition tapers.
+//      - The top of the bracket is 100% flat and flush.
+//      - Direct screw access: The rear flange extends straight down from below the 45°
+//        taper (at Y = 0), leaving >6.0 mm of flat clearance above the M3 screw centers
+//        and 8.5 mm of radial clearance to the eye tongue so screwdrivers and Allen keys
+//        have 100% unobstructed, straight-line coaxial access!
+//    - 100% support-free printing flat on its side with continuous perimeters!
 // ==============================================================================
 
 /* [Configuration & Part Selection] */
-part = 1; // [1:"single_standard - 1 Clean U-Bracket (Top or Bottom)", 2:"pair_standard - Pair of Clean U-Brackets (Top + Bottom)", 3:"single_padel_hook - 1 Padel Hook U-Bracket with Integrated Triangular Strap Eye", 4:"pair_padel_hook - Pair of Padel Hook U-Brackets with Integrated Strap Eyes", 5:"tournament_set4 - Full Set: 2x Top Hook Brackets with Integrated Eyes + 2x Bottom Clean", 8:"preview_strap_bracket - Closeup 3D Preview: Hook Bracket with 5x9mm Strap Hook", 9:"preview_padel_mesh - 3D Preview: Scoreboard with Hooks on Fence", 10:"preview_standard - 3D Preview: Clamped 2-Digit Assembly", 11:"cutaway_hook - Cross-Section Cutaway of Hook & Wire Seating"]
+part = 6; // [1:"single_standard - 1 Clean U-Bracket (Top or Bottom)", 2:"pair_standard - Pair of Clean U-Brackets (Top + Bottom)", 3:"single_hook_top_eye - 1 Hook Bracket with Top Eye (Picture 1)", 4:"pair_hook_top_eye - Pair of Hook Brackets with Top Eye", 5:"tournament_set4_top - Full Set: 2x Top Eye Hooks + 2x Bottom Clean", 6:"single_hook_rear_eye - 1 Hook Bracket with Rear Eye (Picture 2)", 7:"pair_hook_rear_eye - Pair of Hook Brackets with Rear Eye (Picture 2)", 8:"tournament_set4_rear - Full Set: 2x Rear Eye Hooks + 2x Bottom Clean", 9:"preview_strap_bracket - Closeup 3D Preview: Hook Bracket with 5x9mm Strap Hook", 10:"preview_padel_mesh - 3D Preview: Scoreboard with Hooks on Fence", 11:"preview_standard - 3D Preview: Clamped 2-Digit Assembly", 12:"cutaway_hook - Cross-Section Cutaway of Hook & Wire Seating"]
 
 /* [Fastening & Hardware Options] */
 screw_head_style = "countersunk"; // ["countersunk": Flat M3 DIN 7991 (compatible with thumbscrews), "counterbore": Cylindrical socket head M3 DIN 912 / Button head ISO 7380]
 
 /* [Integrated Carrying Strap Eye] */
-strap_eye_mount       = true;  // Integrate monolithic triangular strap eye directly onto U-hook bracket
-strap_eye_h           = 24.0;  // Height of triangular eye above bracket roof (mm)
-strap_eye_thick       = 5.0;   // Bar thickness along Z for the hook to grab (mm)
-strap_eye_top_w       = 20.0;  // Outer width of top arch (mm)
-strap_eye_hole_w      = 12.0;  // Inside opening width (mm, ample clearance for 9mm hook with 3mm free play)
-strap_hook_t          = 5.0;   // Strap hook thickness (mm)
-strap_hook_h          = 9.0;   // Strap hook height/width (mm)
+strap_eye_mount       = true;   // Integrate monolithic triangular strap eye directly onto U-hook bracket
+strap_eye_position    = "rear"; // ["rear": Rear-Facing Strap Eye (on the back, Picture 2), "top": Top-Facing Strap Eye (on the roof, Picture 1)]
+strap_eye_h           = 24.0;   // Length / height of triangular eye (mm)
+strap_eye_thick       = 5.0;    // Bar thickness for the hook to grab (mm)
+strap_eye_top_w       = 20.0;   // Outer width of top/tip arch (mm)
+strap_eye_hole_w      = 12.0;   // Inside opening width (mm, ample clearance for 9mm hook with 3mm free play)
+strap_hook_t          = 5.0;    // Strap hook thickness (mm)
+strap_hook_h          = 9.0;    // Strap hook height/width (mm)
 
 /* [Dimensions - Panel Interface] */
 panel_thick     = 18.5; // Panel depth (13.0mm frontplate + 5.5mm backplate)
@@ -103,6 +108,9 @@ screw_x_positions = [-hole_pitch / 2, hole_pitch / 2]; // [-6.0, +6.0 mm]
 // Distance from panel face = wall_thick + front_clearance + vertical_wire_clearance + wire_d/2 (~11.8 mm)
 wire_center_z = slot_w + wall_thick + front_clearance + vertical_wire_clearance + wire_d / 2; // ~30.9 mm
 wire_center_y = -wall_thick; // Level with web outer face (~ -3.0 mm)
+hook_top_y    = wire_center_y - throat_d/2 - hook_arm_t; // Highest point of hook arch (~ -10.0 mm)
+hook_front_z  = wire_center_z + throat_d/2 + hook_arm_t; // Frontmost edge of hook (~ 38.0 mm)
+lip_bottom_y  = hook_top_y + hook_lip_depth + throat_d/2 + hook_arm_t; // Bottom tip of lip (~ 13.0 mm)
 
 // ==============================================================================
 // 1. STANDARD CLEAN U-PROFILE BRACKET
@@ -173,10 +181,6 @@ module panel_seam_u_bracket_printable() {
 // - Z is depth through the panel (0 = rear backplate, slot_w = frontplate)
 // - Y is height: 0 is panel rim, -wall_thick is web outer face, +Y extends down panel
 module padel_hook_u_profile_2d() {
-    hook_top_y   = wire_center_y - throat_d/2 - hook_arm_t; // Highest point of hook arch (~ -10.0 mm)
-    hook_front_z = wire_center_z + throat_d/2 + hook_arm_t; // Frontmost edge of hook (~ 32.4 mm)
-    lip_bottom_y = hook_top_y + hook_lip_depth + throat_d/2 + hook_arm_t; // Bottom tip of lip (~ 10.2 mm)
-    
     difference() {
         // Outer continuous solid profile envelope
         polygon(points = [
@@ -239,7 +243,7 @@ module panel_seam_u_hook_bracket_solid() {
 }
 
 // ==============================================================================
-// 3. INTEGRATED MONOLITHIC TRIANGULAR STRAP EYE
+// 3A. INTEGRATED TOP-FACING STRAP EYE (Picture 1)
 // ==============================================================================
 
 module integrated_strap_eye_solid(
@@ -248,7 +252,6 @@ module integrated_strap_eye_solid(
     tri_top_w   = strap_eye_top_w,
     tri_thick   = strap_eye_thick
 ) {
-    hook_top_y = wire_center_y - throat_d/2 - hook_arm_t;
     z_center   = slot_w / 2;
     
     // Main arch in XY, extruded along Z
@@ -284,7 +287,6 @@ module integrated_strap_eye_hole(
     tri_thick   = strap_eye_thick,
     hole_w      = strap_eye_hole_w
 ) {
-    hook_top_y = wire_center_y - throat_d/2 - hook_arm_t;
     z_center   = slot_w / 2;
     
     // Generous inside opening: 12mm wide x 14mm tall, accommodates 5mm x 9mm hook with ease
@@ -299,16 +301,100 @@ module integrated_strap_eye_hole(
     }
 }
 
-module panel_seam_u_hook_bracket(with_eye = strap_eye_mount) {
+// ==============================================================================
+// 3B. INTEGRATED REAR-FACING STRAP EYE (Picture 2)
+// ==============================================================================
+// Extends horizontally backwards (-Z) with dual 45° transition tapers:
+// - Top taper blends smoothly into the flat top roof (Y = hook_top_y).
+// - Bottom taper terminates at Y = 0.0 mm (panel rim), leaving the entire rear flange
+//   (Y = 0 to 17mm) 100% flat and unobstructed for M3 screws and screwdrivers!
+
+module integrated_strap_eye_rear_solid(
+    tri_h       = strap_eye_h,
+    tri_base_w  = bracket_w,
+    tri_top_w   = strap_eye_top_w,
+    tri_thick   = strap_eye_thick
+) {
+    z_base   = -wall_thick;             // -3.0 mm
+    y_center = hook_top_y / 2;          // -5.0 mm
+    y_top    = y_center - tri_thick/2;  // -7.5 mm
+    y_bot    = y_center + tri_thick/2;  // -2.5 mm
+    
+    // 1. Main horizontal eye tongue extending in -Z
+    translate([0, y_top, 0]) {
+        rotate([-90, 0, 0]) {
+            linear_extrude(height = tri_thick) {
+                hull() {
+                    translate([-tri_base_w/2 + 3.0, -z_base - 0.1]) circle(r = 3.0);
+                    translate([ tri_base_w/2 - 3.0, -z_base - 0.1]) circle(r = 3.0);
+                    translate([0, -z_base + tri_h - tri_top_w/2]) circle(d = tri_top_w);
+                }
+            }
+        }
+    }
+    
+    // 2. Top 45-degree taper (sloping up-right from y = -7.5 mm to roof at y = -10.0 mm)
+    t_top = abs(hook_top_y - y_top); // 2.5 mm
+    hull() {
+        translate([0, y_top, z_base + 0.1])
+            cube([tri_base_w, 0.1, 0.1], center = true);
+        translate([0, y_top, z_base - t_top])
+            cube([tri_base_w - 4.0, 0.1, 0.1], center = true);
+        translate([0, hook_top_y, z_base + 0.1])
+            cube([tri_base_w, 0.1, 0.1], center = true);
+    }
+    
+    // 3. Bottom 45-degree taper (sloping down-right from y = -2.5 mm to rear flange at y = 0.0 mm)
+    t_bot = abs(0.0 - y_bot); // 2.5 mm
+    hull() {
+        translate([0, y_bot, z_base + 0.1])
+            cube([tri_base_w, 0.1, 0.1], center = true);
+        translate([0, y_bot, z_base - t_bot])
+            cube([tri_base_w - 4.0, 0.1, 0.1], center = true);
+        translate([0, 0.0, z_base + 0.1])
+            cube([tri_base_w, 0.1, 0.1], center = true);
+    }
+}
+
+module integrated_strap_eye_rear_hole(
+    tri_h       = strap_eye_h,
+    tri_top_w   = strap_eye_top_w,
+    tri_thick   = strap_eye_thick,
+    hole_w      = strap_eye_hole_w
+) {
+    z_base   = -wall_thick;
+    y_center = hook_top_y / 2;
+    
+    // Through-hole through vertical thickness of rear eye
+    translate([0, y_center - 10.0, 0]) {
+        rotate([-90, 0, 0]) {
+            linear_extrude(height = tri_thick + 20.0) {
+                hull() {
+                    translate([-hole_w/2 + 2.0, -z_base + 4.0]) circle(r = 2.0);
+                    translate([ hole_w/2 - 2.0, -z_base + 4.0]) circle(r = 2.0);
+                    translate([0, -z_base + tri_h - tri_top_w/2]) circle(d = hole_w);
+                }
+            }
+        }
+    }
+}
+
+// Full Hook Bracket with Configurable Strap Eye Position (Top or Rear)
+module panel_seam_u_hook_bracket(with_eye = strap_eye_mount, eye_pos = strap_eye_position) {
     difference() {
         union() {
             panel_seam_u_hook_bracket_solid();
             if (with_eye) {
-                integrated_strap_eye_solid();
+                if (eye_pos == "rear") {
+                    integrated_strap_eye_rear_solid();
+                } else {
+                    integrated_strap_eye_solid();
+                }
             }
         }
         
         // 2x M3 Countersunk Holes through Rear Flange
+        // Completely flat, unobstructed access on rear flange from Y = 0 to 17 mm
         for (x = screw_x_positions) {
             translate([x, screw_rim_inset, -wall_thick - 0.1]) {
                 cylinder(h = wall_thick + 0.2, d = screw_hole_d);
@@ -336,21 +422,25 @@ module panel_seam_u_hook_bracket(with_eye = strap_eye_mount) {
             
         // Inside opening of triangular strap eye
         if (with_eye) {
-            integrated_strap_eye_hole();
+            if (eye_pos == "rear") {
+                integrated_strap_eye_rear_hole();
+            } else {
+                integrated_strap_eye_hole();
+            }
         }
     }
 }
 
 // Print-Ready Orientation: Lying flat on its side (Z_bed is X-axis)
 // This aligns 100% of layer lines along the tensile hook load path for maximum strength!
-module panel_seam_u_hook_bracket_printable() {
+module panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = strap_eye_position) {
     translate([0, 0, bracket_w/2])
         rotate([0, 90, 0])
-            panel_seam_u_hook_bracket();
+            panel_seam_u_hook_bracket(with_eye = with_eye, eye_pos = eye_pos);
 }
 
 // ==============================================================================
-// 3. 3D PREVIEW & SIMULATION CONTEXT
+// 4. 3D PREVIEW & SIMULATION CONTEXT
 // ==============================================================================
 
 module padel_mesh_wire_grid(w = 360, h = 300) {
@@ -388,16 +478,14 @@ module simulated_digit_panel(panel_label = "1") {
                 text(panel_label, size = 110, font = "Liberation Sans:style=Bold", halign = "center", valign = "center");
 }
 
-module preview_padel_court_mounting(cutaway = false) {
+module preview_padel_court_mounting(cutaway = false, eye_pos = strap_eye_position) {
     pw = 138.4;
     ph = 230.4;
     x_d1 = -pw / 2;
     x_d2 =  pw / 2;
     
     // Wire center in scoreboard coordinates:
-    // Aligns dead center in the hook throat at Y = ph/2 + wall_thick = 118.2 mm
     wire_y_sb = ph/2 + wall_thick;
-    // Front face is at Z = +13.0 mm. Wire sits at Z = 13.0 + slot_clearance/2 + wall_thick + front_clearance + vertical_wire_clearance + wire_d/2
     wire_z_sb = wire_center_z - 5.5 - slot_clearance/2; // ~25.2 mm
     
     difference() {
@@ -407,8 +495,6 @@ module preview_padel_court_mounting(cutaway = false) {
             translate([x_d2, 0, 0]) simulated_digit_panel("2");
             
             // 2. Top Extended Padel Mesh Hook U-Bracket
-            // Mounts across seam (X = 0) at top rim (Y = +ph/2)
-            // Maps +Y_profile (downward into panel) to -Y_sb
             multmatrix([
                 [1,  0, 0, 0],
                 [0, -1, 0, ph/2],
@@ -416,16 +502,7 @@ module preview_padel_court_mounting(cutaway = false) {
                 [0,  0, 0, 1]
             ]) {
                 color("#e11d48") // Anodized Red Accent
-                    panel_seam_u_hook_bracket();
-                if (strap_eye_mount) {
-                    hook_top_y = wire_center_y - throat_d/2 - hook_arm_t;
-                    y_axis     = hook_top_y - strap_lug_h;
-                    z_axis     = slot_w / 2;
-                    translate([0, y_axis, z_axis])
-                        rotate([180 + strap_eye_angle, 0, 0])
-                            color("#38bdf8") // Sky blue strap eye
-                                triangular_strap_eye();
-                }
+                    panel_seam_u_hook_bracket(with_eye = strap_eye_mount, eye_pos = eye_pos);
             }
                     
             // 3. Bottom Clean U-Bracket (keeps bottom seam rigid)
@@ -469,24 +546,35 @@ module preview_padel_court_mounting(cutaway = false) {
     }
 }
 
-module preview_strap_bracket() {
+module preview_strap_bracket(eye_pos = strap_eye_position) {
     color("#e11d48")
-        panel_seam_u_hook_bracket();
+        panel_seam_u_hook_bracket(with_eye = strap_eye_mount, eye_pos = eye_pos);
     if (strap_eye_mount) {
-        hook_top_y = wire_center_y - throat_d/2 - hook_arm_t;
-        z_center   = slot_w / 2;
-        // Exact 5mm x 9mm Strap Hook seated in the top arch of the integrated triangle
-        color("#22c55e", 0.95)
-            translate([0, hook_top_y - strap_eye_h + strap_eye_top_w/2, z_center])
-                rotate([90, 0, 0])
-                    linear_extrude(height = 10.0, center = true)
-                        resize([strap_hook_h, strap_hook_t])
-                            circle(d = strap_hook_h, $fn=40);
+        if (eye_pos == "rear") {
+            y_center = hook_top_y / 2;
+            z_tip    = -wall_thick - strap_eye_h + strap_eye_top_w/2;
+            // Exact 5mm x 9mm Strap Hook seated in the rear triangular eye
+            color("#22c55e", 0.95)
+                translate([0, y_center, z_tip])
+                    rotate([0, 90, 0])
+                        linear_extrude(height = 10.0, center = true)
+                            resize([strap_hook_h, strap_hook_t])
+                                circle(d = strap_hook_h, $fn=40);
+        } else {
+            z_center = slot_w / 2;
+            // Exact 5mm x 9mm Strap Hook seated in the top arch of the integrated triangle
+            color("#22c55e", 0.95)
+                translate([0, hook_top_y - strap_eye_h + strap_eye_top_w/2, z_center])
+                    rotate([90, 0, 0])
+                        linear_extrude(height = 10.0, center = true)
+                            resize([strap_hook_h, strap_hook_t])
+                                circle(d = strap_hook_h, $fn=40);
+        }
     }
 }
 
 // ==============================================================================
-// 4. MAIN SELECTOR
+// 5. MAIN SELECTOR
 // ==============================================================================
 
 if (part == 1) {
@@ -498,30 +586,45 @@ if (part == 1) {
     translate([0, -spacing_y/2, 0]) panel_seam_u_bracket_printable();
     translate([0,  spacing_y/2, 0]) panel_seam_u_bracket_printable();
 } else if (part == 3) {
-    // Single Extended Padel Mesh Hook U-Bracket with Integrated Triangular Strap Eye (Print-ready on side, zero supports, 100% tensile strength)
-    panel_seam_u_hook_bracket_printable();
+    // Single Hook Bracket with Top Eye (Picture 1)
+    panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "top");
 } else if (part == 4) {
-    // Pair of Padel Mesh Hook U-Brackets with Integrated Strap Eyes (for Digits 1-2 and Digits 3-4 top rims)
+    // Pair of Hook Brackets with Top Eye (for Digits 1-2 and Digits 3-4 top rims)
     spacing_x = bracket_w + 10.0;
-    translate([-spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable();
-    translate([ spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable();
+    translate([-spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "top");
+    translate([ spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "top");
 } else if (part == 5) {
-    // Full Tournament Set: 2x Top Hooks with Integrated Strap Eyes + 2x Bottom Clean U-Brackets
+    // Full Tournament Set: 2x Top Eye Hooks + 2x Bottom Clean U-Brackets
     spacing_x = bracket_w + 10.0;
-    translate([-spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable();
-    translate([ spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable();
+    translate([-spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "top");
+    translate([ spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "top");
     translate([-spacing_x/2, total_y + 12.0, 0]) panel_seam_u_bracket_printable();
     translate([ spacing_x/2, total_y + 12.0, 0]) panel_seam_u_bracket_printable();
+} else if (part == 6) {
+    // Single Hook Bracket with Rear Eye (Picture 2, Print-ready on side, zero supports)
+    panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "rear");
+} else if (part == 7) {
+    // Pair of Hook Brackets with Rear Eye (Picture 2)
+    spacing_x = bracket_w + 10.0;
+    translate([-spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "rear");
+    translate([ spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "rear");
 } else if (part == 8) {
-    // Closeup 3D Preview: Hook Bracket with Integrated Strap Eye and 5x9mm Hook
-    preview_strap_bracket();
+    // Full Tournament Set: 2x Rear Eye Hooks + 2x Bottom Clean U-Brackets
+    spacing_x = bracket_w + 10.0;
+    translate([-spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "rear");
+    translate([ spacing_x/2, 0, 0]) panel_seam_u_hook_bracket_printable(with_eye = strap_eye_mount, eye_pos = "rear");
+    translate([-spacing_x/2, total_y + 12.0, 0]) panel_seam_u_bracket_printable();
+    translate([ spacing_x/2, total_y + 12.0, 0]) panel_seam_u_bracket_printable();
 } else if (part == 9) {
-    // 3D Preview: Scoreboard with Hooks on Padel Fence
-    preview_padel_court_mounting(cutaway = false);
+    // Closeup 3D Preview: Hook Bracket with 5x9mm Hook (reflects strap_eye_position)
+    preview_strap_bracket(eye_pos = strap_eye_position);
 } else if (part == 10) {
-    // Standard 2-digit preview with Hooks
-    preview_padel_court_mounting(cutaway = false);
+    // 3D Preview: Scoreboard with Hooks on Padel Fence
+    preview_padel_court_mounting(cutaway = false, eye_pos = strap_eye_position);
 } else if (part == 11) {
+    // Standard 2-digit preview with Hooks
+    preview_padel_court_mounting(cutaway = false, eye_pos = strap_eye_position);
+} else if (part == 12) {
     // Cross-Section Cutaway of Hook & Wire Seating
-    preview_padel_court_mounting(cutaway = true);
+    preview_padel_court_mounting(cutaway = true, eye_pos = strap_eye_position);
 }
