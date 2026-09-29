@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T12:26:00Z",
-  "notes": "Added mobile-optimized Quick Start Guides for smartphone screens and linked them in the Info tab.",
+  "buildTime": "2026-09-29T12:35:00Z",
+  "notes": "Renamed Info tab to Settings with gear icon, updated Rules icon to book, and linked mobile quick start guides.",
   "version": "1.7.2"
 }
