@@ -1,5 +1,5 @@
 // Padel Scoreboard PWA Service Worker
-const APP_VERSION = 'v1.7.7';
+const APP_VERSION = 'v1.7.8';
 const CACHE_NAME = `padel-scoreboard-${APP_VERSION}`;
 
 const PRECACHE_ASSETS = [
@@ -17,7 +17,8 @@ const PRECACHE_ASSETS = [
   'quick_start_app.html',
   'quick_start_bt_button.html',
   'quick_start_app_mobile.html',
-  'quick_start_bt_button_mobile.html'
+  'quick_start_bt_button_mobile.html',
+  'ota.html'
 ];
 
 // Install: Cache essential app assets

@@ -5125,8 +5125,8 @@
             document.querySelectorAll('.pill-theme').forEach(p => {
                 p.classList.toggle('active', p.dataset.theme === theme);
             });
-            // Sync all quick start guide links with the active theme
-            document.querySelectorAll('a[href*="quick_start"]').forEach(a => {
+            // Sync all quick start guide and OTA links with the active theme
+            document.querySelectorAll('a[href*="quick_start"], a[href*="ota.html"]').forEach(a => {
                 const baseHref = a.getAttribute('href').split('?')[0];
                 a.setAttribute('href', `${baseHref}?theme=${encodeURIComponent(theme)}`);
             });
@@ -5136,9 +5136,9 @@
             pill.addEventListener('click', () => applyTheme(pill.dataset.theme));
         });
 
-        // Ensure clicking any guide link carries the latest active theme
+        // Ensure clicking any guide or OTA link carries the latest active theme
         document.addEventListener('click', (e) => {
-            const link = e.target.closest('a[href*="quick_start"]');
+            const link = e.target.closest('a[href*="quick_start"], a[href*="ota.html"]');
             if (link) {
                 const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('appTheme') || 'light';
                 const baseHref = link.getAttribute('href').split('?')[0];
