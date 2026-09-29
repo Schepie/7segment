@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T12:37:00Z",
-  "notes": "Renamed Info tab to Settings with gear icon, updated Rules icon to book, and linked mobile quick start guides.",
-  "version": "1.7.3"
+  "buildTime": "2026-09-29T12:41:00Z",
+  "notes": "Reordered Settings window: 1. App version, 2. App theme, 3. Advanced settings, 4. Quick start guides, 5. Quick scan QR codes.",
+  "version": "1.7.4"
 }

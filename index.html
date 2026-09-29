@@ -2957,29 +2957,17 @@
             </div>
 
             <!-- ============================================ -->
-            <!-- TAB 6: INFO & APP UPDATES                    -->
+            <!-- ============================================ -->
+            <!-- TAB 6: SETTINGS                              -->
             <!-- ============================================ -->
             <div class="tab-pane" id="paneInfo">
                 <div class="scroll-card">
-                    <!-- Theme Selector -->
-                    <div class="section-header">
-                        <span>🎨 App Theme</span>
-                    </div>
-                    <div class="pills-row" id="pillsTheme" style="grid-template-columns: 1fr 1fr;">
-                        <button type="button" class="pill-select pill-theme active" data-theme="dark" id="pillThemeDark"
-                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
-                            🌑 Dark
-                        </button>
-                        <button type="button" class="pill-select pill-theme" data-theme="light" id="pillThemeLight"
-                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
-                            ☀️ Light
-                        </button>
-                    </div>
 
-                    <div class="section-header" style="margin-top: 6px;">
+                    <!-- 1. App Version & Updates -->
+                    <div class="section-header">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.7.3</span>
+                            id="appVersionBadge">v1.7.4</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -3003,36 +2991,42 @@
                         </div>
                     </div>
 
-                    <!-- 2 QR Codes Requested: App URL & Game Rules URL -->
+                    <!-- 2. App Theme Selector -->
                     <div class="section-header" style="margin-top: 6px;">
-                        <span>📷 Quick Scan QR Codes</span>
+                        <span>🎨 App Theme</span>
                     </div>
-                    <div class="qr-cards-grid">
-                        <!-- 1. URL to this app -->
-                        <div class="qr-card">
-                            <div class="qr-card-title">📱 App URL</div>
-                            <div class="qr-image-wrapper">
-                                <img src="qr_app.png" alt="Padel Scoreboard App QR Code" class="qr-img">
-                            </div>
-                            <div class="qr-card-desc">Scan to launch or install scoreboard app</div>
-                            <a href="https://schepie.github.io/7segment/" target="_blank" class="btn-qr-link">Open App
-                                ↗</a>
-                        </div>
-
-                        <!-- 2. URL to the rules of the padel game -->
-                        <div class="qr-card">
-                            <div class="qr-card-title">📖 Padel Rules</div>
-                            <div class="qr-image-wrapper">
-                                <img src="qr_rules.png" alt="Padel Game Rules QR Code" class="qr-img">
-                            </div>
-                            <div class="qr-card-desc">Official padel rules & guidelines</div>
-                            <a href="https://www.tennisenpadelvlaanderen.be/padel/spelregels-padel" target="_blank"
-                                class="btn-qr-link">View Rules ↗</a>
-                        </div>
+                    <div class="pills-row" id="pillsTheme" style="grid-template-columns: 1fr 1fr;">
+                        <button type="button" class="pill-select pill-theme active" data-theme="dark" id="pillThemeDark"
+                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
+                            🌑 Dark
+                        </button>
+                        <button type="button" class="pill-select pill-theme" data-theme="light" id="pillThemeLight"
+                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
+                            ☀️ Light
+                        </button>
                     </div>
 
-                    <!-- Quick Start Guides (Mobile-First) -->
-                    <div class="section-header" style="margin-top: 10px;">
+                    <!-- 3. Advanced Settings Toggle -->
+                    <div class="section-header" style="margin-top: 6px;">
+                        <span>⚙️ Advanced Settings</span>
+                    </div>
+                    <div class="pills-row" id="pillsAdvancedMode" style="grid-template-columns: 1fr 1fr;">
+                        <button type="button" class="pill-select active" data-advanced="0" id="pillAdvancedOff"
+                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
+                            🎾 Simple
+                        </button>
+                        <button type="button" class="pill-select" data-advanced="1" id="pillAdvancedOn"
+                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
+                            🛠️ Advanced
+                        </button>
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+                        Simple mode displays Court, Rules, and Settings. Turn on Advanced to enable Counter, Clock, and LED
+                        Display controls.
+                    </p>
+
+                    <!-- 4. Quick Start Guides (Mobile-First) -->
+                    <div class="section-header" style="margin-top: 6px;">
                         <span>📄 Quick Start Guides</span>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">
@@ -3060,24 +3054,33 @@
                         </div>
                     </div>
 
-                    <!-- Advanced Settings Toggle -->
+                    <!-- 5. Quick Scan QR Codes -->
                     <div class="section-header" style="margin-top: 6px;">
-                        <span>⚙️ Advanced Settings</span>
+                        <span>📷 Quick Scan QR Codes</span>
                     </div>
-                    <div class="pills-row" id="pillsAdvancedMode" style="grid-template-columns: 1fr 1fr;">
-                        <button type="button" class="pill-select active" data-advanced="0" id="pillAdvancedOff"
-                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
-                            🎾 Simple
-                        </button>
-                        <button type="button" class="pill-select" data-advanced="1" id="pillAdvancedOn"
-                            style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;">
-                            🛠️ Advanced
-                        </button>
+                    <div class="qr-cards-grid">
+                        <!-- 1. URL to this app -->
+                        <div class="qr-card">
+                            <div class="qr-card-title">📱 App URL</div>
+                            <div class="qr-image-wrapper">
+                                <img src="qr_app.png" alt="Padel Scoreboard App QR Code" class="qr-img">
+                            </div>
+                            <div class="qr-card-desc">Scan to launch or install scoreboard app</div>
+                            <a href="https://schepie.github.io/7segment/" target="_blank" class="btn-qr-link">Open App
+                                ↗</a>
+                        </div>
+
+                        <!-- 2. URL to the rules of the padel game -->
+                        <div class="qr-card">
+                            <div class="qr-card-title">📖 Padel Rules</div>
+                            <div class="qr-image-wrapper">
+                                <img src="qr_rules.png" alt="Padel Game Rules QR Code" class="qr-img">
+                            </div>
+                            <div class="qr-card-desc">Official padel rules & guidelines</div>
+                            <a href="https://www.tennisenpadelvlaanderen.be/padel/spelregels-padel" target="_blank"
+                                class="btn-qr-link">View Rules ↗</a>
+                        </div>
                     </div>
-                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
-                        Simple mode displays Court, Rules, and Settings. Turn on Advanced to enable Counter, Clock, and LED
-                        Display controls.
-                    </p>
 
                 </div>
             </div>
@@ -4892,7 +4895,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.7.3';
+        const CURRENT_APP_VERSION = '1.7.4';
         let swRegistration = null;
         let isRefreshing = false;
 
