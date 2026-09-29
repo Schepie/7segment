@@ -295,16 +295,31 @@
             user-select: none;
         }
 
+        html {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background: var(--bg-base);
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: radial-gradient(circle at 50% 0%, #16243c 0%, var(--bg-base) 85%);
             color: var(--text-main);
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             height: 100dvh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             overflow: hidden;
+            overscroll-behavior: none;
         }
 
         /* App Shell */
@@ -312,10 +327,14 @@
             width: 100%;
             max-width: 440px;
             height: 100%;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             padding: calc(6px + var(--safe-top)) 10px calc(8px + var(--safe-bottom)) 10px;
             gap: 8px;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
         }
 
         /* Compact Sticky Header */
@@ -406,7 +425,8 @@
 
         /* Main Screen Container */
         .main-stage {
-            flex: 1;
+            flex: 1 1 0%;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -417,7 +437,9 @@
             display: none;
             flex-direction: column;
             height: 100%;
+            min-height: 0;
             gap: 8px;
+            flex: 1 1 0%;
         }
 
         .tab-pane.active {
@@ -429,6 +451,13 @@
         /* ================================================= */
         #paneCourt {
             justify-content: space-between;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #paneCourt::-webkit-scrollbar {
+            display: none;
         }
 
         /* Digital Score Display */
@@ -574,11 +603,11 @@
 
         /* HUGE Scoring Buttons (Filling remaining viewport) */
         .scoring-hero {
-            flex: 1;
+            flex: 1 1 0%;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-            min-height: 140px;
+            min-height: clamp(80px, 18vh, 140px);
         }
 
         .btn-giant-score {
@@ -1440,6 +1469,8 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             min-height: 52px;
             box-sizing: border-box;
+            position: relative;
+            z-index: 100;
         }
 
         .bottom-nav-btn {
@@ -2948,7 +2979,7 @@
                     <div class="section-header" style="margin-top: 6px;">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.7.1</span>
+                            id="appVersionBadge">v1.7.2</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -3154,6 +3185,14 @@
     </div>
 
     <script>
+        // Force manual scroll restoration to prevent browser scroll offset bug on PWA reloads
+        if ('scrollRestoration' in history) {
+            try { history.scrollRestoration = 'manual'; } catch (e) { }
+        }
+        window.scrollTo(0, 0);
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+
         // GATT Service & Characteristic UUIDs
         const WATCH_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const WATCH_CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
@@ -3238,6 +3277,11 @@
 
         function switchTab(target) {
             if (!tabPanes[target]) return;
+            localStorage.setItem('padel_active_tab', target);
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+
             navButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === target));
             Object.keys(tabPanes).forEach(k => {
                 if (tabPanes[k]) {
@@ -3287,14 +3331,15 @@
             });
         });
 
-        // Support URL hash navigation (e.g. #display, #rules, #court, #info)
+        // Tab initialization: check hash first, then saved tab, fallback to court
         const initialHashTab = (window.location.hash || '').replace('#', '').toLowerCase();
-        if (initialHashTab && tabPanes[initialHashTab]) {
-            if (['counter', 'clock', 'display'].includes(initialHashTab)) {
-                setAdvancedSettings(true);
-            }
-            switchTab(initialHashTab);
+        const savedTab = localStorage.getItem('padel_active_tab');
+        const startTab = (initialHashTab && tabPanes[initialHashTab]) ? initialHashTab : (savedTab && tabPanes[savedTab] ? savedTab : 'court');
+        if (['counter', 'clock', 'display'].includes(startTab)) {
+            setAdvancedSettings(true);
         }
+        switchTab(startTab);
+
         window.addEventListener('hashchange', () => {
             const hashTab = (window.location.hash || '').replace('#', '').toLowerCase();
             if (hashTab && tabPanes[hashTab]) {
@@ -4837,7 +4882,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.7.1';
+        const CURRENT_APP_VERSION = '1.7.2';
         let swRegistration = null;
         let isRefreshing = false;
 
@@ -4858,6 +4903,9 @@
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (!isRefreshing) {
                     isRefreshing = true;
+                    window.scrollTo(0, 0);
+                    if (document.documentElement) document.documentElement.scrollTop = 0;
+                    if (document.body) document.body.scrollTop = 0;
                     window.location.reload();
                 }
             });
@@ -4939,9 +4987,12 @@
             setTimeout(() => {
                 if (!isRefreshing) {
                     isRefreshing = true;
+                    window.scrollTo(0, 0);
+                    if (document.documentElement) document.documentElement.scrollTop = 0;
+                    if (document.body) document.body.scrollTop = 0;
                     window.location.reload();
                 }
-            }, 400);
+            }, 300);
         }
 
         if (btnUpdateNow) {
@@ -4971,6 +5022,9 @@
                     if (swRegistration) {
                         await swRegistration.unregister();
                     }
+                    window.scrollTo(0, 0);
+                    if (document.documentElement) document.documentElement.scrollTop = 0;
+                    if (document.body) document.body.scrollTop = 0;
                     window.location.reload();
                 }
             });

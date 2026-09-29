@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T11:55:00Z",
-  "notes": "Added service indicator (gold pulse on games ladder & tiebreak dots), remote 0-0 serve toggle, and Quick Start Guide links in Info tab.",
-  "version": "1.7.1"
+  "buildTime": "2026-09-29T12:20:00Z",
+  "notes": "Fixed bottom navigation icon bar disappearing after app updates (viewport locking, scroll restoration, and flex containment).",
+  "version": "1.7.2"
 }
