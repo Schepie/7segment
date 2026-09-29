@@ -2985,7 +2985,7 @@
                     <div class="section-header">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.7.7</span>
+                            id="appVersionBadge">v1.7.9</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -4913,9 +4913,10 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.7.7';
+        const CURRENT_APP_VERSION = '1.7.9';
         let swRegistration = null;
         let isRefreshing = false;
+        let latestAvailableVersion = null;
 
         const updateBanner = document.getElementById('updateBanner');
         const updateBannerText = document.getElementById('updateBannerText');
@@ -4943,6 +4944,7 @@
         }
 
         function showUpdatePrompt(newVer, notes) {
+            latestAvailableVersion = newVer;
             if (updateBannerText) {
                 updateBannerText.textContent = notes ? `v${newVer}: ${notes}` : `Version v${newVer} is ready to install.`;
             }
@@ -4972,6 +4974,14 @@
                     }
 
                     if (data && data.version && data.version !== CURRENT_APP_VERSION) {
+                        // Avoid nagging with repeated pop-up if user dismissed this version in this session
+                        if (!isManual && sessionStorage.getItem('dismissedUpdateVersion') === data.version) {
+                            if (appUpdateStatusText) {
+                                appUpdateStatusText.textContent = `Update available (v${data.version})`;
+                                appUpdateStatusText.style.color = 'var(--accent-gold)';
+                            }
+                            return true;
+                        }
                         showUpdatePrompt(data.version, data.notes);
                         if (isManual) {
                             alert(`New version v${data.version} is available! Tap "Update Now" on the banner to apply.`);
@@ -5000,13 +5010,17 @@
                 btnUpdateNow.disabled = true;
                 btnUpdateNow.textContent = 'Updating...';
             }
+            if (updateBanner) updateBanner.style.display = 'none';
+            sessionStorage.removeItem('dismissedUpdateVersion');
+
             try {
-                if (updateBanner) updateBanner.style.display = 'none';
                 if (swRegistration && swRegistration.waiting) {
                     swRegistration.waiting.postMessage({ type: 'SKIP_WAITING', action: 'skipWaiting' });
-                }
-                if (swRegistration) {
+                } else if (swRegistration) {
                     await swRegistration.update().catch(() => { });
+                    if (swRegistration.waiting) {
+                        swRegistration.waiting.postMessage({ type: 'SKIP_WAITING', action: 'skipWaiting' });
+                    }
                 }
             } catch (e) {
                 console.warn('Update error:', e);
@@ -5019,7 +5033,7 @@
                     if (document.body) document.body.scrollTop = 0;
                     window.location.reload();
                 }
-            }, 300);
+            }, 500);
         }
 
         if (btnUpdateNow) {
@@ -5029,6 +5043,9 @@
         if (btnUpdateDismiss) {
             btnUpdateDismiss.addEventListener('click', () => {
                 if (updateBanner) updateBanner.style.display = 'none';
+                if (latestAvailableVersion) {
+                    sessionStorage.setItem('dismissedUpdateVersion', latestAvailableVersion);
+                }
             });
         }
 
@@ -5063,7 +5080,7 @@
                     swRegistration = reg;
                     console.log('PWA Service Worker registered:', reg.scope);
 
-                    if (reg.waiting) {
+                    if (reg.waiting && sessionStorage.getItem('dismissedUpdateVersion') !== 'Latest') {
                         showUpdatePrompt('Latest', 'New version ready to activate.');
                     }
 

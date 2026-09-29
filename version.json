@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T13:38:00Z",
-  "notes": "Added dark and light theme support to the BLE Firmware Flasher (ota.html) with automatic synchronization to the app theme.",
-  "version": "1.7.8"
+  "buildTime": "2026-09-29T13:46:00Z",
+  "notes": "Added dark/light theme to FW flasher and synchronized app update version to fix persistent update prompt.",
+  "version": "1.7.9"
 }
