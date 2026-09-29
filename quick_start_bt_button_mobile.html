@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <title>Remote Guide - Padel Scoreboard</title>
+  <meta name="description" content="Mobile Quick Start Guide for the Bluetooth Remote Clicker of the ESP32 Padel Scoreboard.">
+  <meta name="theme-color" content="#080c14">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #080c14;
+      --bg-surface: #101726;
+      --bg-card: rgba(16, 23, 38, 0.95);
+      --bg-card-border: rgba(255, 255, 255, 0.08);
+      --team1-blue: #00d2ff;
+      --team1-glow: rgba(0, 210, 255, 0.3);
+      --team2-red: #ff3366;
+      --team2-glow: rgba(255, 51, 102, 0.3);
+      --accent-green: #00e676;
+      --accent-gold: #ffd700;
+      --text-main: #f0f4f8;
+      --text-muted: #8899aa;
+      --radius-xl: 18px;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #16243c 0%, var(--bg-base) 85%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: calc(10px + var(--safe-top)) 12px calc(24px + var(--safe-bottom)) 12px;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Top Nav Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 8px 12px;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .btn-back:hover, .btn-back:active {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .top-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Hero Banner */
+    .hero-card {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.12), rgba(255, 51, 102, 0.10));
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      border-radius: var(--radius-xl);
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hero-title {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .hero-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    /* Step Cards Grid */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00d2ff, #0077ff);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+    }
+
+    .step-info h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .step-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* Visual Remote Diagram Box */
+    .remote-visual-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-xl);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .remote-svg-box {
+      width: 100%;
+      max-width: 220px;
+      margin: 4px auto;
+    }
+
+    /* Action Control Cards */
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .action-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .action-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .action-trigger {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .badge-t1 {
+      background: rgba(0, 210, 255, 0.15);
+      border: 1px solid rgba(0, 210, 255, 0.4);
+      color: var(--team1-blue);
+    }
+    .badge-t2 {
+      background: rgba(255, 51, 102, 0.15);
+      border: 1px solid rgba(255, 51, 102, 0.4);
+      color: var(--team2-red);
+    }
+    .badge-both {
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      color: var(--accent-gold);
+    }
+
+    .action-effect {
+      font-size: 12px;
+      color: var(--text-main);
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .action-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    /* Pro Tips Grid */
+    .tip-card {
+      background: rgba(255, 215, 0, 0.05);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tip-item {
+      font-size: 11.5px;
+      color: var(--text-main);
+      line-height: 1.4;
+      padding-left: 14px;
+      position: relative;
+    }
+    .tip-item::before {
+      content: "•";
+      color: var(--accent-gold);
+      font-size: 14px;
+      position: absolute;
+      left: 0;
+      top: -1px;
+    }
+
+    /* Print Link Card */
+    .print-switch-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed var(--bg-card-border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .print-switch-text {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .btn-print-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      background: rgba(0, 210, 255, 0.15);
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      color: var(--team1-blue);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="shell">
+
+    <!-- Top Navigation Bar -->
+    <header class="top-bar">
+      <a href="index.html" class="btn-back" id="btnBack">
+        <span>←</span>
+        <span>Scoreboard App</span>
+      </a>
+      <div class="top-badge">
+        <span>🔘 Bluetooth Remote</span>
+      </div>
+    </header>
+
+    <!-- Hero Card -->
+    <div class="hero-card">
+      <div class="hero-title">
+        <span>🎾</span>
+        <span>Remote Button Guide</span>
+      </div>
+      <div class="hero-desc">
+        Pocket Bluetooth remote controller for the ESP32 Padel Scoreboard. No phone required during gameplay!
+      </div>
+    </div>
+
+    <!-- Quick Pairing 3 Steps -->
+    <div class="section-title">
+      <span>⚡ 3-Step Instant Pairing</span>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-info">
+          <h4>Power Scoreboard</h4>
+          <p>Plug in display via USB-C (5V/3A). BLE automatically advertises <code>ESP32_SCOREBOARD</code>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-info">
+          <h4>Wake Remote</h4>
+          <p>Click either button once. The remote's blue LED flashes to wake from ultra-low power sleep.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-info">
+          <h4>Auto Connect</h4>
+          <p>Scoreboard auto-links within ~2 seconds. Center LED flashes to confirm link is active.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remote Diagram Illustration -->
+    <div class="section-title">
+      <span>🔘 Button Layout</span>
+    </div>
+    <div class="remote-visual-card">
+      <div class="remote-svg-box">
+        <svg viewBox="0 0 170 240" width="100%" height="auto" style="display: block; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
+          <!-- Body -->
+          <rect x="25" y="10" width="120" height="220" rx="32" fill="#0f172a" stroke="#334155" stroke-width="2.5"/>
+          <rect x="29" y="14" width="112" height="212" rx="28" fill="#1e293b"/>
+          
+          <!-- Lanyard loop hole at top -->
+          <circle cx="85" cy="24" r="5" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+
+          <!-- BIG BUTTON (Top / Blue) -->
+          <g>
+            <circle cx="85" cy="85" r="38" fill="#0369a1" stroke="#38bdf8" stroke-width="3"/>
+            <circle cx="85" cy="85" r="28" fill="#0284c7"/>
+            <circle cx="85" cy="85" r="10" fill="#ffffff" opacity="0.9"/>
+            <text x="85" y="132" font-size="9" fill="#38bdf8" text-anchor="middle" font-weight="900" font-family="'Inter', sans-serif">BIG BUTTON</text>
+            <text x="85" y="143" font-size="7.5" fill="#cbd5e1" text-anchor="middle" font-family="'Inter', sans-serif">Team 1 (Left / Blue)</text>
+          </g>
+
+          <!-- Divider Accent -->
+          <line x1="50" y1="152" x2="120" y2="152" stroke="#334155" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+          <!-- SMALL BUTTON (Bottom / Red) -->
+          <g>
+            <rect x="60" y="162" width="50" height="34" rx="8" fill="#b91c1c" stroke="#f87171" stroke-width="2.5"/>
+            <rect x="64" y="166" width="42" height="26" rx="5" fill="#dc2626"/>
+            <polygon points="80,172 92,179 80,186" fill="#ffffff" opacity="0.9"/>
+            <text x="85" y="208" font-size="9" fill="#f87171" text-anchor="middle" font-weight="900" font-family="'Inter', sans-serif">SMALL BUTTON</text>
+            <text x="85" y="218" font-size="7.5" fill="#cbd5e1" text-anchor="middle" font-family="'Inter', sans-serif">Team 2 (Right / Red)</text>
+          </g>
+        </svg>
+      </div>
+      <div style="font-size: 11.5px; color: var(--text-muted); text-align: center;">
+        Standard Bluetooth Shutter Remote • Wear on wrist or pocket clip
+      </div>
+    </div>
+
+    <!-- Match Controls List -->
+    <div class="section-title">
+      <span>🎾 Padel Scoring Actions</span>
+    </div>
+    <div class="actions-list">
+
+      <!-- Action 1: Team 1 Point -->
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">👆 Single Click</span>
+          <span class="action-badge badge-t1">● Big Button</span>
+        </div>
+        <div class="action-effect">+1 Point for Team 1 (Left / Blue)</div>
+        <div class="action-detail">Advances score: 0 → 15 → 30 → 40 → Game / Tiebreak.</div>
+      </div>
+
+      <!-- Action 2: Team 2 Point -->
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">👆 Single Click</span>
+          <span class="action-badge badge-t2">■ Small Button</span>
+        </div>
+        <div class="action-effect">+1 Point for Team 2 (Right / Red)</div>
+        <div class="action-detail">Advances score: 0 → 15 → 30 → 40 → Game / Tiebreak.</div>
+      </div>
+
+      <!-- Action 3: Serve Toggle (at 0-0) -->
+      <div class="action-card" style="border-color: rgba(255, 215, 0, 0.4); background: rgba(255, 215, 0, 0.05);">
+        <div class="action-header">
+          <span class="action-trigger">✌️ Double Click (at 0–0)</span>
+          <span class="action-badge badge-both">Either Button</span>
+        </div>
+        <div class="action-effect">Toggle 1st Server (Toss)</div>
+        <div class="action-detail">Before the match starts, double click to choose which team serves first. The golden pulsing LED on the central games ladder hops between Team 1 and Team 2!</div>
+      </div>
+
+      <!-- Action 4: Undo (during match) -->
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">✌️ Double Click (during match)</span>
+          <span class="action-badge badge-both">Either Button</span>
+        </div>
+        <div class="action-effect">↩️ UNDO Last Point</div>
+        <div class="action-detail">Reverts the score back one point if an accidental click occurred. Center display flashes briefly.</div>
+      </div>
+
+      <!-- Action 5: Swap Sides -->
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">⏱️ Long Press (at 0–0)</span>
+          <span class="action-badge badge-both">Hold ≥ 1.5s</span>
+        </div>
+        <div class="action-effect">↔️ Swap Court Sides</div>
+        <div class="action-detail">Swaps Team 1 and Team 2 sides and display colors before the match starts.</div>
+      </div>
+
+      <!-- Action 6: Clock Mode -->
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">⏱️ Long Press (during match)</span>
+          <span class="action-badge badge-both">Hold ≥ 1.5s</span>
+        </div>
+        <div class="action-effect">🕒 Clock Mode Toggle</div>
+        <div class="action-detail">Shows current real-time clock (HH:MM). Click any button to resume the match score intact.</div>
+      </div>
+
+    </div>
+
+    <!-- Gym / Counter Mode -->
+    <div class="section-title">
+      <span>⏱️ Gym / Timer Mode</span>
+    </div>
+    <div class="actions-list">
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">Single Timer Mode</span>
+          <span class="action-badge badge-t1">Countdown / Up</span>
+        </div>
+        <div class="action-detail">
+          • <strong>Big Button:</strong> Toggle Start / Pause<br>
+          • <strong>Small Button:</strong> Step value (+1 / -1)<br>
+          • <strong>Double Click:</strong> Reset timer to target or zero
+        </div>
+      </div>
+      <div class="action-card">
+        <div class="action-header">
+          <span class="action-trigger">Dual Timer Mode</span>
+          <span class="action-badge badge-t2">Two Clocks</span>
+        </div>
+        <div class="action-detail">
+          • <strong>Big Button:</strong> Start/Pause Left | Double Click: Reset Left<br>
+          • <strong>Small Button:</strong> Start/Pause Right | Double Click: Reset Right
+        </div>
+      </div>
+    </div>
+
+    <!-- Serve Indicator & Battery Pro Tips -->
+    <div class="section-title">
+      <span>💡 Serve Indicator & Pro Tips</span>
+    </div>
+    <div class="tip-card">
+      <div class="tip-item">
+        <strong>Gold Serve Pulse:</strong> On the scoreboard's middle ladder, the next unearned game LED gently pulses in <strong>Gold</strong> on the serving team's column.
+      </div>
+      <div class="tip-item">
+        <strong>Tiebreak Serves:</strong> In tiebreaks, 1 or 2 solid gold dots indicate whether the server is on their 1st or 2nd serve of the turn.
+      </div>
+      <div class="tip-item">
+        <strong>Battery Replacement:</strong> Uses a standard <strong>CR1632</strong> 3V coin cell (lasts 6–12 months). Twist open the back cap with a coin to swap.
+      </div>
+      <div class="tip-item">
+        <strong>Deep Sleep:</strong> The remote automatically sleeps after inactivity. The first press wakes it up and auto-reconnects in 1–2 seconds.
+      </div>
+      <div class="tip-item">
+        <strong>Undo Timing:</strong> Double-click threshold is <strong>380ms</strong>. Keep a deliberate rhythm when scoring points quickly.
+      </div>
+    </div>
+
+    <!-- Printable A4 Switch -->
+    <div class="print-switch-card">
+      <div class="print-switch-text">
+        Need a printable A4 PDF sheet for your club board?
+      </div>
+      <a href="quick_start_bt_button.html" target="_blank" class="btn-print-link">
+        <span>🖨️ A4 Guide ↗</span>
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // Smooth back button navigation
+    const btnBack = document.getElementById('btnBack');
+    if (btnBack) {
+      btnBack.addEventListener('click', (e) => {
+        if (window.history.length > 1) {
+          e.preventDefault();
+          window.history.back();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

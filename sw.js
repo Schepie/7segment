@@ -15,7 +15,9 @@ const PRECACHE_ASSETS = [
   'qr_app.png',
   'qr_rules.png',
   'quick_start_app.html',
-  'quick_start_bt_button.html'
+  'quick_start_bt_button.html',
+  'quick_start_app_mobile.html',
+  'quick_start_bt_button_mobile.html'
 ];
 
 // Install: Cache essential app assets

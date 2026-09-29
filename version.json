@@ -1,5 +1,5 @@
 {
-  "buildTime": "2026-09-29T12:20:00Z",
-  "notes": "Fixed bottom navigation icon bar disappearing after app updates (viewport locking, scroll restoration, and flex containment).",
+  "buildTime": "2026-09-29T12:26:00Z",
+  "notes": "Added mobile-optimized Quick Start Guides for smartphone screens and linked them in the Info tab.",
   "version": "1.7.2"
 }
