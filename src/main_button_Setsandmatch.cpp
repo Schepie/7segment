@@ -737,7 +737,7 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
     }
   } else {
     int t1Tens, t1Ones, t2Tens, t2Ones;
-    if (betweenGames) {
+    if (betweenGames && !inTiebreak) {
       int g1 = betweenSets ? completedSetGames1 : team1Games;
       int g2 = betweenSets ? completedSetGames2 : team2Games;
       t1Tens = (g1 >= 10) ? (g1 / 10) : DIGIT_BLANK; // Blank leading zero
@@ -799,13 +799,13 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
   }
 
   // Draw Games & Sets module in the middle (LEDs 56..79)
-  if (betweenSets) {
+  if (betweenSets && !inTiebreak) {
     drawGamesAndSets(completedSetGames1, team1Sets, completedSetGames2, team2Sets, swapped, brightnessFactor);
   } else {
     drawGamesAndSets(swapped, brightnessFactor);
   }
 
-  if (betweenGames && cfgLedLayout == 1) {
+  if (betweenGames && !inTiebreak && cfgLedLayout == 1) {
     renderColon(true, scaleColor(pixels.Color(120, 120, 120), brightnessFactor));
   }
 
@@ -1670,6 +1670,7 @@ bool undoScoreState() {
   courtSideInverted  = scoreHistory[historyCount].courtInverted;
   currentServer      = scoreHistory[historyCount].server;
   tbFirstServer      = scoreHistory[historyCount].tbFirstSrv;
+  triggerTiebreakIntroAnimation = false;
   if (!matchWon) {
     matchWonPhase = MATCH_PHASE_NONE;
   }
@@ -1689,6 +1690,18 @@ void addPadelPoint(int team) {
     scoreNeedsUpdate = true;
     notifyWatchScore();
     Serial.println("[PADEL] Button press dismissed settings screen -> Showing 0-0");
+    return;
+  }
+
+  // If tiebreak splash screen ('tb' or 'Stb') is currently displayed,
+  // this button press dismisses the intro to show 0/0 with serve indication without scoring yet:
+  if (inTiebreak && triggerTiebreakIntroAnimation) {
+    triggerTiebreakIntroAnimation = false;
+    betweenGames = false;
+    betweenSets = false;
+    scoreNeedsUpdate = true;
+    notifyWatchScore();
+    Serial.println("[TIEBREAK] Button press dismissed tb screen -> Showing 0/0 with serve indication");
     return;
   }
 
@@ -1872,9 +1885,9 @@ void addPadelPoint(int team) {
       tiebreakPoints2 = 0;
       tbFirstServer = (currentServer == 1) ? 2 : 1;
       currentServer = tbFirstServer;
-      triggerTiebreakIntroAnimation = true; // Show tb indicator briefly at start
+      triggerTiebreakIntroAnimation = true; // Show tb indicator until button is pressed
       tiebreakIntroStartTime = millis();
-      betweenGames = true;
+      betweenGames = false;
       betweenSets = false;
       triggerGameWonAnimation = true;
       Serial.printf("[PADEL] 🔥 %d-%d Reached -> ENTERING TIEBREAK!\n", cfgGamesPerSet, cfgGamesPerSet);
@@ -1935,8 +1948,10 @@ void addPadelPoint(int team) {
           tiebreakPoints1 = 0;
           tiebreakPoints2 = 0;
           tbFirstServer = currentServer;
-          triggerTiebreakIntroAnimation = true; // Show Stb indicator briefly at start
+          triggerTiebreakIntroAnimation = true; // Show Stb indicator until button is pressed
           tiebreakIntroStartTime = millis();
+          betweenGames = false;
+          betweenSets = false;
           Serial.println("[PADEL] 🔥 1-1 in sets reached -> ENTERING DECIDING SUPER TIEBREAK (10 pts)!");
         }
       }
@@ -2083,6 +2098,7 @@ void resetMatchScores() {
   inTiebreak = false;
   tiebreakPoints1 = 0;
   tiebreakPoints2 = 0;
+  triggerTiebreakIntroAnimation = false;
   matchWon = false;
   matchWonPhase = MATCH_PHASE_NONE;
   courtSideInverted = false;
@@ -3138,7 +3154,7 @@ void loop() {
   // Check Inactivity Idle Timer:
   // If in Scoreboard Mode and inactivity timer expired, return to Clock Mode!
   // Note: While holding between games/sets or match won, keep score visible on the board!
-  if (currentMode == MODE_SCOREBOARD && cfgIdleTimeoutMs > 0 && !betweenGames && !matchWon) {
+  if (currentMode == MODE_SCOREBOARD && cfgIdleTimeoutMs > 0 && !betweenGames && !matchWon && !triggerTiebreakIntroAnimation) {
     if (millis() - lastActivityTime >= cfgIdleTimeoutMs) {
       Serial.println("[MODE] Inactivity timeout -> Automatically switching to Clock Mode");
       currentMode = MODE_CLOCK;
@@ -3214,33 +3230,43 @@ void loop() {
     if (currentMode == MODE_COUNTER) {
       handleCounterRemoteButton(lastPressedButton, false);
     } else {
-      const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
-      if (lastPressedButton == BUTTON_BIG) {
-        addPadelPoint(1);
-        Serial.printf("[BUTTON] Big Button -> Team 1 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
-                      pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-        if (inTiebreak) {
-          bool newSwapped = isCourtSwapped();
-          if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
-            animateCourtSideSwap(newSwapped);
-            currentCourtSwapped = newSwapped;
-          }
-        }
-        lastActivityTime = millis();
+      if (inTiebreak && triggerTiebreakIntroAnimation) {
+        triggerTiebreakIntroAnimation = false;
+        betweenGames = false;
+        betweenSets = false;
         scoreNeedsUpdate = true;
-      } else if (lastPressedButton == BUTTON_SMALL) {
-        addPadelPoint(2);
-        Serial.printf("[BUTTON] Small Button -> Team 2 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
-                      pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
-        if (inTiebreak) {
-          bool newSwapped = isCourtSwapped();
-          if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
-            animateCourtSideSwap(newSwapped);
-            currentCourtSwapped = newSwapped;
-          }
-        }
+        notifyWatchScore();
         lastActivityTime = millis();
-        scoreNeedsUpdate = true;
+        Serial.println("[TIEBREAK] Button Pressed -> Dismissed tb screen, showing 0/0 with serve indication");
+      } else {
+        const char* pointNames[] = { " 0", "15", "30", "40", "Ad" };
+        if (lastPressedButton == BUTTON_BIG) {
+          addPadelPoint(1);
+          Serial.printf("[BUTTON] Big Button -> Team 1 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
+                        pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
+          if (inTiebreak) {
+            bool newSwapped = isCourtSwapped();
+            if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
+              animateCourtSideSwap(newSwapped);
+              currentCourtSwapped = newSwapped;
+            }
+          }
+          lastActivityTime = millis();
+          scoreNeedsUpdate = true;
+        } else if (lastPressedButton == BUTTON_SMALL) {
+          addPadelPoint(2);
+          Serial.printf("[BUTTON] Small Button -> Team 2 Point! Score: %s - %s (Games: %d-%d | Sets: %d-%d)\n",
+                        pointNames[team1Point], pointNames[team2Point], team1Games, team2Games, team1Sets, team2Sets);
+          if (inTiebreak) {
+            bool newSwapped = isCourtSwapped();
+            if (newSwapped != currentCourtSwapped && !triggerGameWonAnimation && !triggerSetWonAnimation && !triggerMatchWonAnimation) {
+              animateCourtSideSwap(newSwapped);
+              currentCourtSwapped = newSwapped;
+            }
+          }
+          lastActivityTime = millis();
+          scoreNeedsUpdate = true;
+        }
       }
     }
   }
@@ -3454,11 +3480,7 @@ void loop() {
     }
   }
 
-  // Auto-dismiss tiebreak splash intro after 1200ms so 0-0 score & serve indicator show up
-  if (triggerTiebreakIntroAnimation && (millis() - tiebreakIntroStartTime >= 1200)) {
-    triggerTiebreakIntroAnimation = false;
-    scoreNeedsUpdate = true;
-  }
+  // Tiebreak splash ('tb' or 'Stb') stays on screen until the user presses a button
 
   if (scoreNeedsUpdate && currentMode == MODE_SCOREBOARD) {
     scoreNeedsUpdate = false;
