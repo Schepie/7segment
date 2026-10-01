@@ -1,6 +1,6 @@
 {
-  "buildTime": "2026-10-01T06:45:00Z",
-  "notes": "WS2813 SPI DMA timing gecorrigeerd naar 3.2MHz en 0x0C/0x08 patroon: lost het wegvallen van Bit 7 bij 50% helderheid op en voorkomt kleurverschuivingen (roze naar blauw, geel naar groen, cyaan naar groen, paars naar roze).",
-  "version": "1.8.2"
+  "buildTime": "2026-10-01T14:31:00Z",
+  "notes": "Tiebreak weergave update (tb blijft op display tot knopdruk, toont 0/0 met opslagindicatie) en configureerbare opslagindicator modi (Standaard onder 0, Speler onder/boven 0, Speler R/L, Uit).",
+  "version": "1.8.3"
 }
 

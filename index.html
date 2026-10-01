@@ -751,6 +751,21 @@
             gap: 6px;
         }
 
+        .pills-row.pills-2col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .pills-2col .pill-select {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 8px 10px;
+            font-size: 11.5px;
+            line-height: 1.3;
+            text-align: center;
+        }
+
         .pill-select {
             padding: 10px 4px;
             font-size: 12px;
@@ -2602,6 +2617,16 @@
                             </div>
                         </div>
 
+                        <div class="rule-field-group">
+                            <label class="rule-field-label">🎾 Opslag Indicatie (Serve Display)</label>
+                            <div class="pills-row pills-2col" id="toggleSrvInd">
+                                <button type="button" class="pill-select active" data-val="0">🟡 Standaard (Onder 0)</button>
+                                <button type="button" class="pill-select" data-val="1">↕️ Speler (Onder / Boven)</button>
+                                <button type="button" class="pill-select" data-val="2">🔤 Speler (R / L)</button>
+                                <button type="button" class="pill-select" data-val="3">🚫 Geen Opslag</button>
+                            </div>
+                        </div>
+
                         <!-- Preview Rules on Scoreboard -->
                         <button type="button" class="btn-preview-rules" id="btnPreviewRules">
                             <span>📺 Preview Rules on Scoreboard</span>
@@ -2985,7 +3010,7 @@
                     <div class="section-header">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.8.2</span>
+                            id="appVersionBadge">v1.8.3</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -3237,6 +3262,7 @@
             sets: 2,
             games: 6,
             tb: 1,
+            srvInd: 0,
             brt: 88,
             idle: 300000,
             layout: 0, // Fixed to 136 LEDs (Full padel scoreboard)
@@ -3564,6 +3590,11 @@
                 appConfig.tb = parseInt(tbMatch[1]);
                 updatePillGroupUI('toggleTb', appConfig.tb);
                 updateSetsPillLabel();
+            }
+            const srvIndMatch = text.match(/SRV_IND=(\d+)/);
+            if (srvIndMatch) {
+                appConfig.srvInd = parseInt(srvIndMatch[1]);
+                updatePillGroupUI('toggleSrvInd', appConfig.srvInd);
             }
             syncRulesPresetBadge();
             if (idleMatch) updatePillGroupUI('pillsIdleTimeout', parseInt(idleMatch[1]), 'idle');
@@ -4190,6 +4221,10 @@
             appConfig.sets = preset.sets;
             appConfig.games = preset.games;
             appConfig.tb = preset.tb;
+            if (preset.srvInd !== undefined) {
+                appConfig.srvInd = preset.srvInd;
+                updatePillGroupUI('toggleSrvInd', appConfig.srvInd);
+            }
 
             updatePillGroupUI('toggleGp', preset.gp);
             updatePillGroupUI('toggleSets', preset.sets);
@@ -4235,7 +4270,9 @@
             const setsText = appConfig.sets === 1 ? '🥇 1 Set' : (appConfig.tb === 1 ? '🏆 2 Sets + Super TB' : '🏆 Best of 3');
             const gamesText = `🎾 ${appConfig.games} Games`;
             const tbText = appConfig.tb === 1 ? '🔥 Super TB ON' : '🚫 Super TB OFF';
-            preview.innerHTML = `<strong>Selected Rules:</strong> ${gpText} • ${setsText} • ${gamesText} • ${tbText}`;
+            const srvTexts = ['🟡 Standaard', '↕️ Speler 0', '🔤 Speler R/L', '🚫 Geen Opslag'];
+            const srvText = srvTexts[appConfig.srvInd] || '🟡 Standaard';
+            preview.innerHTML = `<strong>Selected Rules:</strong> ${gpText} • ${setsText} • ${gamesText} • ${tbText} • ${srvText}`;
         }
 
         function toggleAddShortcutPanel(show) {
@@ -4345,7 +4382,7 @@
             autoSaveRulesTimer = setTimeout(async () => {
                 if (!watchChar) return;
                 const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
-                const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr}`;
+                const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr},SRV_IND=${appConfig.srvInd}`;
                 const ok = await sendBleText(rulesPayload);
                 if (ok) {
                     log(`Rules auto-saved: GP=${appConfig.gp}, Sets=${appConfig.sets}, Games=${appConfig.games}, TB=${appConfig.tb}`, 'suc');
@@ -4374,7 +4411,7 @@
                     container.querySelectorAll('.pill-select').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     appConfig[configKey] = parseInt(btn.dataset[valAttr]);
-                    if (['gp', 'sets', 'games', 'tb'].includes(configKey)) {
+                    if (['gp', 'sets', 'games', 'tb', 'srvInd'].includes(configKey)) {
                         if (configKey === 'tb') updateSetsPillLabel();
                         updateAddShortcutPreview();
                         syncRulesPresetBadge();
@@ -4402,6 +4439,7 @@
         setupPillGroup('toggleSets', 'sets');
         setupPillGroup('toggleGames', 'games');
         setupPillGroup('toggleTb', 'tb');
+        setupPillGroup('toggleSrvInd', 'srvInd');
         setupPillGroup('pillsIdleTimeout', 'idle', 'idle');
         updateSetsPillLabel();
         loadRulePresets();
@@ -4999,7 +5037,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.8.2';
+        const CURRENT_APP_VERSION = '1.8.3';
         let swRegistration = null;
         let isRefreshing = false;
         let latestAvailableVersion = null;

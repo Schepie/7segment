@@ -101,6 +101,7 @@ struct ScoreState {
   bool courtInverted;
   int server;
   int tbFirstSrv;
+  int setFirstSrv;
 };
 
 #define SCORE_HISTORY_DEPTH 30
@@ -133,6 +134,8 @@ int tiebreakPoints2 = 0;
 // Service Tracking (1 = Team 1 Left/Blue, 2 = Team 2 Right/Red)
 int currentServer = 1;
 int tbFirstServer = 1;
+int setFirstServer = 1; // Team serving Game 1 of current set
+uint8_t cfgServeIndicatorMode = 0; // 0=Standard (Bottom 0), 1=Player Top/Bottom 0, 2=Player L/R, 3=Off
 
 int getTiebreakCurrentServer() {
   int tot = tiebreakPoints1 + tiebreakPoints2;
@@ -329,10 +332,14 @@ inline void updateLedBrightness(uint8_t brt) {
 //   [5] T  (Top)
 //   [6] TR (Top-Right)
 // ==============================================================================
-#define DIGIT_BLANK 10
-#define DIGIT_SERVE 16
+#define DIGIT_BLANK        10
+#define DIGIT_SERVE_BOTTOM 16  // Lower "0" (BL, B, BR, M)
+#define DIGIT_SERVE_TOP    17  // Upper "0" (TL, T, TR, M)
+#define DIGIT_SERVE_L      18  // Uppercase 'L' (BL, B, TL)
+#define DIGIT_SERVE_R      19  // Lowercase 'r' (BL, M)
+#define DIGIT_SERVE        DIGIT_SERVE_BOTTOM
 
-const byte numbers[17][7] = {
+const byte numbers[20][7] = {
   // BL, B, BR, M, TL, T, TR
   {   1, 1,  1, 0,  1, 1,  1 }, // 0: BL, B, BR, TL, T, TR
   {   0, 0,  1, 0,  0, 0,  1 }, // 1: BR, TR
@@ -350,7 +357,10 @@ const byte numbers[17][7] = {
   {   0, 1,  1, 1,  1, 1,  0 }, // 13: 'S' (Set / Uppercase 'S')
   {   1, 1,  0, 1,  1, 0,  0 }, // 14: 't' (lowercase 't')
   {   1, 1,  1, 1,  1, 0,  0 }, // 15: 'b' (lowercase 'b')
-  {   1, 1,  1, 1,  0, 0,  0 }  // 16: Serve symbol: BL, B, BR, M
+  {   1, 1,  1, 1,  0, 0,  0 }, // 16: Serve symbol bottom: BL, B, BR, M
+  {   0, 0,  0, 1,  1, 1,  1 }, // 17: Serve symbol top: M, TL, T, TR
+  {   1, 1,  0, 0,  1, 0,  0 }, // 18: Serve 'L': BL, B, TL
+  {   1, 0,  0, 1,  0, 0,  0 }  // 19: Serve 'r': BL, M
 };
 
 // ==============================================================================
@@ -394,7 +404,7 @@ const uint8_t panel0SegmentMap[7] = { 6, 5, 4, 3, 2, 1, 0 };
 
 void drawDigit(int digitIndex, int num, uint32_t color) {
   if (digitIndex < 0 || digitIndex >= NUM_DIGITS) return;
-  if (num < 0 || num > 16) num = DIGIT_BLANK;
+  if (num < 0 || num > 19) num = DIGIT_BLANK;
 
   int baseLed = getDigitBaseLed(digitIndex);
   for (int seg = 0; seg < 7; seg++) {
@@ -508,7 +518,7 @@ void drawGamesAndSets(int games1, int sets1, int games2, int sets2, bool swapped
   // --- Serve Indicator Overlay on Games Ladder ---
   // Regular game serve indicator on games ladder is removed (now on 7-segment display).
   // For tiebreaks, the ladder LED is used only when points reach double digits (>= 10).
-  if (!matchWon && !betweenSets && inTiebreak) {
+  if (!matchWon && !betweenSets && inTiebreak && cfgServeIndicatorMode != 3) {
     bool tbDoubleDigits = (tiebreakPoints1 >= 10 || tiebreakPoints2 >= 10);
     if (tbDoubleDigits) {
       uint32_t serveColor = scaleColor(pixels.Color(255, 255, 0), brightnessFactor);
@@ -705,6 +715,39 @@ void showPixelsSafe() {
 
 void renderColon(bool colonOn, uint32_t color);
 
+// Returns false for Right player (R / Bottom), true for Left player (L / Top)
+bool isServePlayerLeft() {
+  if (inTiebreak) {
+    int tot = tiebreakPoints1 + tiebreakPoints2;
+    int block = (tot == 0) ? 0 : ((tot - 1) / 2 + 1);
+    return ((block / 2) % 2 == 1);
+  } else {
+    int totalSetGames = team1Games + team2Games;
+    int turn;
+    if (currentServer == setFirstServer) {
+      turn = totalSetGames / 2;
+    } else {
+      turn = (totalSetGames > 0) ? ((totalSetGames - 1) / 2) : 0;
+    }
+    return (turn % 2 == 1);
+  }
+}
+
+int getServeDigitGlyph() {
+  if (cfgServeIndicatorMode == 3) {
+    return DIGIT_BLANK;
+  }
+  if (cfgServeIndicatorMode == 1) {
+    bool isLeft = isServePlayerLeft();
+    return isLeft ? DIGIT_SERVE_TOP : DIGIT_SERVE_BOTTOM;
+  }
+  if (cfgServeIndicatorMode == 2) {
+    bool isLeft = isServePlayerLeft();
+    return isLeft ? DIGIT_SERVE_L : DIGIT_SERVE_R;
+  }
+  return DIGIT_SERVE_BOTTOM;
+}
+
 void renderBoardWithState(bool swapped, float brightnessFactor) {
   pixels.clear();
   if (brightnessFactor <= 0.001f) {
@@ -752,7 +795,7 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
     // Determine if serve indicator should be displayed on 1st 7-segment display
     bool showServeOnDigits = false;
     int activeServer = 1;
-    if (!matchWon) {
+    if (!matchWon && cfgServeIndicatorMode != 3) {
       if (inTiebreak) {
         // In tiebreak, use 7-segment display for serve until points reach double digits
         if (tiebreakPoints1 < 10 && tiebreakPoints2 < 10) {
@@ -781,12 +824,13 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
     int d2Num = rightTensDigit;
 
     if (showServeOnDigits) {
+      int srvGlyph = getServeDigitGlyph();
       if (isLeftServer) {
-        d0Num = DIGIT_SERVE;
+        d0Num = srvGlyph;
         d0Color = colorGold;
         d2Num = DIGIT_BLANK;
       } else {
-        d2Num = DIGIT_SERVE;
+        d2Num = srvGlyph;
         d2Color = colorGold;
         d0Num = DIGIT_BLANK;
       }
@@ -1611,6 +1655,9 @@ void saveScoreState() {
     scoreHistory[historyCount].compSetG1 = completedSetGames1;
     scoreHistory[historyCount].compSetG2 = completedSetGames2;
     scoreHistory[historyCount].courtInverted = courtSideInverted;
+    scoreHistory[historyCount].server = currentServer;
+    scoreHistory[historyCount].tbFirstSrv = tbFirstServer;
+    scoreHistory[historyCount].setFirstSrv = setFirstServer;
     historyCount++;
   } else {
     for (int i = 0; i < SCORE_HISTORY_DEPTH - 1; i++) {
@@ -1640,6 +1687,7 @@ void saveScoreState() {
     scoreHistory[SCORE_HISTORY_DEPTH - 1].courtInverted = courtSideInverted;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].server = currentServer;
     scoreHistory[SCORE_HISTORY_DEPTH - 1].tbFirstSrv = tbFirstServer;
+    scoreHistory[SCORE_HISTORY_DEPTH - 1].setFirstSrv = setFirstServer;
   }
 }
 
@@ -1670,6 +1718,7 @@ bool undoScoreState() {
   courtSideInverted  = scoreHistory[historyCount].courtInverted;
   currentServer      = scoreHistory[historyCount].server;
   tbFirstServer      = scoreHistory[historyCount].tbFirstSrv;
+  setFirstServer     = scoreHistory[historyCount].setFirstSrv;
   triggerTiebreakIntroAnimation = false;
   if (!matchWon) {
     matchWonPhase = MATCH_PHASE_NONE;
@@ -1781,6 +1830,7 @@ void addPadelPoint(int team) {
         team2Sets++;
       }
       currentServer = (tbFirstServer == 1) ? 2 : 1; // Team that received in point 1 of tiebreak serves game 1 of next set
+      setFirstServer = currentServer;
 
       // Record this completed set's final games (e.g. 7-6 or 9-8):
       if (totalSetsPlayed == 0) {
@@ -1958,6 +2008,7 @@ void addPadelPoint(int team) {
       // Reset games for the new set
       team1Games = 0;
       team2Games = 0;
+      setFirstServer = currentServer;
     } else {
       triggerGameWonAnimation = true;
       betweenGames = true;
@@ -2105,6 +2156,7 @@ void resetMatchScores() {
   currentCourtSwapped = false;
   currentServer = 1;
   tbFirstServer = 1;
+  setFirstServer = 1;
   showingSettingsInfo = true;
   scoreNeedsUpdate = true;
   notifyWatchScore();
@@ -2156,16 +2208,16 @@ void sendConfigNotification() {
   char colHex[10];
   snprintf(colHex, sizeof(colHex), "#%02X%02X%02X", cfgClockR, cfgClockG, cfgClockB);
   char buf[128];
-  snprintf(buf, sizeof(buf), "CFG,GP=%d,SETS=%d,GAMES=%d,TB=%d,BRT=%d,IDLE=%lu,LAY=%d,COL=%s",
+  snprintf(buf, sizeof(buf), "CFG,GP=%d,SETS=%d,GAMES=%d,TB=%d,BRT=%d,IDLE=%lu,LAY=%d,COL=%s,SRV_IND=%d",
            cfgGoldenPoint ? 1 : 0, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak ? 1 : 0,
-           cfgBrightness, (unsigned long)cfgIdleTimeoutMs, (int)cfgLedLayout, colHex);
+           cfgBrightness, (unsigned long)cfgIdleTimeoutMs, (int)cfgLedLayout, colHex, (int)cfgServeIndicatorMode);
   pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
   pWatchCharacteristic->notify();
   Serial.printf("[BLE-CFG] Notified client: '%s'\n", buf);
 }
 
 void parseConfigPayload(const std::string& val) {
-  if (val.find("GP=") != std::string::npos || val.find("BRT=") != std::string::npos || val.find("IDLE=") != std::string::npos || val.find("COL=") != std::string::npos || val.find("LAY=") != std::string::npos) {
+  if (val.find("GP=") != std::string::npos || val.find("BRT=") != std::string::npos || val.find("IDLE=") != std::string::npos || val.find("COL=") != std::string::npos || val.find("LAY=") != std::string::npos || val.find("SRV_IND=") != std::string::npos || val.find("SRV_MODE=") != std::string::npos) {
     if (val.find("GP=1") != std::string::npos) cfgGoldenPoint = true;
     else if (val.find("GP=0") != std::string::npos) cfgGoldenPoint = false;
 
@@ -2202,6 +2254,16 @@ void parseConfigPayload(const std::string& val) {
       if (eqPos != std::string::npos) {
         int lay = atoi(val.substr(eqPos + 1).c_str());
         if (lay >= 0 && lay <= 2) cfgLedLayout = (uint8_t)lay;
+      }
+    }
+
+    size_t siPos = val.find("SRV_IND=");
+    if (siPos == std::string::npos) siPos = val.find("SRV_MODE=");
+    if (siPos != std::string::npos) {
+      size_t eqPos = val.find('=', siPos);
+      if (eqPos != std::string::npos) {
+        int sm = atoi(val.substr(eqPos + 1).c_str());
+        if (sm >= 0 && sm <= 3) cfgServeIndicatorMode = (uint8_t)sm;
       }
     }
 
@@ -2253,6 +2315,10 @@ void parseConfigPayload(const std::string& val) {
         cfgClockColor = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
       }
     }
+    if (parts.size() >= 9) {
+      int sm = atoi(parts[8].c_str());
+      if (sm >= 0 && sm <= 3) cfgServeIndicatorMode = (uint8_t)sm;
+    }
   }
 
   if (cfgSetsToWin < 1 || cfgSetsToWin > 3) cfgSetsToWin = 2;
@@ -2271,11 +2337,12 @@ void parseConfigPayload(const std::string& val) {
   cfgPrefs.putUChar("clock_r", cfgClockR);
   cfgPrefs.putUChar("clock_g", cfgClockG);
   cfgPrefs.putUChar("clock_b", cfgClockB);
+  cfgPrefs.putUChar("srv_ind", cfgServeIndicatorMode);
   cfgPrefs.end();
 
-  Serial.printf("[CONFIG] Saved to flash: GP=%d, SetsToWin=%d, GamesPerSet=%d, Tiebreak=%d, Brightness=%d, IdleTimeout=%lu, Layout=%d, ClockColor=#%02X%02X%02X\n",
+  Serial.printf("[CONFIG] Saved to flash: GP=%d, SetsToWin=%d, GamesPerSet=%d, Tiebreak=%d, Brightness=%d, IdleTimeout=%lu, Layout=%d, ClockColor=#%02X%02X%02X, SrvInd=%d\n",
                 cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs,
-                (int)cfgLedLayout, cfgClockR, cfgClockG, cfgClockB);
+                (int)cfgLedLayout, cfgClockR, cfgClockG, cfgClockB, (int)cfgServeIndicatorMode);
 
   lastActivityTime = millis();
   showingSettingsInfo = true;
@@ -2371,7 +2438,7 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       return;
     }
 
-    // 3. Direct Layout Command: "CMD,LAY,...", "LAY,...", "LAY=..."
+    // Direct Layout Command: "CMD,LAY,...", "LAY,...", "LAY=..."
     if (val.rfind("CMD,LAY,", 0) == 0 || val.rfind("LAY,", 0) == 0 || val.rfind("LAY=", 0) == 0) {
       size_t pfx = (val.rfind("CMD,LAY,", 0) == 0) ? 8 : 4;
       int lay = atoi(val.substr(pfx).c_str());
@@ -2382,6 +2449,25 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
         cfgPrefs.putUChar("led_layout", cfgLedLayout);
         cfgPrefs.end();
         if (currentMode == MODE_CLOCK) renderClock();
+      }
+      sendConfigNotification();
+      return;
+    }
+
+    // Direct Serve Indicator Command: "CMD,SRV_IND,...", "SRV_IND=..."
+    if (val.rfind("CMD,SRV_IND,", 0) == 0 || val.rfind("SRV_IND=", 0) == 0 || val.rfind("CFG,SRV_IND=", 0) == 0) {
+      size_t pfx = 8;
+      if (val.rfind("CMD,SRV_IND,", 0) == 0) pfx = 12;
+      else if (val.rfind("CFG,SRV_IND=", 0) == 0) pfx = 12;
+      int sm = atoi(val.substr(pfx).c_str());
+      if (sm >= 0 && sm <= 3) {
+        cfgServeIndicatorMode = (uint8_t)sm;
+        Preferences cfgPrefs;
+        cfgPrefs.begin("padel_cfg", false);
+        cfgPrefs.putUChar("srv_ind", cfgServeIndicatorMode);
+        cfgPrefs.end();
+        scoreNeedsUpdate = true;
+        renderPadelScoreboard();
       }
       sendConfigNotification();
       return;
@@ -2459,16 +2545,19 @@ class WatchCharCallbacks : public NimBLECharacteristicCallbacks {
       } else if (cmd == "SRV,1" || cmd == "SRV=1") {
         currentServer = 1;
         tbFirstServer = 1;
+        if (team1Games == 0 && team2Games == 0) setFirstServer = 1;
         notifyWatchScore();
         scoreNeedsUpdate = true;
       } else if (cmd == "SRV,2" || cmd == "SRV=2") {
         currentServer = 2;
         tbFirstServer = 2;
+        if (team1Games == 0 && team2Games == 0) setFirstServer = 2;
         notifyWatchScore();
         scoreNeedsUpdate = true;
       } else if (cmd == "SRV,TOGGLE" || cmd == "TOGGLE_SRV") {
         currentServer = (currentServer == 1) ? 2 : 1;
         tbFirstServer = currentServer;
+        if (team1Games == 0 && team2Games == 0) setFirstServer = currentServer;
         notifyWatchScore();
         scoreNeedsUpdate = true;
       } else if (cmd.rfind("CTR,", 0) == 0) {
@@ -3115,12 +3204,14 @@ void setup() {
   cfgClockR        = cfgPrefs.getUChar("clock_r", 0); // Default Pure Green (#00FF00)
   cfgClockG        = cfgPrefs.getUChar("clock_g", 255);
   cfgClockB        = cfgPrefs.getUChar("clock_b", 0);
+  cfgServeIndicatorMode = cfgPrefs.getUChar("srv_ind", 0);
+  if (cfgServeIndicatorMode > 3) cfgServeIndicatorMode = 0;
   cfgPrefs.end();
   cfgClockColor    = pixels.Color(cfgClockR, cfgClockG, cfgClockB);
   updateLedBrightness(cfgBrightness);
-  Serial.printf("[CONFIG] Flash Rules: GP=%d, Sets=%d, Games=%d, TB=%d, Brightness=%d, Idle=%lu ms, Layout=%d, ClockColor=#%02X%02X%02X\n",
+  Serial.printf("[CONFIG] Flash Rules: GP=%d, Sets=%d, Games=%d, TB=%d, Brightness=%d, Idle=%lu ms, Layout=%d, ClockColor=#%02X%02X%02X, SrvInd=%d\n",
                 cfgGoldenPoint, cfgSetsToWin, cfgGamesPerSet, cfgTiebreak, cfgBrightness, (unsigned long)cfgIdleTimeoutMs,
-                (int)cfgLedLayout, cfgClockR, cfgClockG, cfgClockB);
+                (int)cfgLedLayout, cfgClockR, cfgClockG, cfgClockB, (int)cfgServeIndicatorMode);
 
   NimBLEScan* pScan = NimBLEDevice::getScan();
   pScan->setAdvertisedDeviceCallbacks(new AdvertisedDeviceCallbacks(), false);
@@ -3281,6 +3372,7 @@ void loop() {
       if (isAtMatchStart()) {
         currentServer = (currentServer == 1) ? 2 : 1;
         tbFirstServer = currentServer;
+        setFirstServer = currentServer;
         showingSettingsInfo = false; // exit settings splash if shown
         Serial.printf("[BUTTON] Double Click at 0-0 -> Toggled First Server! Team %d is now serving first.\n", currentServer);
         // Quick flash on middle module
