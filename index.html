@@ -1874,7 +1874,7 @@
         /* QR Code Cards for App & Game Rules */
         .qr-cards-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 10px;
             margin-top: 4px;
         }
@@ -3010,7 +3010,7 @@
                     <div class="section-header">
                         <span>📲 App Version & Updates</span>
                         <span class="pill-select active" style="font-size: 10px; padding: 2px 8px;"
-                            id="appVersionBadge">v1.8.3</span>
+                            id="appVersionBadge">v1.8.5</span>
                     </div>
                     <div
                         style="background: rgba(0,0,0,0.3); border: 1px solid var(--bg-card-border); border-radius: var(--radius-lg); padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -3113,7 +3113,18 @@
                                 ↗</a>
                         </div>
 
-                        <!-- 2. URL to the rules of the padel game -->
+                        <!-- 2. URL to the mobile voordelen & simulator app -->
+                        <div class="qr-card">
+                            <div class="qr-card-title">✨ Voordelen App</div>
+                            <div class="qr-image-wrapper">
+                                <img src="qr_voordelen.png" alt="Padel Scoreboard Voordelen App QR Code" class="qr-img">
+                            </div>
+                            <div class="qr-card-desc">Scan for mobile simulator & benefits</div>
+                            <a href="voordelen_mobile.html" target="_blank" class="btn-qr-link">Open Voordelen
+                                ↗</a>
+                        </div>
+
+                        <!-- 3. URL to the rules of the padel game -->
                         <div class="qr-card">
                             <div class="qr-card-title">📖 Padel Rules</div>
                             <div class="qr-image-wrapper">
@@ -5037,7 +5048,7 @@
         // -------------------------------------------------------------
         // PWA Service Worker & Real-Time Push Update Manager
         // -------------------------------------------------------------
-        const CURRENT_APP_VERSION = '1.8.3';
+        const CURRENT_APP_VERSION = '1.8.5';
         let swRegistration = null;
         let isRefreshing = false;
         let latestAvailableVersion = null;

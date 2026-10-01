@@ -1449,6 +1449,56 @@
             color: var(--team-red);
         }
 
+        .btn-board-start {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 13px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: inherit;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.28), rgba(0, 255, 102, 0.22));
+            border: 1px solid rgba(0, 210, 255, 0.55);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 12px rgba(0, 210, 255, 0.25);
+        }
+
+        .btn-board-start:hover {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.45), rgba(0, 255, 102, 0.35));
+            border-color: #00d2ff;
+            box-shadow: 0 0 18px rgba(0, 210, 255, 0.55);
+            transform: scale(1.03);
+        }
+
+        .btn-board-start:active {
+            transform: scale(0.97);
+        }
+
+        .btn-board-start .play-icon {
+            font-size: 9px;
+            color: #00ff66;
+        }
+
+        .sim-chip-btn.match-start {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(255, 214, 0, 0.15));
+            border-color: rgba(0, 210, 255, 0.5);
+            color: #00d2ff;
+            font-weight: 700;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        .sim-chip-btn.match-start:hover {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.35), rgba(255, 214, 0, 0.25));
+            border-color: #00d2ff;
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(0, 210, 255, 0.45);
+        }
+
         /* Simulator Opslag Indicatie Selector */
         .sim-serve-selector-box {
             width: 100%;
@@ -2263,11 +2313,16 @@
                 <!-- Het Virtuele Fysieke Paneel -->
                 <div class="board-housing">
                     <div class="housing-top-strip">
-                        <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="color: var(--accent-green);">● LIVE</span>
                             <span style="margin-left: 8px;">PADELSCORE // 5-SEGMENT DISPLAY // ESP32 MASTER</span>
                         </div>
-                        <div class="housing-mode-badge" id="simModeBadge">SCOREBORD MODUS</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn-board-start" id="btnHeaderMatchStart" title="Start geanimeerde wedstrijdintroductie">
+                                <span class="play-icon">▶</span> Start Wedstrijd
+                            </button>
+                            <div class="housing-mode-badge" id="simModeBadge">SCOREBORD MODUS</div>
+                        </div>
                     </div>
 
 
@@ -2465,6 +2520,9 @@
                             <div class="sim-quick-actions">
                                 <div class="sim-quick-title">Snelle Functies</div>
                                 <div class="sim-quick-grid">
+                                    <button type="button" class="sim-chip-btn match-start" id="btnSimMatchStart" title="Start geanimeerde wedstrijdintroductie (Boot, Splash, Toss & 0-0)">
+                                        <span>🎬</span> Start Wedstrijd
+                                    </button>
                                     <button type="button" class="sim-chip-btn" id="btnSimSwap" title="Wissel van speelhelft">
                                         <span>🔄</span> Wissel Kant
                                     </button>
@@ -3221,6 +3279,7 @@
             sideSwapped: false, // true wanneer kanten gewisseld zijn
             isClockMode: false,
             isSpelMode: false,
+            isStartAnimation: false,
             inTiebreak: false,
             showTbIntro: false,
             isSuperTb: false,
@@ -3273,6 +3332,11 @@
             'r': ['e', 'g'],
             't': ['d', 'e', 'f', 'g'],
             'b': ['c', 'd', 'e', 'f', 'g'],
+            'C': ['a', 'd', 'e', 'f'],
+            'O': ['a', 'b', 'c', 'd', 'e', 'f'],
+            'o': ['c', 'd', 'e', 'g'],
+            'n': ['c', 'e', 'g'],
+            'u': ['c', 'd', 'e'],
             ' ': [],
             '-': ['g']
         };
@@ -3532,6 +3596,10 @@
                 return; // SPEL animation is running
             }
 
+            if (state.isStartAnimation) {
+                return; // Match start animation is running
+            }
+
             elSimModeBadge.textContent = 'SCOREBORD MODUS';
             elSimModeBadge.style.color = 'var(--team-blue)';
 
@@ -3681,6 +3749,7 @@
         }
 
         function undoPoint() {
+            clearMatchStartTimers();
             if (historyStack.length === 0) {
                 elExplainer.innerHTML = '⚠️ <strong>Geen eerdere stand:</strong> Er kan geen actie meer ongedaan worden gemaakt.';
                 return;
@@ -3735,6 +3804,7 @@
         }
 
         function addPoint(team) {
+            clearMatchStartTimers();
             saveStateForUndo();
 
             if (state.isClockMode || state.isSpelMode) {
@@ -4025,6 +4095,7 @@
         }
 
         function toggleServer() {
+            clearMatchStartTimers();
             saveStateForUndo();
             state.server = (state.server === 'home') ? 'away' : 'home';
             if (state.gamesHome === 0 && state.gamesAway === 0 && state.pointsHome === 0 && state.pointsAway === 0) {
@@ -4037,6 +4108,7 @@
 
         // Automatische kantwissel simulatie
         function toggleSideSwap() {
+            clearMatchStartTimers();
             saveStateForUndo();
             state.sideSwapped = !state.sideSwapped;
             const leftTeamName = state.sideSwapped ? 'Bezoekers (Rood)' : 'Thuis (Blauw)';
@@ -4048,6 +4120,7 @@
 
         // Match Start Splash Weergave (Dynamisch per regelset: 26Ad, 26GP, 16GP, 19Ad)
         function triggerStartSplash() {
+            clearMatchStartTimers();
             if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
             state.isClockMode = false;
             state.isSpelMode = false;
@@ -4060,9 +4133,80 @@
             const c3 = (state.gp === 1) ? 'P' : 'd';
             const code = `${c0}${c1}${c2}${c3}`;
 
-            // Digits in geel
-            setScoreboardDigits(c0, c1, 'lit-yellow', c2, c3, 'lit-yellow');
+            // Digits conform ESP32 firmware: blauw voor format, geel/goud voor regels
+            const ruleColor = (state.gp === 1) ? 'lit-yellow' : 'lit-gold';
+            setScoreboardDigits(c0, c1, 'lit-blue', c2, c3, ruleColor);
 
+            // Target games op de middenladder
+            for (let g = 1; g <= 9; g++) {
+                const row = 11 - g;
+                const dL = document.getElementById(`dot_L_${row}`);
+                const dR = document.getElementById(`dot_R_${row}`);
+                if (dL) dL.className.baseVal = (g <= state.gamesPerSet) ? 'phys-dot lit-blue' : 'phys-dot';
+                if (dR) dR.className.baseVal = (g <= state.gamesPerSet) ? 'phys-dot lit-red' : 'phys-dot';
+            }
+
+            // Target sets op sets ladder
+            const s1L = document.getElementById('dot_L_0');
+            const s1R = document.getElementById('dot_R_0');
+            const s2L = document.getElementById('dot_L_1');
+            const s2R = document.getElementById('dot_R_1');
+            if (s1L) s1L.className.baseVal = (state.setsToWin >= 1) ? 'phys-dot lit-yellow' : 'phys-dot';
+            if (s1R) s1R.className.baseVal = (state.setsToWin >= 1) ? 'phys-dot lit-yellow' : 'phys-dot';
+            if (s2L) s2L.className.baseVal = (state.setsToWin >= 2) ? 'phys-dot lit-yellow' : 'phys-dot';
+            if (s2R) s2R.className.baseVal = (state.setsToWin >= 2) ? 'phys-dot lit-yellow' : 'phys-dot';
+
+            const gpDesc = (state.gp === 1) ? 'Golden Point (Punto de Oro)' : 'Voordeel (Advantage)';
+            const tbDesc = (state.tb === 1) ? 'met Tiebreak' : 'zonder Tiebreak';
+            elExplainer.innerHTML = `▶ <strong>Match Start Splash (${code}):</strong> Het fysieke display toont bij inschakeling "${code}" = ${state.setsToWin} set(s), ${state.gamesPerSet} games, ${gpDesc}, ${tbDesc}. Target games en sets lichten op.`;
+
+            setTimeout(() => {
+                updateDisplay();
+            }, 3000);
+        }
+
+        // Complete Geanimeerde Wedstrijd-Openingsceremonie
+        let matchStartTimers = [];
+
+        function clearMatchStartTimers() {
+            if (matchStartTimers && matchStartTimers.length > 0) {
+                matchStartTimers.forEach(t => clearTimeout(t));
+                matchStartTimers = [];
+            }
+            state.isStartAnimation = false;
+        }
+
+        function triggerMatchStartAnimation() {
+            clearMatchStartTimers();
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            if (state.spelTimer) { clearInterval(state.spelTimer); state.spelTimer = null; }
+            state.isClockMode = false;
+            state.isSpelMode = false;
+            state.isStartAnimation = true;
+
+            // 1. Initial State Reset (Score naar 0-0, server Thuis)
+            historyStack = [];
+            state.pointsHome = 0;
+            state.pointsAway = 0;
+            state.gamesHome = 0;
+            state.gamesAway = 0;
+            state.setsHome = 0;
+            state.setsAway = 0;
+            state.server = 'home';
+            state.sideSwapped = false;
+            state.inTiebreak = false;
+            state.showTbIntro = false;
+            state.isSuperTb = false;
+
+            // Directe UI feedback
+            elSimModeBadge.textContent = 'BOOT & CONNECT';
+            elSimModeBadge.style.color = 'var(--accent-green)';
+            if (elExplainer) {
+                elExplainer.innerHTML = `🎬 <strong>Start Wedstrijd:</strong> Scorebord ontwaakt en initialiseert draadloze communicatie...`;
+            }
+
+            // Wis display
+            setScoreboardDigits(' ', ' ', 'phys-seg', ' ', ' ', 'phys-seg');
             for (let i = 0; i <= 10; i++) {
                 const dL = document.getElementById(`dot_L_${i}`);
                 const dR = document.getElementById(`dot_R_${i}`);
@@ -4070,17 +4214,143 @@
                 if (dR) dR.className.baseVal = 'phys-dot';
             }
 
-            const gpDesc = (state.gp === 1) ? 'Golden Point (Punto de Oro)' : 'Voordeel (Advantage)';
-            const tbDesc = (state.tb === 1) ? 'met Tiebreak' : 'zonder Tiebreak';
-            elExplainer.innerHTML = `▶ <strong>Match Start Splash (${code}):</strong> Het fysieke display toont bij inschakeling "${code}" = ${state.setsToWin} set(s), ${state.gamesPerSet} games, ${gpDesc}, ${tbDesc}.`;
+            // Stap 1: BLE Handshake ("CONN") [400ms]
+            matchStartTimers.push(setTimeout(() => {
+                setScoreboardDigits('C', 'O', 'lit-green', 'n', 'n', 'lit-green');
+                flashRemoteLed();
+                // Subtiele sweep op de ladder
+                for (let i = 2; i <= 10; i++) {
+                    const dL = document.getElementById(`dot_L_${i}`);
+                    const dR = document.getElementById(`dot_R_${i}`);
+                    if (dL) dL.className.baseVal = 'phys-dot lit-green';
+                    if (dR) dR.className.baseVal = 'phys-dot lit-green';
+                }
+                elSimModeBadge.textContent = 'BLE VERBONDEN';
+                elSimModeBadge.style.color = 'var(--accent-green)';
+                if (elExplainer) {
+                    elExplainer.innerHTML = `📶 <strong>BLE Handshake:</strong> Draadloze verbinding gemaakt met BLE Pols-Remote en App Controller.`;
+                }
+            }, 400));
 
-            setTimeout(() => {
+            // Korte pauze / ladder sweep reset [1400ms]
+            matchStartTimers.push(setTimeout(() => {
+                for (let i = 0; i <= 10; i++) {
+                    const dL = document.getElementById(`dot_L_${i}`);
+                    const dR = document.getElementById(`dot_R_${i}`);
+                    if (dL) dL.className.baseVal = 'phys-dot';
+                    if (dR) dR.className.baseVal = 'phys-dot';
+                }
+            }, 1400));
+
+            // Stap 2: Match Formaat & Regels Splash ("26Ad" / "26GP") [1600ms]
+            matchStartTimers.push(setTimeout(() => {
+                const c0 = String(state.setsToWin);
+                const c1 = String(state.gamesPerSet);
+                const c2 = (state.gp === 1) ? 'G' : 'A';
+                const c3 = (state.gp === 1) ? 'P' : 'd';
+                const code = `${c0}${c1}${c2}${c3}`;
+
+                // ESP32 firmware kleuren: blauw voor format, geel/goud voor regels
+                const ruleColor = (state.gp === 1) ? 'lit-yellow' : 'lit-gold';
+                setScoreboardDigits(c0, c1, 'lit-blue', c2, c3, ruleColor);
+
+                // Target Games verlichten op beide kolommen
+                for (let g = 1; g <= state.gamesPerSet && g <= 9; g++) {
+                    const row = 11 - g;
+                    const dL = document.getElementById(`dot_L_${row}`);
+                    const dR = document.getElementById(`dot_R_${row}`);
+                    if (dL) dL.className.baseVal = 'phys-dot lit-blue';
+                    if (dR) dR.className.baseVal = 'phys-dot lit-red';
+                }
+
+                // Target Sets verlichten in geel
+                if (state.setsToWin >= 1) {
+                    const s1L = document.getElementById('dot_L_0');
+                    const s1R = document.getElementById('dot_R_0');
+                    if (s1L) s1L.className.baseVal = 'phys-dot lit-yellow';
+                    if (s1R) s1R.className.baseVal = 'phys-dot lit-yellow';
+                }
+                if (state.setsToWin >= 2) {
+                    const s2L = document.getElementById('dot_L_1');
+                    const s2R = document.getElementById('dot_R_1');
+                    if (s2L) s2L.className.baseVal = 'phys-dot lit-yellow';
+                    if (s2R) s2R.className.baseVal = 'phys-dot lit-yellow';
+                }
+
+                const gpDesc = (state.gp === 1) ? 'Golden Point (Punto de Oro)' : 'Voordeel (Advantage)';
+                const tbDesc = (state.tb === 1) ? 'met Tiebreak' : 'zonder Tiebreak';
+                elSimModeBadge.textContent = `SPLASH (${code})`;
+                elSimModeBadge.style.color = 'var(--accent-yellow)';
+                if (elExplainer) {
+                    elExplainer.innerHTML = `📋 <strong>Match Regels (${code}):</strong> ${state.setsToWin} Set(s) to win • ${state.gamesPerSet} Games per set • ${gpDesc} • ${tbDesc}. Target games en sets lichten op.`;
+                }
+            }, 1600));
+
+            // Stap 3: De Toss (Opslag Bepaling) [4000ms]
+            matchStartTimers.push(setTimeout(() => {
+                // Ladder leegmaken
+                for (let i = 0; i <= 10; i++) {
+                    const dL = document.getElementById(`dot_L_${i}`);
+                    const dR = document.getElementById(`dot_R_${i}`);
+                    if (dL) dL.className.baseVal = 'phys-dot';
+                    if (dR) dR.className.baseVal = 'phys-dot';
+                }
+
+                setScoreboardDigits('t', 'o', 'lit-yellow', 'S', 'S', 'lit-yellow');
+                elSimModeBadge.textContent = 'TOSS (LOTING)';
+                elSimModeBadge.style.color = 'var(--accent-yellow)';
+                if (elExplainer) {
+                    elExplainer.innerHTML = `🪙 <strong>Toss (Loting):</strong> Wie mag als eerste serveren? Automatische loting tussen Thuis (Blauw) en Bezoekers (Rood)...`;
+                }
+            }, 4000));
+
+            // Toss wissel animatie: links/rechts flitsen met vertragende cadans
+            const tossFlips = [
+                { delay: 4500, side: 'home' },
+                { delay: 4750, side: 'away' },
+                { delay: 5050, side: 'home' },
+                { delay: 5400, side: 'away' },
+                { delay: 5800, side: 'home' } // Winnaar: Thuis
+            ];
+
+            tossFlips.forEach(step => {
+                matchStartTimers.push(setTimeout(() => {
+                    flashRemoteLed();
+                    if (step.side === 'home') {
+                        setScoreboardDigits('P', '1', 'lit-blue', ' ', ' ', 'phys-seg');
+                    } else {
+                        setScoreboardDigits(' ', ' ', 'phys-seg', 'P', '2', 'lit-red');
+                    }
+                }, step.delay));
+            });
+
+            // Toss resultaat bevestiging [6300ms]
+            matchStartTimers.push(setTimeout(() => {
+                state.server = 'home';
+                setScoreboardDigits('P', '1', 'lit-gold', '-', '-', 'lit-gold');
+                elSimModeBadge.textContent = 'TOSS: THUIS SERVEERT';
+                elSimModeBadge.style.color = 'var(--team-blue)';
+                if (elExplainer) {
+                    elExplainer.innerHTML = `🪙 <strong>Toss Gewonnen:</strong> Team Thuis (Blauw) wint de toss en begint met de opslag!`;
+                }
+            }, 6300));
+
+            // Stap 4: Startstand 00 - 00 & Game On! [7400ms]
+            matchStartTimers.push(setTimeout(() => {
+                state.isStartAnimation = false;
                 updateDisplay();
-            }, 3000);
+                elSimModeBadge.textContent = 'WEDSTRIJD GESTART';
+                elSimModeBadge.style.color = 'var(--accent-green)';
+                if (elExplainer) {
+                    const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                    elExplainer.innerHTML = `🎾 <strong>De wedstrijd is gestart!</strong> Stand: <strong>0 - 0</strong>. Eerste opslag voor <strong>Team Thuis (Blauw, ${serverSide})</strong> met gouden serveer-indicator.<br>Druk op de <strong>Grote Knop</strong> (Blauw) of <strong>Kleine Knop</strong> (Rood) van de BLE remote om te scoren!`;
+                }
+            }, 7400));
         }
 
         // "SPEL" (30 seconden) + Setstanden
         function triggerSpel(winner = 'home') {
+            clearMatchStartTimers();
             if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
             state.isClockMode = false;
             state.isSpelMode = true;
@@ -4115,6 +4385,7 @@
 
         // Klokmodus (DS1302 RTC)
         function toggleClock() {
+            clearMatchStartTimers();
             state.isClockMode = !state.isClockMode;
             if (state.isClockMode) {
                 state.isSpelMode = false;
@@ -4143,6 +4414,7 @@
         }
 
         function resetMatch() {
+            clearMatchStartTimers();
             if (state.spelTimer) clearInterval(state.spelTimer);
             if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
             historyStack = [];
@@ -4253,12 +4525,16 @@
         // -------------------------------------------------------------
         // Quick Action Chips & Opslag Selector
         // -------------------------------------------------------------
+        const btnSimMatchStart = document.getElementById('btnSimMatchStart');
+        const btnHeaderMatchStart = document.getElementById('btnHeaderMatchStart');
         const btnSimSwap = document.getElementById('btnSimSwap');
         const btnSimServe = document.getElementById('btnSimServe');
         const btnSimClock = document.getElementById('btnSimClock');
         const btnSimSplash = document.getElementById('btnSimSplash');
         const btnSimReset = document.getElementById('btnSimReset');
 
+        if (btnSimMatchStart) btnSimMatchStart.addEventListener('click', triggerMatchStartAnimation);
+        if (btnHeaderMatchStart) btnHeaderMatchStart.addEventListener('click', triggerMatchStartAnimation);
         if (btnSimSwap) btnSimSwap.addEventListener('click', toggleSideSwap);
         if (btnSimServe) btnSimServe.addEventListener('click', toggleServer);
         if (btnSimClock) btnSimClock.addEventListener('click', toggleClock);

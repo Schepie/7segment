@@ -1,0 +1,2608 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PadelScore Voordelen — Mobiele App</title>
+    <meta name="description" content="Mobiele app variant van de voordelen en interactieve simulator voor het 7-Segment Padel Scorebord.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#080c14">
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        (function() {
+            try {
+                const p = new URLSearchParams(window.location.search).get('theme');
+                const t = p || localStorage.getItem('padelTheme') || localStorage.getItem('appTheme') || 'dark';
+                document.documentElement.setAttribute('data-theme', t);
+                const meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', t === 'dark' ? '#080c14' : '#f2f2f7');
+            } catch (e) {}
+        })();
+    </script>
+
+    <style>
+        :root {
+            --bg-base: #080c14;
+            --bg-surface: #101726;
+            --bg-card: rgba(16, 23, 38, 0.95);
+            --bg-card-border: rgba(255, 255, 255, 0.08);
+            --team1-blue: #00d2ff;
+            --team1-glow: rgba(0, 210, 255, 0.35);
+            --team2-red: #ff2a5f;
+            --team2-glow: rgba(255, 42, 95, 0.35);
+            --accent-green: #00ff66;
+            --accent-gold: #ffb400;
+            --accent-yellow: #ffd600;
+            --text-main: #f0f4f8;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+            --radius-xl: 18px;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        [data-theme="light"] {
+            --bg-base: #f2f4f8;
+            --bg-surface: #ffffff;
+            --bg-card: #ffffff;
+            --bg-card-border: rgba(15, 23, 42, 0.08);
+            --team1-blue: #007aff;
+            --team1-glow: rgba(0, 122, 255, 0.25);
+            --team2-red: #e11d48;
+            --team2-glow: rgba(225, 29, 72, 0.25);
+            --accent-green: #10b981;
+            --accent-gold: #d97706;
+            --accent-yellow: #f59e0b;
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: radial-gradient(circle at 50% 0%, #16243c 0%, var(--bg-base) 85%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: calc(60px + var(--safe-top)) 12px calc(76px + var(--safe-bottom)) 12px;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        [data-theme="light"] body {
+            background: radial-gradient(circle at 50% 0%, #e2e8f0 0%, var(--bg-base) 85%);
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ── Top Fixed Navigation Bar ── */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(8, 12, 20, 0.85);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--bg-card-border);
+            padding: calc(6px + var(--safe-top)) 12px 8px 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        [data-theme="light"] .top-nav {
+            background: rgba(255, 255, 255, 0.90);
+        }
+
+        .top-nav-inner {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.15s ease;
+        }
+
+        [data-theme="light"] .nav-back-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-back-btn:active {
+            transform: scale(0.96);
+        }
+
+        .nav-title-group {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .nav-logo-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, var(--team1-blue), var(--accent-green));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 900;
+            color: #04070d;
+        }
+
+        .nav-title-text {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: var(--text-main);
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        [data-theme="light"] .btn-icon {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-icon:active {
+            transform: scale(0.93);
+        }
+
+        /* ── Hero Mini Card ── */
+        .mobile-hero-card {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.12), rgba(0, 255, 102, 0.08));
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            border-radius: var(--radius-xl);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        [data-theme="light"] .mobile-hero-card {
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(16, 185, 129, 0.06));
+            border-color: rgba(0, 122, 255, 0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+        }
+
+        .hero-pill {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: rgba(0, 210, 255, 0.16);
+            border: 1px solid rgba(0, 210, 255, 0.35);
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--team1-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-heading {
+            font-size: 17px;
+            font-weight: 900;
+            line-height: 1.25;
+            color: var(--text-main);
+        }
+
+        .hero-sub {
+            font-size: 12px;
+            color: var(--text-sub);
+            line-height: 1.45;
+        }
+
+        /* ── Segmented Views Container ── */
+        .tab-view {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            animation: viewFade 0.22s ease-out;
+        }
+
+        .tab-view.active {
+            display: flex;
+        }
+
+        @keyframes viewFade {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Simulator Scorebord Behuizing ── */
+        .sim-board-housing {
+            background: #0b111c;
+            border-radius: var(--radius-lg);
+            border: 2px solid #222f46;
+            padding: 10px 10px 14px 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        [data-theme="light"] .sim-board-housing {
+            background: #101726;
+            border-color: #2b3952;
+        }
+
+        .housing-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .board-mode-pill {
+            background: rgba(0, 210, 255, 0.15);
+            border: 1px solid rgba(0, 210, 255, 0.4);
+            color: var(--team1-blue);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-header-start {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 10px;
+            font-weight: 800;
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.35), rgba(0, 255, 102, 0.25));
+            border: 1px solid rgba(0, 210, 255, 0.55);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.25);
+            transition: all 0.15s ease;
+        }
+
+        .btn-header-start:active {
+            transform: scale(0.95);
+        }
+
+        .board-svg-wrap {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #151d2b;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8), 0 4px 14px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .physical-board-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .board-inner-face {
+            fill: #16202e;
+        }
+
+        /* ── Segment & Dot Styles ── */
+        .phys-seg {
+            fill: #222b39;
+            fill-opacity: 0.85;
+            stroke: #334155;
+            stroke-width: 1.5;
+            transition: fill 0.12s ease, filter 0.12s ease;
+        }
+
+        .phys-seg.lit-red {
+            fill: #ff2a5f;
+            fill-opacity: 1;
+            stroke: #ff7597;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px #ff2a5f) drop-shadow(0 0 18px rgba(255, 42, 95, 0.95));
+        }
+
+        .phys-seg.lit-blue {
+            fill: #00d2ff;
+            fill-opacity: 1;
+            stroke: #6ee6ff;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px #00d2ff) drop-shadow(0 0 18px rgba(0, 210, 255, 0.95));
+        }
+
+        .phys-seg.lit-green {
+            fill: #00ff66;
+            fill-opacity: 1;
+            stroke: #66ffaa;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px #00ff66) drop-shadow(0 0 18px rgba(0, 255, 102, 0.95));
+        }
+
+        .phys-seg.lit-yellow {
+            fill: #ffd600;
+            fill-opacity: 1;
+            stroke: #ffea70;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px #ffd600) drop-shadow(0 0 18px rgba(255, 214, 0, 0.95));
+        }
+
+        .phys-seg.lit-gold {
+            fill: #ffb400;
+            fill-opacity: 1;
+            stroke: #ffe066;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px #ffb400) drop-shadow(0 0 18px rgba(255, 180, 0, 0.95));
+        }
+
+        .phys-seg.lit-white {
+            fill: #ffffff;
+            fill-opacity: 1;
+            stroke: #e2e8f0;
+            stroke-width: 1.5;
+            filter: drop-shadow(0 0 8px #ffffff) drop-shadow(0 0 18px rgba(255, 255, 255, 0.95));
+        }
+
+        .phys-dot {
+            fill: #222b39;
+            fill-opacity: 0.85;
+            stroke: #334155;
+            stroke-width: 1.5;
+            transition: fill 0.12s ease, filter 0.12s ease;
+        }
+
+        .phys-dot.lit-red {
+            fill: #ff2a5f;
+            fill-opacity: 1;
+            stroke: #ff7597;
+            filter: drop-shadow(0 0 5px #ff2a5f) drop-shadow(0 0 10px rgba(255, 42, 95, 0.95));
+        }
+
+        .phys-dot.lit-blue {
+            fill: #00d2ff;
+            fill-opacity: 1;
+            stroke: #6ee6ff;
+            filter: drop-shadow(0 0 5px #00d2ff) drop-shadow(0 0 10px rgba(0, 210, 255, 0.95));
+        }
+
+        .phys-dot.lit-green {
+            fill: #00ff66;
+            fill-opacity: 1;
+            stroke: #66ffaa;
+            filter: drop-shadow(0 0 5px #00ff66);
+        }
+
+        .phys-dot.lit-yellow {
+            fill: #ffd600;
+            fill-opacity: 1;
+            stroke: #ffea70;
+            filter: drop-shadow(0 0 5px #ffd600) drop-shadow(0 0 10px rgba(255, 214, 0, 0.95));
+        }
+
+        /* ── Explainer Box ── */
+        .sim-explainer-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            padding: 10px 12px;
+            font-size: 11.5px;
+            line-height: 1.5;
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* ── Mobile BLE Remote Interactive Section ── */
+        .mobile-remote-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .remote-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .remote-title {
+            font-size: 12.5px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .remote-led-chip {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10.5px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .remote-led-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #334155;
+            transition: all 0.15s ease;
+        }
+
+        .remote-led-dot.flash {
+            background: #00ff66;
+            box-shadow: 0 0 10px #00ff66, 0 0 16px #00ff66;
+        }
+
+        /* Grote ergonomische mobiele touch-knoppen */
+        .remote-touch-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-touch-team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 14px 10px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            font-family: var(--font-sans);
+            font-weight: 800;
+            transition: transform 0.1s ease, filter 0.15s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-touch-team:active {
+            transform: scale(0.96);
+        }
+
+        .btn-touch-team.team-home {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.22), rgba(0, 122, 255, 0.15));
+            border-color: rgba(0, 210, 255, 0.45);
+            color: var(--team1-blue);
+        }
+
+        .btn-touch-team.team-away {
+            background: linear-gradient(135deg, rgba(255, 42, 95, 0.22), rgba(225, 29, 72, 0.15));
+            border-color: rgba(255, 42, 95, 0.45);
+            color: var(--team2-red);
+        }
+
+        .touch-btn-main {
+            font-size: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .touch-btn-sub {
+            font-size: 10.5px;
+            opacity: 0.85;
+            font-weight: 600;
+        }
+
+        .remote-aux-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-aux {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 9px 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        [data-theme="light"] .btn-aux {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-aux:active {
+            transform: scale(0.96);
+        }
+
+        /* ── Snelle Actie Chips ── */
+        .quick-chips-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chips-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .chips-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .m-chip-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 8px 4px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            color: var(--text-main);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            text-align: center;
+        }
+
+        [data-theme="light"] .m-chip-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .m-chip-btn:active {
+            transform: scale(0.95);
+        }
+
+        .m-chip-btn.highlight {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(0, 255, 102, 0.15));
+            border-color: rgba(0, 210, 255, 0.45);
+            color: var(--team1-blue);
+        }
+
+        .m-chip-btn.danger {
+            color: var(--team2-red);
+        }
+
+        /* ── Accordeons voor Regels & Opslag ── */
+        .mobile-accordion {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .accordion-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 12.5px;
+            font-weight: 800;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .accordion-arrow {
+            font-size: 10px;
+            transition: transform 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .mobile-accordion.open .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .accordion-body {
+            display: none;
+            padding: 0 14px 14px 14px;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 2px;
+            padding-top: 10px;
+        }
+
+        .mobile-accordion.open .accordion-body {
+            display: flex;
+        }
+
+        .cfg-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .cfg-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cfg-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .cfg-pill-btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 7px 10px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s ease;
+        }
+
+        [data-theme="light"] .cfg-pill-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .cfg-pill-btn.active {
+            background: rgba(0, 210, 255, 0.18);
+            border-color: var(--team1-blue);
+            color: var(--team1-blue);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        /* ── View 2: Voordelen Kaarten Stream ── */
+        .pillar-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--team1-blue);
+            margin-top: 4px;
+        }
+
+        .feature-card-m {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-m-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-m-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(0, 210, 255, 0.12);
+            border: 1px solid rgba(0, 210, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .card-m-title {
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1.25;
+            color: var(--text-main);
+        }
+
+        .card-m-desc {
+            font-size: 12px;
+            line-height: 1.45;
+            color: var(--text-sub);
+        }
+
+        .card-m-bullets {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .card-m-bullets li {
+            font-size: 11.5px;
+            line-height: 1.4;
+            color: var(--text-sub);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .card-m-bullets li strong {
+            color: var(--text-main);
+        }
+
+        .bullet-check {
+            color: var(--accent-green);
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        .card-m-img {
+            width: 100%;
+            max-height: 190px;
+            object-fit: contain;
+            border-radius: var(--radius-md);
+            margin-top: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px;
+        }
+
+        [data-theme="light"] .card-m-img {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        /* ── View 3: Accu Calculator ── */
+        .calc-card-m {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .slider-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-val-badge {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--accent-green);
+            background: rgba(0, 255, 102, 0.12);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 102, 0.25);
+        }
+
+        .m-battery-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.12);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .m-battery-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+            cursor: pointer;
+        }
+
+        .calc-results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .calc-res-pill {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-md);
+            padding: 10px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 3px;
+        }
+
+        [data-theme="light"] .calc-res-pill {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.07);
+        }
+
+        .res-pill-val {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--accent-green);
+        }
+
+        .res-pill-lbl {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        /* ── View 4: Vergelijking ── */
+        .compare-card-m {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .compare-card-m.winner {
+            border: 2px solid var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 102, 0.06), var(--bg-card));
+        }
+
+        .comp-score-badge {
+            align-self: flex-start;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+        }
+
+        .comp-score-badge.win {
+            background: rgba(0, 255, 102, 0.18);
+            color: var(--accent-green);
+        }
+
+        .comp-score-badge.low {
+            background: rgba(255, 42, 95, 0.18);
+            color: var(--team2-red);
+        }
+
+        .comp-score-badge.mid {
+            background: rgba(255, 180, 0, 0.18);
+            color: var(--accent-gold);
+        }
+
+        /* ── Quick Footer Links ── */
+        .mobile-footer {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-xl);
+            font-size: 12px;
+        }
+
+        .footer-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .footer-links-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .footer-link-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 11.5px;
+            font-weight: 700;
+            transition: all 0.12s ease;
+        }
+
+        [data-theme="light"] .footer-link-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .footer-link-btn:active {
+            transform: scale(0.97);
+        }
+
+        .qr-share-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            padding: 14px 10px;
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-top: 6px;
+        }
+
+        [data-theme="light"] .qr-share-card {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.07);
+        }
+
+        .qr-share-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11.5px;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-img-box {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 0 16px rgba(0, 210, 255, 0.25);
+            max-width: 130px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-share-img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .qr-share-sub {
+            font-size: 10.5px;
+            color: var(--text-sub);
+            max-width: 250px;
+            line-height: 1.35;
+        }
+
+        /* ── Bottom Segmented Tab Bar ── */
+        .bottom-nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(8, 12, 20, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--bg-card-border);
+            padding: 6px 12px calc(8px + var(--safe-bottom)) 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        [data-theme="light"] .bottom-nav-bar {
+            background: rgba(255, 255, 255, 0.92);
+        }
+
+        .bottom-nav-inner {
+            width: 100%;
+            max-width: 520px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .tab-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 4px;
+            border-radius: var(--radius-md);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tab-btn:active {
+            transform: scale(0.92);
+        }
+
+        .tab-btn.active {
+            color: var(--team1-blue);
+            background: rgba(0, 210, 255, 0.12);
+        }
+
+        .tab-btn-icon {
+            font-size: 16px;
+        }
+
+        .tab-btn-lbl {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION APP BAR -->
+    <header class="top-nav">
+        <div class="top-nav-inner">
+            <a href="index.html" class="nav-back-btn" title="Naar Scorebord Controller">
+                <span>‹</span>
+                <span>App</span>
+            </a>
+            <div class="nav-title-group">
+                <div class="nav-logo-badge">7</div>
+                <div class="nav-title-text">PadelScore Voordelen</div>
+            </div>
+            <button type="button" class="btn-icon" id="btnThemeToggle" title="Thema wisselen">
+                <span id="themeIcon">☀️</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- APP SHELL -->
+    <div class="app-shell">
+
+        <!-- MINI HERO BANNER -->
+        <div class="mobile-hero-card">
+            <div class="hero-pill">🎾 Dé Game-Changer op het Veld</div>
+            <h1 class="hero-heading">Alle Voordelen van het Padel Scorebord</h1>
+            <p class="hero-sub">Geen score-discussies meer. 100% zonlicht-zichtbaar, autonoom matchbrein en vederlicht.</p>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB 1: SIMULATOR (SCOREBORD, REMOTE & LIVE LOGICA)             -->
+        <!-- ============================================================== -->
+        <section class="tab-view active" id="viewSimulator">
+
+            <!-- Fysiek Scorebord Mockup -->
+            <div class="sim-board-housing">
+                <div class="housing-top-bar">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="color: var(--accent-green);">● LIVE</span>
+                        <span style="color: var(--text-sub);">PADELSCORE ESP32</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="btn-header-start" id="btnHeaderMatchStart" title="Start geanimeerde openingsvolgorde">
+                            <span>▶</span> Start Wedstrijd
+                        </button>
+                        <div class="board-mode-pill" id="simModeBadge">SCOREBORD</div>
+                    </div>
+                </div>
+
+                <div class="board-svg-wrap">
+                    <svg class="physical-board-svg" viewBox="0 0 1024 426" preserveAspectRatio="xMidYMid meet" id="physicalBoardSvg">
+                        <rect width="1024" height="426" rx="14" class="board-inner-face" />
+
+                        <!-- Digit 0 (Thuis Tientallen) -->
+                        <g id="svgDig0" transform="translate(60, 57)">
+                            <polygon id="d0_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                            <polygon id="d0_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                            <polygon id="d0_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                            <polygon id="d0_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                            <polygon id="d0_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                            <polygon id="d0_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                            <polygon id="d0_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                        </g>
+
+                        <!-- Digit 1 (Thuis Eenheden) -->
+                        <g id="svgDig1" transform="translate(276, 57)">
+                            <polygon id="d1_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                            <polygon id="d1_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                            <polygon id="d1_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                            <polygon id="d1_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                            <polygon id="d1_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                            <polygon id="d1_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                            <polygon id="d1_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                        </g>
+
+                        <!-- Middenmodule: Sets & Games Ladder -->
+                        <g id="svgCenterLadder">
+                            <text x="511.5" y="52" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" letter-spacing="2">SETS</text>
+                            <circle id="dot_L_0" class="phys-dot" cx="494" cy="70" r="8.7" />
+                            <text x="511.5" y="73" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">1</text>
+                            <circle id="dot_R_0" class="phys-dot" cx="529" cy="70" r="8.7" />
+
+                            <circle id="dot_L_1" class="phys-dot" cx="494" cy="96" r="8.7" />
+                            <text x="511.5" y="99" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">2</text>
+                            <circle id="dot_R_1" class="phys-dot" cx="529" cy="96" r="8.7" />
+
+                            <text x="511.5" y="132" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" letter-spacing="2">GAMES</text>
+                            <circle id="dot_L_2" class="phys-dot" cx="494" cy="148" r="8.7" />
+                            <text x="511.5" y="151.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">9</text>
+                            <circle id="dot_R_2" class="phys-dot" cx="529" cy="148" r="8.7" />
+
+                            <circle id="dot_L_3" class="phys-dot" cx="494" cy="174" r="8.7" />
+                            <text x="511.5" y="177.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">8</text>
+                            <circle id="dot_R_3" class="phys-dot" cx="529" cy="174" r="8.7" />
+
+                            <circle id="dot_L_4" class="phys-dot" cx="494" cy="200" r="8.7" />
+                            <text x="511.5" y="203.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">7</text>
+                            <circle id="dot_R_4" class="phys-dot" cx="529" cy="200" r="8.7" />
+
+                            <circle id="dot_L_5" class="phys-dot" cx="494" cy="226" r="8.7" />
+                            <text x="511.5" y="229.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">6</text>
+                            <circle id="dot_R_5" class="phys-dot" cx="529" cy="226" r="8.7" />
+
+                            <circle id="dot_L_6" class="phys-dot" cx="494" cy="252" r="8.7" />
+                            <text x="511.5" y="255.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">5</text>
+                            <circle id="dot_R_6" class="phys-dot" cx="529" cy="252" r="8.7" />
+
+                            <circle id="dot_L_7" class="phys-dot" cx="494" cy="278" r="8.7" />
+                            <text x="511.5" y="281.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">4</text>
+                            <circle id="dot_R_7" class="phys-dot" cx="529" cy="278" r="8.7" />
+
+                            <circle id="dot_L_8" class="phys-dot" cx="494" cy="304" r="8.7" />
+                            <text x="511.5" y="307.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">3</text>
+                            <circle id="dot_R_8" class="phys-dot" cx="529" cy="304" r="8.7" />
+
+                            <circle id="dot_L_9" class="phys-dot" cx="494" cy="330" r="8.7" />
+                            <text x="511.5" y="333.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">2</text>
+                            <circle id="dot_R_9" class="phys-dot" cx="529" cy="330" r="8.7" />
+
+                            <circle id="dot_L_10" class="phys-dot" cx="494" cy="356" r="8.7" />
+                            <text x="511.5" y="359.5" text-anchor="middle" fill="#64748b" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700">1</text>
+                            <circle id="dot_R_10" class="phys-dot" cx="529" cy="356" r="8.7" />
+                        </g>
+
+                        <!-- Digit 2 (Bezoekers Tientallen) -->
+                        <g id="svgDig2" transform="translate(579, 57)">
+                            <polygon id="d2_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                            <polygon id="d2_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                            <polygon id="d2_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                            <polygon id="d2_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                            <polygon id="d2_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                            <polygon id="d2_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                            <polygon id="d2_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                        </g>
+
+                        <!-- Digit 3 (Bezoekers Eenheden) -->
+                        <g id="svgDig3" transform="translate(795, 57)">
+                            <polygon id="d3_a" class="phys-seg" points="15,12 27,24 141,24 153,12 141,0 27,0" />
+                            <polygon id="d3_b" class="phys-seg" points="155,16 143,28 143,140 156,152 168,140 168,28" />
+                            <polygon id="d3_c" class="phys-seg" points="155,159 143,171 143,284 156,296 168,284 168,171" />
+                            <polygon id="d3_d" class="phys-seg" points="15,299 26,311 141,311 152,300 140,287 28,287" />
+                            <polygon id="d3_e" class="phys-seg" points="12,159 0,171 0,285 11,296 24,284 24,171" />
+                            <polygon id="d3_f" class="phys-seg" points="12,15 0,27 0,141 12,153 24,141 24,27" />
+                            <polygon id="d3_g" class="phys-seg" points="15,156 27,168 140,168 152,155 141,144 27,144" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Live Status & Explainer -->
+            <div class="sim-explainer-card" id="simExplainerText">
+                🎾 <strong>Simulator Gereed:</strong> Klik op de blauwe of rode knop om te scoren of start de openingsanimatie.
+            </div>
+
+            <!-- Mobile Ergonomic BLE Remote Card -->
+            <div class="mobile-remote-card">
+                <div class="remote-header">
+                    <div class="remote-title">
+                        <span>⌚</span>
+                        <span>BLE Pols-Remote Touchpad</span>
+                    </div>
+                    <div class="remote-led-chip">
+                        <span>LED:</span>
+                        <div class="remote-led-dot" id="btRemoteLed"></div>
+                    </div>
+                </div>
+
+                <!-- Ergonomische Knoppen -->
+                <div class="remote-touch-grid">
+                    <button type="button" class="btn-touch-team team-home" id="btnBtBig">
+                        <span class="touch-btn-main">🔵 +1 THUIS</span>
+                        <span class="touch-btn-sub">Grote Knop (Blauw)</span>
+                    </button>
+                    <button type="button" class="btn-touch-team team-away" id="btnBtSmall">
+                        <span class="touch-btn-main">🔴 +1 GASTEN</span>
+                        <span class="touch-btn-sub">Kleine Knop (Rood)</span>
+                    </button>
+                </div>
+
+                <div class="remote-aux-row">
+                    <button type="button" class="btn-aux" id="btnSimUndo">
+                        <span>↩</span>
+                        <span>Undo (Dubbelklik)</span>
+                    </button>
+                    <button type="button" class="btn-aux" id="btnSimTossOrClock">
+                        <span>🪙</span>
+                        <span>Toss / Klok (Lang)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Snelle Functies Card -->
+            <div class="quick-chips-card">
+                <div class="chips-title">Snelle Functies</div>
+                <div class="chips-grid">
+                    <button type="button" class="m-chip-btn highlight" id="btnSimMatchStart">
+                        <span>🎬</span>
+                        <span>Start Match</span>
+                    </button>
+                    <button type="button" class="m-chip-btn" id="btnSimSwap">
+                        <span>🔄</span>
+                        <span>Wissel Kant</span>
+                    </button>
+                    <button type="button" class="m-chip-btn" id="btnSimServe">
+                        <span>🎾</span>
+                        <span>Wissel Opslag</span>
+                    </button>
+                    <button type="button" class="m-chip-btn" id="btnSimClock">
+                        <span>🕒</span>
+                        <span>Klokmodus</span>
+                    </button>
+                    <button type="button" class="m-chip-btn" id="btnSimSplash">
+                        <span>▶</span>
+                        <span>26Ad Splash</span>
+                    </button>
+                    <button type="button" class="m-chip-btn danger" id="btnSimReset">
+                        <span>⟲</span>
+                        <span>Reset 0-0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Accordeon 1: Spelregels & Formaat -->
+            <div class="mobile-accordion" id="accRules">
+                <button type="button" class="accordion-header" onclick="toggleAccordion('accRules')">
+                    <span>⚖️ Wedstrijdregels & Formaat</span>
+                    <span class="accordion-arrow">▼</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="cfg-row">
+                        <div class="cfg-label">Puntensysteem (40-40)</div>
+                        <div class="cfg-pills" id="simRuleGp">
+                            <button type="button" class="cfg-pill-btn active" data-gp="0">Voordeel (Ad)</button>
+                            <button type="button" class="cfg-pill-btn" data-gp="1">Golden Point (GP)</button>
+                        </div>
+                    </div>
+                    <div class="cfg-row">
+                        <div class="cfg-label">Aantal Sets om te Winnen</div>
+                        <div class="cfg-pills" id="simRuleSets">
+                            <button type="button" class="cfg-pill-btn" data-sets="1">1 Set</button>
+                            <button type="button" class="cfg-pill-btn active" data-sets="2">2 Sets</button>
+                        </div>
+                    </div>
+                    <div class="cfg-row">
+                        <div class="cfg-label">Games per Set</div>
+                        <div class="cfg-pills" id="simRuleGames">
+                            <button type="button" class="cfg-pill-btn active" data-games="6">6 Games</button>
+                            <button type="button" class="cfg-pill-btn" data-games="9">9 Games</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordeon 2: Opslag Indicatie Modus -->
+            <div class="mobile-accordion" id="accServe">
+                <button type="button" class="accordion-header" onclick="toggleAccordion('accServe')">
+                    <span>🟡 Opslag Indicatie op Scorebord</span>
+                    <span class="accordion-arrow">▼</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="cfg-row">
+                        <div class="cfg-label">Kies Indicatiemethode</div>
+                        <div class="cfg-pills" id="simServeGrid">
+                            <button type="button" class="cfg-pill-btn active" data-srv="0">Onder 0 (Standaard)</button>
+                            <button type="button" class="cfg-pill-btn" data-srv="1">Onder / Boven</button>
+                            <button type="button" class="cfg-pill-btn" data-srv="2">Letter (R / L)</button>
+                            <button type="button" class="cfg-pill-btn" data-srv="3">Geen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 2: VOORDELEN (10 UNIQUE FEATURES CARDS)                    -->
+        <!-- ============================================================== -->
+        <section class="tab-view" id="viewVoordelen">
+
+            <div class="pillar-badge">⌚ Draadloze Polsbediening</div>
+
+            <!-- Feature 1 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">⌚</div>
+                    <h3 class="card-m-title">Rond de Pols & Directe Auto-Connect</h3>
+                </div>
+                <p class="card-m-desc">Comfortabele BLE button om de pols. Geen geren naar het net of zoeken naar een afstandsbediening.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Automatisch verbonden:</strong> Connecteert direct zodra het bord inschakelt.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Geen telefoon nodig:</strong> Scoor direct zonder mobiel op de baan.</span></li>
+                </ul>
+                <img src="Images/bt_button_remote.png" alt="BLE button remote om de pols" class="card-m-img" loading="lazy">
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">🔘</div>
+                    <h3 class="card-m-title">2 Voelbare Knoppen & Dubbelklik Undo</h3>
+                </div>
+                <p class="card-m-desc">Grote ronde knop voor Thuis (Blauw) en kleine rechthoekige knop voor Bezoekers (Rood). Blindelings te bedienen.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Blindelings voelbaar:</strong> Verschil in vorm voorkomt misklikken.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Snelle Undo:</strong> Dubbelklik herstelt direct een foute score.</span></li>
+                </ul>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">🪙</div>
+                    <h3 class="card-m-title">Toss bij 0-0 & Zuinige Knoopcel</h3>
+                </div>
+                <p class="card-m-desc">Lang drukken bij de stand 0-0 voert een toss uit om de beginnende serveerder te kiezen. Tijdens het spel toont lang drukken de klok.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Zuinige CR2032 knoopcel:</strong> Maandenlang speelplezier dankzij ultra-low BLE.</span></li>
+                </ul>
+            </div>
+
+            <div class="pillar-badge">🎒 Mobiliteit & Montage</div>
+
+            <!-- Feature 4 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">🎒</div>
+                    <h3 class="card-m-title">Vederlicht & In Tweeën Splitsbaar (53 cm)</h3>
+                </div>
+                <p class="card-m-desc">Het bord is voorzien van een robuuste bajonet/schuifkoppeling waardoor het in seconden in twee compacte helften van 53 cm splitst.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Past in elke padeltas:</strong> Gemakkelijk mee te nemen naar elke club.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Gewicht < 2 kg:</strong> Zeer comfortabel te dragen met de schouderriem.</span></li>
+                </ul>
+                <img src="Images/padel_panel_carried_strap.jpg" alt="PadelScore bord comfortabel gedragen met schouderriem" class="card-m-img" loading="lazy">
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">🥅</div>
+                    <h3 class="card-m-title">Uitklapbare Voetjes & Smashproof Haken</h3>
+                </div>
+                <p class="card-m-desc">Geen losse onderdelen. Uitklapbare voetjes voor op de grond of bank, plus geïntegreerde haken voor het hekwerk.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>100% Smashproof:</strong> Bestand tegen harde padelballen.</span></li>
+                </ul>
+                <img src="Images/padel_real_panel_fence.jpg" alt="PadelScore bord aan het hekwerk" class="card-m-img" loading="lazy">
+            </div>
+
+            <div class="pillar-badge">🔋 Voeding & Accu</div>
+
+            <!-- Feature 6 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">🔋</div>
+                    <h3 class="card-m-title">Universele 5V Powerbank Voeding</h3>
+                </div>
+                <p class="card-m-desc">Geen dure gepatenteerde accu's. Werkt direct op elke standaard 5V USB-powerbank die je al bezit.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Geïntegreerde VESA houder:</strong> Powerbank klikt stevig achterop.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Urenlang speelplezier:</strong> Een 20.000 mAh powerbank levert ~12,5 uur speeltijd.</span></li>
+                </ul>
+                <img src="Images/padel_battery_holder_vesa_assembly.png" alt="Accuhouder achterzijde" class="card-m-img" loading="lazy">
+            </div>
+
+            <div class="pillar-badge">🔢 Display & Matchlogica</div>
+
+            <!-- Feature 7 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">☀️</div>
+                    <h3 class="card-m-title">Maximale Zonlicht-Zichtbaarheid</h3>
+                </div>
+                <p class="card-m-desc">Grote 12 cm hoge 7-segment cijfers met matte diffusers. Vanaf elke hoek van de kooi en door het glas haarscherp leesbaar.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Team Blauw vs Rood:</strong> Intuïtief kleuronderscheid voorkomt verwarring.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Geen weerspiegeling:</strong> In tegenstelling tot glimmende tv- of tabletschermen.</span></li>
+                </ul>
+            </div>
+
+            <!-- Feature 8 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">🎾</div>
+                    <h3 class="card-m-title">Wie Serveert, Kantwissel & Ruststandklok</h3>
+                </div>
+                <p class="card-m-desc">Gouden opslagindicatie toont altijd wie aan de beurt is. Automatische kantwissel draait de kleuren om bij oneven games.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>30s SPEL viering:</strong> Feestelijke animatie na winst van de match.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Echte RTC klok:</strong> Toont actuele tijd wanneer er niet gespeeld wordt.</span></li>
+                </ul>
+            </div>
+
+            <div class="pillar-badge">📱 App & Firmware</div>
+
+            <!-- Feature 9 & 10 -->
+            <div class="feature-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon">⚡</div>
+                    <h3 class="card-m-title">Autonome ESP32 Master & WebBLE App</h3>
+                </div>
+                <p class="card-m-desc">Het matchbrein draait 100% op het bord zelf. Zelfs als je telefoon leeg is, blijft de wedstrijd intact en speelbaar via de remote.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span><strong>Geen App Store vereist:</strong> Werkt via Web Bluetooth direct in Chrome/Bluefy.</span></li>
+                    <li><span class="bullet-check">✓</span> <span><strong>Draadloze OTA updates:</strong> Nieuwe functies installeer je in seconden via de browser.</span></li>
+                </ul>
+            </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 3: ACCU CALCULATOR                                         -->
+        <!-- ============================================================== -->
+        <section class="tab-view" id="viewAccu">
+
+            <div class="calc-card-m">
+                <div class="card-m-top">
+                    <div class="card-m-icon" style="background: rgba(0, 255, 102, 0.12); border-color: rgba(0, 255, 102, 0.3);">🔋</div>
+                    <div>
+                        <h2 class="card-m-title">Accuduur Calculator</h2>
+                        <p class="card-m-desc">Bereken de speelduur op basis van je powerbank capaciteit.</p>
+                    </div>
+                </div>
+
+                <div class="slider-wrap">
+                    <div class="slider-header">
+                        <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Powerbank Capaciteit</span>
+                        <span class="slider-val-badge" id="mCalcCapacityDisplay">20.000 mAh</span>
+                    </div>
+                    <input type="range" min="5000" max="30000" step="2500" value="20000" class="m-battery-slider" id="mBatterySlider">
+                </div>
+
+                <div class="calc-results-grid">
+                    <div class="calc-res-pill">
+                        <span class="res-pill-val" id="mCalcHours">~12.5 uur</span>
+                        <span class="res-pill-lbl">Speeltijd</span>
+                    </div>
+                    <div class="calc-res-pill">
+                        <span class="res-pill-val" id="mCalcMatches">9 - 11</span>
+                        <span class="res-pill-lbl">Wedstrijden</span>
+                    </div>
+                    <div class="calc-res-pill">
+                        <span class="res-pill-val" id="mCalcStandby">~36 uur</span>
+                        <span class="res-pill-lbl">Klok Standby</span>
+                    </div>
+                </div>
+
+                <div style="font-size: 11px; color: var(--text-sub); line-height: 1.45; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+                    💡 <strong>Tip:</strong> Een lichte 10.000 mAh powerbank weegt slechts ~180g en is ruim voldoende voor een compleet toernooi (meer dan 6 uur speeltijd).
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- TAB 4: VERGELIJKING (SCOREBORD VS OUD / TABLET)                -->
+        <!-- ============================================================== -->
+        <section class="tab-view" id="viewVergelijk">
+
+            <div class="compare-card-m winner">
+                <span class="comp-score-badge win">10 / 10 • UITSTEKEND</span>
+                <h3 class="card-m-title">🏆 7-Segment Padel Scorebord</h3>
+                <p class="card-m-desc">Speciaal ontworpen voor padel: direct zonlicht-bestendig, draadloos om de pols, autonoom en smashproof.</p>
+                <ul class="card-m-bullets">
+                    <li><span class="bullet-check">✓</span> <span>Zonlicht: 100% scherp zichtbaar dankzij 12 cm hoge LED-diffusers.</span></li>
+                    <li><span class="bullet-check">✓</span> <span>Bediening: Snelle tactiele pols-remote (geen geren naar het net).</span></li>
+                    <li><span class="bullet-check">✓</span> <span>Batterij: Universele 5V USB powerbank (tot 18 uur).</span></li>
+                    <li><span class="bullet-check">✓</span> <span>Impact: 100% smashproof en balbestendig.</span></li>
+                </ul>
+            </div>
+
+            <div class="compare-card-m">
+                <span class="comp-score-badge low">3 / 10 • VEROUDERD</span>
+                <h3 class="card-m-title">🪵 Klassiek Handmatig Bordje</h3>
+                <p class="card-m-desc">Draaischijven of magneten die na elk punt handmatig moeten worden verzet.</p>
+                <ul class="card-m-bullets">
+                    <li><span style="color: var(--team2-red); font-weight:900;">✗</span> <span>Men vergeet te draaien tijdens intensieve rally's.</span></li>
+                    <li><span style="color: var(--team2-red); font-weight:900;">✗</span> <span>Onduidelijk wie serveert of welke kantwissel van kracht is.</span></li>
+                    <li><span style="color: var(--team2-red); font-weight:900;">✗</span> <span>Moeilijk leesbaar door hekwerk en glas.</span></li>
+                </ul>
+            </div>
+
+            <div class="compare-card-m">
+                <span class="comp-score-badge mid">5 / 10 • KWETSBAAR</span>
+                <h3 class="card-m-title">📱 Tablet of TV Scherm</h3>
+                <p class="card-m-desc">Consumentenelektronica ingezet op een sportveld.</p>
+                <ul class="card-m-bullets">
+                    <li><span style="color: var(--accent-gold); font-weight:900;">!</span> <span>Hinderlijke spiegelingen in buitenlucht en fel zonlicht.</span></li>
+                    <li><span style="color: var(--team2-red); font-weight:900;">✗</span> <span>Glas breekt direct bij een harde padelbal of smash.</span></li>
+                    <li><span style="color: var(--team2-red); font-weight:900;">✗</span> <span>Batterij van een tablet is na 2 uur leeg bij max helderheid.</span></li>
+                </ul>
+            </div>
+
+        </section>
+
+        <!-- QUICK LINKS FOOTER -->
+        <footer class="mobile-footer">
+            <div class="footer-title">Snelle Koppelingen</div>
+            <div class="footer-links-grid">
+                <a href="index.html" class="footer-link-btn">
+                    <span>📱</span>
+                    <span>Live App</span>
+                </a>
+                <a href="quick_start_app_mobile.html" class="footer-link-btn">
+                    <span>📖</span>
+                    <span>Handleiding App</span>
+                </a>
+                <a href="quick_start_bt_button_mobile.html" class="footer-link-btn">
+                    <span>🔘</span>
+                    <span>Handleiding Knop</span>
+                </a>
+                <a href="voordelen.html" class="footer-link-btn">
+                    <span>💻</span>
+                    <span>Desktop Versie</span>
+                </a>
+            </div>
+
+            <!-- QR Code Card -->
+            <div class="qr-share-card">
+                <div class="qr-share-header">
+                    <span>📷</span>
+                    <span>Deel deze Mobiele Web App</span>
+                </div>
+                <div class="qr-img-box">
+                    <img src="qr_voordelen.png" alt="QR Code PadelScore Voordelen Mobiele App" class="qr-share-img">
+                </div>
+                <div class="qr-share-sub">
+                    Scan met smartphone camera om direct te openen op de padelbaan
+                </div>
+            </div>
+
+            <div style="font-size: 10.5px; color: var(--text-muted); text-align: center; margin-top: 4px;">
+                ESP32 Padel Scoreboard • Mobiele Web App • Versie 1.8.5
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- BOTTOM FIXED SEGMENTED NAVIGATION BAR -->
+    <nav class="bottom-nav-bar">
+        <div class="bottom-nav-inner">
+            <button type="button" class="tab-btn active" data-tab="viewSimulator">
+                <span class="tab-btn-icon">🎮</span>
+                <span class="tab-btn-lbl">Simulator</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="viewVoordelen">
+                <span class="tab-btn-icon">✨</span>
+                <span class="tab-btn-lbl">Voordelen</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="viewAccu">
+                <span class="tab-btn-icon">🔋</span>
+                <span class="tab-btn-lbl">Accu</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="viewVergelijk">
+                <span class="tab-btn-icon">⚖️</span>
+                <span class="tab-btn-lbl">Vergelijk</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- INTERACTIEVE SIMULATOR & APP LOGICA -->
+    <script>
+        // -------------------------------------------------------------
+        // Simulator State
+        // -------------------------------------------------------------
+        const state = {
+            pointsHome: 0,
+            pointsAway: 0,
+            gamesHome: 0,
+            gamesAway: 0,
+            setsHome: 0,
+            setsAway: 0,
+            server: 'home',
+            sideSwapped: false,
+            isClockMode: false,
+            isSpelMode: false,
+            isStartAnimation: false,
+            inTiebreak: false,
+            showTbIntro: false,
+            isSuperTb: false,
+            tbFirstServer: 'home',
+            setFirstServer: 'home',
+            srvIndMode: 0,
+            gp: 0,
+            setsToWin: 2,
+            gamesPerSet: 6,
+            tb: 1,
+            spelTimer: null,
+            clockTimer: null
+        };
+
+        const tennisPoints = ['00', '15', '30', '40'];
+
+        // UI Elements
+        const elSimModeBadge = document.getElementById('simModeBadge');
+        const elExplainer = document.getElementById('simExplainerText');
+        const elBtRemoteLed = document.getElementById('btRemoteLed');
+
+        // 7-Segment Lookup Table
+        const SEG_MAP = {
+            '0': ['a', 'b', 'c', 'd', 'e', 'f'],
+            '1': ['b', 'c'],
+            '2': ['a', 'b', 'g', 'e', 'd'],
+            '3': ['a', 'b', 'g', 'c', 'd'],
+            '4': ['f', 'g', 'b', 'c'],
+            '5': ['a', 'f', 'g', 'c', 'd'],
+            '6': ['a', 'f', 'e', 'd', 'c', 'g'],
+            '7': ['a', 'b', 'c'],
+            '8': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+            '9': ['a', 'b', 'c', 'd', 'f', 'g'],
+            'A': ['a', 'b', 'c', 'e', 'f', 'g'],
+            'G': ['a', 'c', 'd', 'e', 'f', 'g'],
+            'd': ['b', 'c', 'd', 'e', 'g'],
+            'S': ['a', 'f', 'g', 'c', 'd'],
+            'P': ['a', 'b', 'e', 'f', 'g'],
+            'E': ['a', 'd', 'e', 'f', 'g'],
+            'L': ['d', 'e', 'f'],
+            'serve': ['c', 'd', 'e', 'g'],
+            'serve_top': ['a', 'b', 'f', 'g'],
+            'r': ['e', 'g'],
+            't': ['d', 'e', 'f', 'g'],
+            'b': ['c', 'd', 'e', 'f', 'g'],
+            'C': ['a', 'd', 'e', 'f'],
+            'O': ['a', 'b', 'c', 'd', 'e', 'f'],
+            'o': ['c', 'd', 'e', 'g'],
+            'n': ['c', 'e', 'g'],
+            'u': ['c', 'd', 'e'],
+            ' ': [],
+            '-': ['g']
+        };
+
+        function setDigit(digitIdx, char, colorClass) {
+            const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+            const active = SEG_MAP[char] || [];
+            segs.forEach(s => {
+                const el = document.getElementById(`d${digitIdx}_${s}`);
+                if (el) {
+                    el.className.baseVal = 'phys-seg' + (active.includes(s) ? ` ${colorClass}` : '');
+                }
+            });
+        }
+
+        function setScoreboardDigits(c0, c1, colorLeft, c2, c3, colorRight) {
+            setDigit(0, c0, colorLeft);
+            setDigit(1, c1, colorLeft);
+            setDigit(2, c2, colorRight);
+            setDigit(3, c3, colorRight);
+        }
+
+        function isSimServePlayerLeft() {
+            if (state.inTiebreak) {
+                const tot = state.pointsHome + state.pointsAway;
+                const block = (tot === 0) ? 0 : Math.floor((tot - 1) / 2) + 1;
+                return ((Math.floor(block / 2) % 2) === 1);
+            } else {
+                const totalSetGames = state.gamesHome + state.gamesAway;
+                let turn;
+                if (state.server === state.setFirstServer) {
+                    turn = Math.floor(totalSetGames / 2);
+                } else {
+                    turn = (totalSetGames > 0) ? Math.floor((totalSetGames - 1) / 2) : 0;
+                }
+                return ((turn % 2) === 1);
+            }
+        }
+
+        function getSimServeChar() {
+            if (state.srvIndMode === 0) return 'serve';
+            if (state.srvIndMode === 1) return isSimServePlayerLeft() ? 'serve_top' : 'serve';
+            if (state.srvIndMode === 2) return isSimServePlayerLeft() ? 'L' : 'r';
+            return ' ';
+        }
+
+        function getSimServeExplainerText(serverSide) {
+            const srvTeamName = (state.server === 'home') ? 'Team Thuis (Blauw)' : 'Bezoekers (Rood)';
+            if (state.srvIndMode === 0) return `Opslag bij <strong>${srvTeamName} (${serverSide})</strong>: gouden mini-nul onderaan`;
+            if (state.srvIndMode === 1) {
+                const pos = isSimServePlayerLeft() ? 'Speler Links (Boven)' : 'Speler Rechts (Onder)';
+                return `Opslag bij <strong>${srvTeamName}</strong>: ${pos}`;
+            }
+            if (state.srvIndMode === 2) {
+                const pos = isSimServePlayerLeft() ? 'L (Links)' : 'r (Rechts)';
+                return `Opslag bij <strong>${srvTeamName}</strong>: Gouden "${pos}"`;
+            }
+            return `Opslag bij <strong>${srvTeamName} (${serverSide})</strong>`;
+        }
+
+        function updateSvgLadder() {
+            for (let i = 0; i <= 10; i++) {
+                const dL = document.getElementById(`dot_L_${i}`);
+                const dR = document.getElementById(`dot_R_${i}`);
+                if (dL) dL.className.baseVal = 'phys-dot';
+                if (dR) dR.className.baseVal = 'phys-dot';
+            }
+
+            if (state.isClockMode) {
+                const colonOn = (Math.floor(Date.now() / 1000) % 2 === 0);
+                if (colonOn) {
+                    ['dot_L_2', 'dot_R_2', 'dot_L_3', 'dot_R_3',
+                     'dot_L_6', 'dot_R_6', 'dot_L_7', 'dot_R_7'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.className.baseVal = 'phys-dot lit-green';
+                    });
+                }
+                return;
+            }
+
+            const colorLeft = state.sideSwapped ? 'lit-red' : 'lit-blue';
+            const colorRight = state.sideSwapped ? 'lit-blue' : 'lit-red';
+            const setsLeft = state.sideSwapped ? state.setsAway : state.setsHome;
+            const setsRight = state.sideSwapped ? state.setsHome : state.setsAway;
+            const gamesLeft = state.sideSwapped ? state.gamesAway : state.gamesHome;
+            const gamesRight = state.sideSwapped ? state.gamesHome : state.gamesAway;
+
+            if (setsLeft >= 1) { const d = document.getElementById('dot_L_0'); if (d) d.className.baseVal = `phys-dot ${colorLeft}`; }
+            if (setsLeft >= 2) { const d = document.getElementById('dot_L_1'); if (d) d.className.baseVal = `phys-dot ${colorLeft}`; }
+            if (setsRight >= 1) { const d = document.getElementById('dot_R_0'); if (d) d.className.baseVal = `phys-dot ${colorRight}`; }
+            if (setsRight >= 2) { const d = document.getElementById('dot_R_1'); if (d) d.className.baseVal = `phys-dot ${colorRight}`; }
+
+            for (let g = 1; g <= 9; g++) {
+                const row = 11 - g;
+                const dL = document.getElementById(`dot_L_${row}`);
+                if (dL) dL.className.baseVal = (g <= gamesLeft) ? `phys-dot ${colorLeft}` : 'phys-dot';
+                const dR = document.getElementById(`dot_R_${row}`);
+                if (dR) dR.className.baseVal = (g <= gamesRight) ? `phys-dot ${colorRight}` : 'phys-dot';
+            }
+        }
+
+        function updateDisplay() {
+            if (state.isClockMode) {
+                renderClock();
+                return;
+            }
+            if (state.isSpelMode || state.isStartAnimation) {
+                return;
+            }
+
+            elSimModeBadge.textContent = 'SCOREBORD';
+            elSimModeBadge.style.color = 'var(--team1-blue)';
+
+            const isNewGameStart = (state.pointsHome === 0 && state.pointsAway === 0);
+            const serverIsOnLeft = (!state.sideSwapped && state.server === 'home') || 
+                                   (state.sideSwapped && state.server === 'away');
+
+            const colorLeft = state.sideSwapped ? 'lit-red' : 'lit-blue';
+            const colorRight = state.sideSwapped ? 'lit-blue' : 'lit-red';
+
+            const gamesLeft = state.sideSwapped ? state.gamesAway : state.gamesHome;
+            const gamesRight = state.sideSwapped ? state.gamesHome : state.gamesAway;
+
+            if (state.inTiebreak) {
+                if (state.showTbIntro) {
+                    if (state.isSuperTb) {
+                        setDigit(0, 'S', 'lit-white');
+                        setDigit(1, 't', 'lit-white');
+                        setDigit(2, 'b', 'lit-white');
+                        setDigit(3, ' ', 'lit-white');
+                    } else {
+                        setDigit(0, 't', 'lit-white');
+                        setDigit(1, 'b', 'lit-white');
+                        setDigit(2, ' ', 'lit-white');
+                        setDigit(3, ' ', 'lit-white');
+                    }
+                    updateSvgLadder();
+                    return;
+                }
+
+                const ptLeft  = state.sideSwapped ? state.pointsAway : state.pointsHome;
+                const ptRight = state.sideSwapped ? state.pointsHome : state.pointsAway;
+
+                if (state.pointsHome < 10 && state.pointsAway < 10) {
+                    const srvChar = getSimServeChar();
+                    const showSrv = (state.srvIndMode !== 3);
+
+                    setDigit(0, (serverIsOnLeft && showSrv) ? srvChar : ' ', (serverIsOnLeft && showSrv) ? 'lit-gold' : colorLeft);
+                    setDigit(1, String(ptLeft % 10), colorLeft);
+                    setDigit(2, (!serverIsOnLeft && showSrv) ? srvChar : ' ', (!serverIsOnLeft && showSrv) ? 'lit-gold' : colorRight);
+                    setDigit(3, String(ptRight % 10), colorRight);
+                } else {
+                    const sL = String(ptLeft).padStart(2, ' ');
+                    const sR = String(ptRight).padStart(2, ' ');
+                    setDigit(0, sL[0], colorLeft);
+                    setDigit(1, sL[1], colorLeft);
+                    setDigit(2, sR[0], colorRight);
+                    setDigit(3, sR[1], colorRight);
+                }
+                updateSvgLadder();
+                return;
+            }
+
+            if (isNewGameStart) {
+                const srvChar = getSimServeChar();
+                const showSrv = (state.srvIndMode !== 3);
+
+                setDigit(0, (serverIsOnLeft && showSrv) ? srvChar : ' ', (serverIsOnLeft && showSrv) ? 'lit-gold' : colorLeft);
+                setDigit(1, String(gamesLeft % 10), colorLeft);
+                setDigit(2, (!serverIsOnLeft && showSrv) ? srvChar : ' ', (!serverIsOnLeft && showSrv) ? 'lit-gold' : colorRight);
+                setDigit(3, String(gamesRight % 10), colorRight);
+            } else {
+                const ptHome = formatPoint(state.pointsHome, state.pointsAway);
+                const ptAway = formatPoint(state.pointsAway, state.pointsHome);
+                const ptLeft  = state.sideSwapped ? ptAway : ptHome;
+                const ptRight = state.sideSwapped ? ptHome : ptAway;
+
+                setDigit(0, ptLeft[0] || ' ', colorLeft);
+                setDigit(1, ptLeft[1] || '0', colorLeft);
+                setDigit(2, ptRight[0] || ' ', colorRight);
+                setDigit(3, ptRight[1] || '0', colorRight);
+            }
+
+            updateSvgLadder();
+        }
+
+        // Undo History Stack
+        let historyStack = [];
+
+        function saveStateForUndo() {
+            historyStack.push({
+                pointsHome: state.pointsHome,
+                pointsAway: state.pointsAway,
+                gamesHome: state.gamesHome,
+                gamesAway: state.gamesAway,
+                setsHome: state.setsHome,
+                setsAway: state.setsAway,
+                server: state.server,
+                sideSwapped: state.sideSwapped,
+                inTiebreak: state.inTiebreak,
+                showTbIntro: state.showTbIntro,
+                isSuperTb: state.isSuperTb,
+                tbFirstServer: state.tbFirstServer,
+                setFirstServer: state.setFirstServer,
+                gp: state.gp,
+                setsToWin: state.setsToWin,
+                gamesPerSet: state.gamesPerSet,
+                tb: state.tb
+            });
+            if (historyStack.length > 50) historyStack.shift();
+        }
+
+        function undoPoint() {
+            clearMatchStartTimers();
+            if (historyStack.length === 0) {
+                elExplainer.innerHTML = '⚠️ <strong>Geen eerdere stand:</strong> Er kan geen actie meer ongedaan worden gemaakt.';
+                return;
+            }
+            const prev = historyStack.pop();
+            Object.assign(state, prev);
+            if (state.spelTimer) clearInterval(state.spelTimer);
+
+            const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+            elExplainer.innerHTML = `↩️ <strong>Undo:</strong> Stand hersteld naar <strong>${formatPoint(state.pointsHome, state.pointsAway)} - ${formatPoint(state.pointsAway, state.pointsHome)}</strong> (${getSimServeExplainerText(serverSide)}).`;
+            updateDisplay();
+        }
+
+        function formatPoint(p1, p2) {
+            if (state.inTiebreak) return (p1 >= 10) ? String(p1) : (' ' + p1);
+            if (state.gp === 1) {
+                if (p1 >= 3 && p2 >= 3) return '40';
+                if (p1 === 0) return ' 0';
+                return tennisPoints[p1] || ' 0';
+            }
+            if (p1 >= 3 && p2 >= 3) {
+                if (p1 === p2) return '40';
+                if (p1 > p2) return 'Ad';
+                return '40';
+            }
+            if (p1 === 0) return ' 0';
+            return tennisPoints[p1] || ' 0';
+        }
+
+        function addPoint(team) {
+            clearMatchStartTimers();
+            saveStateForUndo();
+
+            if (state.isClockMode || state.isSpelMode) {
+                state.isClockMode = false;
+                state.isSpelMode = false;
+                if (state.spelTimer) clearTimeout(state.spelTimer);
+                if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            }
+
+            if (state.inTiebreak && state.showTbIntro) {
+                state.showTbIntro = false;
+                const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                elExplainer.innerHTML = `🔥 <strong>Tiebreak gereed!</strong> Stand: <strong>0 - 0</strong> • ${getSimServeExplainerText(serverSide)}.`;
+                updateDisplay();
+                return;
+            }
+
+            let gameJustWon = false;
+            let gameWinner = '';
+            let wonByGoldenPoint = false;
+
+            // Tiebreak Modus
+            if (state.inTiebreak) {
+                if (team === 'home') state.pointsHome++; else state.pointsAway++;
+
+                const totPts = state.pointsHome + state.pointsAway;
+                const tbTarget = state.isSuperTb ? 10 : 7;
+                const pLead = (team === 'home') ? (state.pointsHome - state.pointsAway) : (state.pointsAway - state.pointsHome);
+
+                if (team === 'home' && state.pointsHome >= tbTarget && pLead >= 2) {
+                    gameJustWon = true; gameWinner = 'home';
+                } else if (team === 'away' && state.pointsAway >= tbTarget && pLead >= 2) {
+                    gameJustWon = true; gameWinner = 'away';
+                } else {
+                    if (totPts % 2 === 1) {
+                        state.server = (state.server === 'home') ? 'away' : 'home';
+                    }
+                    if (totPts % 6 === 0) {
+                        state.sideSwapped = !state.sideSwapped;
+                    }
+                }
+            } else {
+                // Regulier Spel
+                let pMe = (team === 'home') ? state.pointsHome : state.pointsAway;
+                let pOther = (team === 'home') ? state.pointsAway : state.pointsHome;
+
+                if (state.gp === 1) {
+                    if (pMe === 3 && pOther === 3) {
+                        gameJustWon = true; gameWinner = team; wonByGoldenPoint = true;
+                    } else if (pMe === 3) {
+                        gameJustWon = true; gameWinner = team;
+                    } else {
+                        if (team === 'home') state.pointsHome++; else state.pointsAway++;
+                    }
+                } else {
+                    if (pMe >= 3 && pOther >= 3) {
+                        if (pMe === pOther) {
+                            if (team === 'home') state.pointsHome++; else state.pointsAway++;
+                        } else if (pMe > pOther) {
+                            gameJustWon = true; gameWinner = team;
+                        } else {
+                            if (team === 'home') state.pointsAway--; else state.pointsHome--;
+                        }
+                    } else if (pMe === 3) {
+                        gameJustWon = true; gameWinner = team;
+                    } else {
+                        if (team === 'home') state.pointsHome++; else state.pointsAway++;
+                    }
+                }
+            }
+
+            // Game afhandeling
+            if (gameJustWon) {
+                state.inTiebreak = false;
+                state.showTbIntro = false;
+                state.pointsHome = 0;
+                state.pointsAway = 0;
+
+                if (gameWinner === 'home') state.gamesHome++; else state.gamesAway++;
+
+                state.server = (state.server === 'home') ? 'away' : 'home';
+
+                const totalSetGames = state.gamesHome + state.gamesAway;
+                const check = checkSetWon();
+
+                if (check.won) {
+                    if (check.winner === 'home') state.setsHome++; else state.setsAway++;
+                    state.gamesHome = 0;
+                    state.gamesAway = 0;
+
+                    if (state.setsHome >= state.setsToWin || state.setsAway >= state.setsToWin) {
+                        triggerSpel(check.winner);
+                        return;
+                    } else {
+                        state.sideSwapped = !state.sideSwapped;
+                        elExplainer.innerHTML = `🏆 <strong>Set gewonnen</strong> door ${check.winner === 'home' ? 'Team Thuis (Blauw)' : 'Bezoekers (Rood)'}! Kanten gewisseld. Stand in sets: <strong>${state.setsHome} - ${state.setsAway}</strong>.`;
+                    }
+                } else if (check.isTiebreak) {
+                    const tbLabel = check.isSuperTbStart ? 'Super Tiebreak (tot 10)' : 'Tiebreak (tot 7)';
+                    elExplainer.innerHTML = `🔥 <strong>${tbLabel} Bereikt!</strong> Beide teams staan gelijk. Druk op de remote om te starten.`;
+                } else {
+                    if (totalSetGames % 2 === 1) {
+                        state.sideSwapped = !state.sideSwapped;
+                        const winnerName = (gameWinner === 'home') ? 'Team Thuis (Blauw)' : 'Bezoekers (Rood)';
+                        elExplainer.innerHTML = `🔄 <strong>Game voor ${winnerName}!</strong> Oneven game (${state.gamesHome}-${state.gamesAway}): <strong>Automatische Kantwissel</strong>!`;
+                    } else {
+                        const winnerName = (gameWinner === 'home') ? 'Team Thuis (Blauw)' : 'Bezoekers (Rood)';
+                        elExplainer.innerHTML = `🎾 <strong>Game voor ${winnerName}!</strong> Stand in games: <strong>${state.gamesHome} - ${state.gamesAway}</strong>.`;
+                    }
+                }
+            } else {
+                const srvSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+                const teamName = (team === 'home') ? 'Thuis (Blauw)' : 'Bezoekers (Rood)';
+                elExplainer.innerHTML = `+1 Punt voor <strong>${teamName}</strong> • Stand: <strong>${formatPoint(state.pointsHome, state.pointsAway)} - ${formatPoint(state.pointsAway, state.pointsHome)}</strong> • ${getSimServeExplainerText(srvSide)}.`;
+            }
+
+            updateDisplay();
+        }
+
+        function checkSetWon() {
+            let won = false;
+            let winner = '';
+            let totalGames = 0;
+            let isTiebreak = false;
+            let isSuperTbStart = false;
+            const gTarget = state.gamesPerSet;
+
+            if (state.tb === 1 && state.gamesHome === gTarget && state.gamesAway === gTarget) {
+                state.inTiebreak = true;
+                state.isSuperTb = false;
+                state.showTbIntro = true;
+                state.tbFirstServer = state.server;
+                state.pointsHome = 0;
+                state.pointsAway = 0;
+                return { won: false, winner: '', totalGames: gTarget * 2, isTiebreak: true };
+            }
+
+            const diff = Math.abs(state.gamesHome - state.gamesAway);
+            if (state.gamesHome >= gTarget && diff >= 2) {
+                won = true; winner = 'home';
+            } else if (state.gamesAway >= gTarget && diff >= 2) {
+                won = true; winner = 'away';
+            }
+            return { won, winner, totalGames, isTiebreak, isSuperTbStart };
+        }
+
+        function toggleServer() {
+            clearMatchStartTimers();
+            saveStateForUndo();
+            state.server = (state.server === 'home') ? 'away' : 'home';
+            if (state.gamesHome === 0 && state.gamesAway === 0 && state.pointsHome === 0 && state.pointsAway === 0) {
+                state.setFirstServer = state.server;
+            }
+            const serverSide = ((!state.sideSwapped && state.server === 'home') || (state.sideSwapped && state.server === 'away')) ? 'links' : 'rechts';
+            elExplainer.innerHTML = `🎾 <strong>Opslag gewisseld:</strong> ${getSimServeExplainerText(serverSide)}!`;
+            updateDisplay();
+        }
+
+        function toggleSideSwap() {
+            clearMatchStartTimers();
+            saveStateForUndo();
+            state.sideSwapped = !state.sideSwapped;
+            const leftTeam = state.sideSwapped ? 'Bezoekers (Rood)' : 'Thuis (Blauw)';
+            const rightTeam = state.sideSwapped ? 'Thuis (Blauw)' : 'Bezoekers (Rood)';
+            elExplainer.innerHTML = `🔄 <strong>Handmatige Kantwissel:</strong> Links: ${leftTeam} | Rechts: ${rightTeam}.`;
+            updateDisplay();
+        }
+
+        // -------------------------------------------------------------
+        // Wedstrijd Start Animatie & Splash
+        // -------------------------------------------------------------
+        let matchStartTimers = [];
+
+        function clearMatchStartTimers() {
+            if (matchStartTimers && matchStartTimers.length > 0) {
+                matchStartTimers.forEach(t => clearTimeout(t));
+                matchStartTimers = [];
+            }
+            state.isStartAnimation = false;
+        }
+
+        function triggerMatchStartAnimation() {
+            clearMatchStartTimers();
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            if (state.spelTimer) { clearInterval(state.spelTimer); state.spelTimer = null; }
+            state.isClockMode = false;
+            state.isSpelMode = false;
+            state.isStartAnimation = true;
+
+            historyStack = [];
+            state.pointsHome = 0;
+            state.pointsAway = 0;
+            state.gamesHome = 0;
+            state.gamesAway = 0;
+            state.setsHome = 0;
+            state.setsAway = 0;
+            state.server = 'home';
+            state.sideSwapped = false;
+            state.inTiebreak = false;
+            state.showTbIntro = false;
+            state.isSuperTb = false;
+
+            elSimModeBadge.textContent = 'BOOT & CONNECT';
+            elSimModeBadge.style.color = 'var(--accent-green)';
+            elExplainer.innerHTML = `🎬 <strong>Start Wedstrijd:</strong> Scorebord ontwaakt en initialiseert draadloze communicatie...`;
+
+            setScoreboardDigits(' ', ' ', 'phys-seg', ' ', ' ', 'phys-seg');
+            for (let i = 0; i <= 10; i++) {
+                const dL = document.getElementById(`dot_L_${i}`);
+                const dR = document.getElementById(`dot_R_${i}`);
+                if (dL) dL.className.baseVal = 'phys-dot';
+                if (dR) dR.className.baseVal = 'phys-dot';
+            }
+
+            // 1. CONN (400ms)
+            matchStartTimers.push(setTimeout(() => {
+                setScoreboardDigits('C', 'O', 'lit-green', 'n', 'n', 'lit-green');
+                flashRemoteLed();
+                for (let i = 2; i <= 10; i++) {
+                    const dL = document.getElementById(`dot_L_${i}`);
+                    const dR = document.getElementById(`dot_R_${i}`);
+                    if (dL) dL.className.baseVal = 'phys-dot lit-green';
+                    if (dR) dR.className.baseVal = 'phys-dot lit-green';
+                }
+                elSimModeBadge.textContent = 'BLE CONNECT';
+                elExplainer.innerHTML = `📶 <strong>BLE Handshake:</strong> Draadloze verbinding gemaakt met BLE Pols-Remote.`;
+            }, 400));
+
+            // Ladder reset (1400ms)
+            matchStartTimers.push(setTimeout(() => {
+                for (let i = 0; i <= 10; i++) {
+                    const dL = document.getElementById(`dot_L_${i}`);
+                    const dR = document.getElementById(`dot_R_${i}`);
+                    if (dL) dL.className.baseVal = 'phys-dot';
+                    if (dR) dR.className.baseVal = 'phys-dot';
+                }
+            }, 1400));
+
+            // 2. Rules Splash (1600ms)
+            matchStartTimers.push(setTimeout(() => {
+                const c0 = String(state.setsToWin);
+                const c1 = String(state.gamesPerSet);
+                const c2 = (state.gp === 1) ? 'G' : 'A';
+                const c3 = (state.gp === 1) ? 'P' : 'd';
+                const code = `${c0}${c1}${c2}${c3}`;
+
+                const ruleColor = (state.gp === 1) ? 'lit-yellow' : 'lit-gold';
+                setScoreboardDigits(c0, c1, 'lit-blue', c2, c3, ruleColor);
+
+                for (let g = 1; g <= state.gamesPerSet && g <= 9; g++) {
+                    const row = 11 - g;
+                    const dL = document.getElementById(`dot_L_${row}`);
+                    const dR = document.getElementById(`dot_R_${row}`);
+                    if (dL) dL.className.baseVal = 'phys-dot lit-blue';
+                    if (dR) dR.className.baseVal = 'phys-dot lit-red';
+                }
+
+                if (state.setsToWin >= 1) {
+                    const s1L = document.getElementById('dot_L_0');
+                    const s1R = document.getElementById('dot_R_0');
+                    if (s1L) s1L.className.baseVal = 'phys-dot lit-yellow';
+                    if (s1R) s1R.className.baseVal = 'phys-dot lit-yellow';
+                }
+                if (state.setsToWin >= 2) {
+                    const s2L = document.getElementById('dot_L_1');
+                    const s2R = document.getElementById('dot_R_1');
+                    if (s2L) s2L.className.baseVal = 'phys-dot lit-yellow';
+                    if (s2R) s2R.className.baseVal = 'phys-dot lit-yellow';
+                }
+
+                elSimModeBadge.textContent = `SPLASH (${code})`;
+                elSimModeBadge.style.color = 'var(--accent-yellow)';
+                elExplainer.innerHTML = `📋 <strong>Match Regels (${code}):</strong> ${state.setsToWin} Sets • ${state.gamesPerSet} Games • ${state.gp === 1 ? 'Golden Point' : 'Voordeel'}. Target games en sets lichten op.`;
+            }, 1600));
+
+            // 3. Toss (4000ms)
+            matchStartTimers.push(setTimeout(() => {
+                for (let i = 0; i <= 10; i++) {
+                    const dL = document.getElementById(`dot_L_${i}`);
+                    const dR = document.getElementById(`dot_R_${i}`);
+                    if (dL) dL.className.baseVal = 'phys-dot';
+                    if (dR) dR.className.baseVal = 'phys-dot';
+                }
+                setScoreboardDigits('t', 'o', 'lit-yellow', 'S', 'S', 'lit-yellow');
+                elSimModeBadge.textContent = 'TOSS (LOTING)';
+                elExplainer.innerHTML = `🪙 <strong>Toss:</strong> Wie mag als eerste serveren? Automatische loting...`;
+            }, 4000));
+
+            const tossFlips = [
+                { delay: 4500, side: 'home' },
+                { delay: 4750, side: 'away' },
+                { delay: 5050, side: 'home' },
+                { delay: 5400, side: 'away' },
+                { delay: 5800, side: 'home' }
+            ];
+
+            tossFlips.forEach(step => {
+                matchStartTimers.push(setTimeout(() => {
+                    flashRemoteLed();
+                    if (step.side === 'home') {
+                        setScoreboardDigits('P', '1', 'lit-blue', ' ', ' ', 'phys-seg');
+                    } else {
+                        setScoreboardDigits(' ', ' ', 'phys-seg', 'P', '2', 'lit-red');
+                    }
+                }, step.delay));
+            });
+
+            matchStartTimers.push(setTimeout(() => {
+                state.server = 'home';
+                setScoreboardDigits('P', '1', 'lit-gold', '-', '-', 'lit-gold');
+                elSimModeBadge.textContent = 'TOSS: THUIS';
+                elExplainer.innerHTML = `🪙 <strong>Toss Gewonnen:</strong> Team Thuis (Blauw) begint met de opslag!`;
+            }, 6300));
+
+            // 4. Start 00 - 00 (7400ms)
+            matchStartTimers.push(setTimeout(() => {
+                state.isStartAnimation = false;
+                updateDisplay();
+                elSimModeBadge.textContent = 'WEDSTRIJD GESTART';
+                elSimModeBadge.style.color = 'var(--accent-green)';
+                elExplainer.innerHTML = `🎾 <strong>De wedstrijd is gestart!</strong> Stand: <strong>0 - 0</strong>. Eerste opslag voor <strong>Team Thuis (Blauw)</strong>. Druk op de remote knoppen om te scoren!`;
+            }, 7400));
+        }
+
+        function triggerStartSplash() {
+            clearMatchStartTimers();
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            state.isClockMode = false;
+            state.isSpelMode = false;
+            elSimModeBadge.textContent = 'START SPLASH';
+            elSimModeBadge.style.color = 'var(--accent-yellow)';
+
+            const c0 = String(state.setsToWin);
+            const c1 = String(state.gamesPerSet);
+            const c2 = (state.gp === 1) ? 'G' : 'A';
+            const c3 = (state.gp === 1) ? 'P' : 'd';
+            const code = `${c0}${c1}${c2}${c3}`;
+
+            const ruleColor = (state.gp === 1) ? 'lit-yellow' : 'lit-gold';
+            setScoreboardDigits(c0, c1, 'lit-blue', c2, c3, ruleColor);
+
+            for (let g = 1; g <= 9; g++) {
+                const row = 11 - g;
+                const dL = document.getElementById(`dot_L_${row}`);
+                const dR = document.getElementById(`dot_R_${row}`);
+                if (dL) dL.className.baseVal = (g <= state.gamesPerSet) ? 'phys-dot lit-blue' : 'phys-dot';
+                if (dR) dR.className.baseVal = (g <= state.gamesPerSet) ? 'phys-dot lit-red' : 'phys-dot';
+            }
+
+            const s1L = document.getElementById('dot_L_0');
+            const s1R = document.getElementById('dot_R_0');
+            const s2L = document.getElementById('dot_L_1');
+            const s2R = document.getElementById('dot_R_1');
+            if (s1L) s1L.className.baseVal = (state.setsToWin >= 1) ? 'phys-dot lit-yellow' : 'phys-dot';
+            if (s1R) s1R.className.baseVal = (state.setsToWin >= 1) ? 'phys-dot lit-yellow' : 'phys-dot';
+            if (s2L) s2L.className.baseVal = (state.setsToWin >= 2) ? 'phys-dot lit-yellow' : 'phys-dot';
+            if (s2R) s2R.className.baseVal = (state.setsToWin >= 2) ? 'phys-dot lit-yellow' : 'phys-dot';
+
+            elExplainer.innerHTML = `▶ <strong>Match Start Splash (${code}):</strong> Display toont ${state.setsToWin} sets, ${state.gamesPerSet} games, ${state.gp ? 'GP' : 'Ad'}.`;
+
+            setTimeout(() => { updateDisplay(); }, 3000);
+        }
+
+        function triggerSpel(winner = 'home') {
+            clearMatchStartTimers();
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            state.isClockMode = false;
+            state.isSpelMode = true;
+            elSimModeBadge.textContent = 'MATCH WON';
+            elSimModeBadge.style.color = 'var(--accent-green)';
+
+            const winColor = (winner === 'home')
+                ? (state.sideSwapped ? 'lit-red' : 'lit-blue')
+                : (state.sideSwapped ? 'lit-blue' : 'lit-red');
+
+            setScoreboardDigits('S', 'P', winColor, 'E', 'L', winColor);
+
+            let countdown = 15;
+            elExplainer.innerHTML = `🏆 <strong>SPEL!</strong> ${winner === 'home' ? 'Team Thuis (Blauw)' : 'Bezoekers (Rood)'} wint de wedstrijd! "SPEL" op het paneel...`;
+
+            if (state.spelTimer) clearInterval(state.spelTimer);
+            state.spelTimer = setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    clearInterval(state.spelTimer);
+                    state.isSpelMode = false;
+                    updateDisplay();
+                }
+            }, 1000);
+        }
+
+        function toggleClock() {
+            clearMatchStartTimers();
+            state.isClockMode = !state.isClockMode;
+            if (state.isClockMode) {
+                state.isSpelMode = false;
+                if (state.spelTimer) clearInterval(state.spelTimer);
+
+                elSimModeBadge.textContent = 'KLOKMODUS';
+                elSimModeBadge.style.color = 'var(--accent-green)';
+                elExplainer.innerHTML = '🕒 <strong>Klokmodus Actief:</strong> Display toont actuele tijd.';
+
+                renderClock();
+                if (state.clockTimer) clearInterval(state.clockTimer);
+                state.clockTimer = setInterval(renderClock, 250);
+            } else {
+                if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+                updateDisplay();
+            }
+        }
+
+        function renderClock() {
+            const now = new Date();
+            const hrs = now.getHours() < 10 ? (' ' + now.getHours()) : String(now.getHours());
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            setScoreboardDigits(hrs[0], hrs[1], 'lit-green', mins[0], mins[1], 'lit-green');
+            updateSvgLadder();
+        }
+
+        function resetMatch() {
+            clearMatchStartTimers();
+            if (state.spelTimer) clearInterval(state.spelTimer);
+            if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+            historyStack = [];
+            state.pointsHome = 0;
+            state.pointsAway = 0;
+            state.gamesHome = 0;
+            state.gamesAway = 0;
+            state.setsHome = 0;
+            state.setsAway = 0;
+            state.server = 'home';
+            state.sideSwapped = false;
+            state.isClockMode = false;
+            state.isSpelMode = false;
+            state.inTiebreak = false;
+            state.showTbIntro = false;
+            state.isSuperTb = false;
+            state.tbFirstServer = 'home';
+            state.setFirstServer = 'home';
+
+            elExplainer.innerHTML = `⟲ <strong>Wedstrijd Gereset:</strong> Stand is 0-0. ${getSimServeExplainerText('links')}.`;
+            updateDisplay();
+        }
+
+        function flashRemoteLed() {
+            if (!elBtRemoteLed) return;
+            elBtRemoteLed.classList.add('flash');
+            setTimeout(() => {
+                elBtRemoteLed.classList.remove('flash');
+            }, 260);
+        }
+
+        // -------------------------------------------------------------
+        // Accordeon Helper
+        // -------------------------------------------------------------
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('open');
+        }
+
+        // -------------------------------------------------------------
+        // Tab Navigation
+        // -------------------------------------------------------------
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+
+                btn.classList.add('active');
+                const targetView = document.getElementById(btn.dataset.tab);
+                if (targetView) targetView.classList.add('active');
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        // -------------------------------------------------------------
+        // Event Listeners voor Knoppen
+        // -------------------------------------------------------------
+        const btnBtBig = document.getElementById('btnBtBig');
+        const btnBtSmall = document.getElementById('btnBtSmall');
+        const btnSimUndo = document.getElementById('btnSimUndo');
+        const btnSimTossOrClock = document.getElementById('btnSimTossOrClock');
+        const btnHeaderMatchStart = document.getElementById('btnHeaderMatchStart');
+        const btnSimMatchStart = document.getElementById('btnSimMatchStart');
+        const btnSimSwap = document.getElementById('btnSimSwap');
+        const btnSimServe = document.getElementById('btnSimServe');
+        const btnSimClock = document.getElementById('btnSimClock');
+        const btnSimSplash = document.getElementById('btnSimSplash');
+        const btnSimReset = document.getElementById('btnSimReset');
+
+        if (btnBtBig) btnBtBig.addEventListener('click', () => { flashRemoteLed(); addPoint('home'); });
+        if (btnBtSmall) btnBtSmall.addEventListener('click', () => { flashRemoteLed(); addPoint('away'); });
+        if (btnSimUndo) btnSimUndo.addEventListener('click', () => { flashRemoteLed(); undoPoint(); });
+        if (btnSimTossOrClock) btnSimTossOrClock.addEventListener('click', () => {
+            flashRemoteLed();
+            const isFirstGame = (state.setsHome === 0 && state.setsAway === 0 &&
+                                 state.gamesHome === 0 && state.gamesAway === 0 &&
+                                 state.pointsHome === 0 && state.pointsAway === 0);
+            if (isFirstGame) toggleServer(); else toggleClock();
+        });
+
+        if (btnHeaderMatchStart) btnHeaderMatchStart.addEventListener('click', triggerMatchStartAnimation);
+        if (btnSimMatchStart) btnSimMatchStart.addEventListener('click', triggerMatchStartAnimation);
+        if (btnSimSwap) btnSimSwap.addEventListener('click', toggleSideSwap);
+        if (btnSimServe) btnSimServe.addEventListener('click', toggleServer);
+        if (btnSimClock) btnSimClock.addEventListener('click', toggleClock);
+        if (btnSimSplash) btnSimSplash.addEventListener('click', triggerStartSplash);
+        if (btnSimReset) btnSimReset.addEventListener('click', resetMatch);
+
+        // Rule selector pills
+        document.querySelectorAll('#simRuleGp .cfg-pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#simRuleGp .cfg-pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.gp = parseInt(btn.dataset.gp);
+                triggerStartSplash();
+            });
+        });
+        document.querySelectorAll('#simRuleSets .cfg-pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#simRuleSets .cfg-pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.setsToWin = parseInt(btn.dataset.sets);
+                triggerStartSplash();
+            });
+        });
+        document.querySelectorAll('#simRuleGames .cfg-pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#simRuleGames .cfg-pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.gamesPerSet = parseInt(btn.dataset.games);
+                triggerStartSplash();
+            });
+        });
+        document.querySelectorAll('#simServeGrid .cfg-pill-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#simServeGrid .cfg-pill-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.srvIndMode = parseInt(btn.dataset.srv);
+                updateDisplay();
+            });
+        });
+
+        // -------------------------------------------------------------
+        // Accu Slider
+        // -------------------------------------------------------------
+        const mBatterySlider = document.getElementById('mBatterySlider');
+        const mCalcCapacityDisplay = document.getElementById('mCalcCapacityDisplay');
+        const mCalcHours = document.getElementById('mCalcHours');
+        const mCalcMatches = document.getElementById('mCalcMatches');
+        const mCalcStandby = document.getElementById('mCalcStandby');
+
+        if (mBatterySlider) {
+            mBatterySlider.addEventListener('input', (e) => {
+                const mah = parseInt(e.target.value);
+                if (mCalcCapacityDisplay) mCalcCapacityDisplay.textContent = mah.toLocaleString('nl-NL') + ' mAh';
+                const hours = (mah / 1600).toFixed(1);
+                const matches = Math.floor(hours / 1.3);
+                const standbyHours = Math.floor(mah / 550);
+
+                if (mCalcHours) mCalcHours.textContent = `~${hours} uur`;
+                if (mCalcMatches) mCalcMatches.textContent = `${matches} - ${matches + 2}`;
+                if (mCalcStandby) mCalcStandby.textContent = `~${standbyHours} uur`;
+            });
+        }
+
+        // -------------------------------------------------------------
+        // Theme Toggle
+        // -------------------------------------------------------------
+        const btnThemeToggle = document.getElementById('btnThemeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            try { localStorage.setItem('padelTheme', theme); } catch(e) {}
+            if (themeIcon) themeIcon.textContent = (theme === 'dark') ? '☀️' : '🌙';
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', theme === 'dark' ? '#080c14' : '#f2f2f7');
+        }
+
+        if (btnThemeToggle) {
+            btnThemeToggle.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                applyTheme(current === 'dark' ? 'light' : 'dark');
+            });
+        }
+
+        // Init
+        const initTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        if (themeIcon) themeIcon.textContent = (initTheme === 'dark') ? '☀️' : '🌙';
+        resetMatch();
+    </script>
+</body>
+</html>
