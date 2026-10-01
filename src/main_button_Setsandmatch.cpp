@@ -183,7 +183,8 @@ inline bool isCourtSwapped() {
     int tbSum = tiebreakPoints1 + tiebreakPoints2;
     int totalGames = team1Games + team2Games;
     bool baseSwapped = ((totalGames + 1) / 2) % 2 == 1;
-    bool tbSwap = ((tbSum + 5) / 6) % 2 == 1;
+    // Tiebreak court ends swap every 6 points (6, 12, 18...)
+    bool tbSwap = (tbSum / 6) % 2 == 1;
     standardSwap = baseSwapped ^ tbSwap;
   } else {
     int totalGames = team1Games + team2Games;
@@ -196,6 +197,7 @@ bool triggerGameWonAnimation  = false;
 bool triggerSetWonAnimation   = false;
 bool triggerMatchWonAnimation = false;
 bool triggerTiebreakIntroAnimation = false;
+uint32_t tiebreakIntroStartTime = 0;
 int winningTeam = 0;
 bool triggerUndoAction = false;
 bool scoreNeedsUpdate = true;
@@ -238,9 +240,9 @@ struct CounterState {
   int dualDownMin2 = 3, dualDownSec2 = 0;
 
   // Colors
-  uint32_t color1 = 0x006EA0; // Team 1 Blue current-balanced (0, 110, 160)
+  uint32_t color1 = 0x0000FF; // Team 1 Blue (0, 0, 255)
   uint32_t color2 = 0xFF0000; // Team 2 Red (255, 0, 0)
-  uint32_t colorSingle = 0x006EA0; // Single counter color (Cyan)
+  uint32_t colorSingle = 0x0000FF; // Single counter color (Blue 0, 0, 255)
 
   // Timing
   uint32_t lastTickMs1 = 0;
@@ -260,7 +262,7 @@ void handleCounterTick();
 bool counterNeedsUpdate = true;
 uint32_t lastCounterRender = 0;
 uint32_t lastActivityTime = 0;
-uint8_t  cfgBrightness    = 180;             // LED brightness (0 - 255)
+uint8_t  cfgBrightness    = 88;              // LED brightness (0 - 125 safe range)
 uint32_t cfgIdleTimeoutMs = 5 * 60 * 1000;   // Inactivity timeout in ms (0 = Never)
 uint8_t  cfgClockR        = 0;               // Clock Digit Color: Red component (Default Pure Green #00FF00)
 uint8_t  cfgClockG        = 255;             // Clock Digit Color: Green component
@@ -309,14 +311,11 @@ bool doScan = true;
 // Hardware Instances
 Adafruit_NeoPixel pixels(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-// Hardware power governor & brightness manager
+// Hardware power governor & brightness manager (0-50% scale: max 125)
 inline void updateLedBrightness(uint8_t brt) {
-  cfgBrightness = brt; // Keep user's configured setting (e.g. 255) for flash and UI
-  // Cap actual hardware PWM brightness to 240 (94%).
-  // This avoids Adafruit_NeoPixel uint8_t overflow (255+1=0) which bypasses all scaling,
-  // and eliminates voltage droop / ground bounce between segments that causes ghosting.
-  uint8_t safeBrt = (brt > 240) ? 240 : brt;
-  pixels.setBrightness(safeBrt);
+  if (brt > 125) brt = 125;
+  cfgBrightness = brt;
+  pixels.setBrightness(brt);
 }
 
 // ==============================================================================
@@ -330,7 +329,10 @@ inline void updateLedBrightness(uint8_t brt) {
 //   [5] T  (Top)
 //   [6] TR (Top-Right)
 // ==============================================================================
-const byte numbers[16][7] = {
+#define DIGIT_BLANK 10
+#define DIGIT_SERVE 16
+
+const byte numbers[17][7] = {
   // BL, B, BR, M, TL, T, TR
   {   1, 1,  1, 0,  1, 1,  1 }, // 0: BL, B, BR, TL, T, TR
   {   0, 0,  1, 0,  0, 0,  1 }, // 1: BR, TR
@@ -347,7 +349,8 @@ const byte numbers[16][7] = {
   {   1, 1,  1, 1,  0, 0,  1 }, // 12: 'd' (Advantage)
   {   0, 1,  1, 1,  1, 1,  0 }, // 13: 'S' (Set / Uppercase 'S')
   {   1, 1,  0, 1,  1, 0,  0 }, // 14: 't' (lowercase 't')
-  {   1, 1,  1, 1,  1, 0,  0 }  // 15: 'b' (lowercase 'b')
+  {   1, 1,  1, 1,  1, 0,  0 }, // 15: 'b' (lowercase 'b')
+  {   1, 1,  1, 1,  0, 0,  0 }  // 16: Serve symbol: BL, B, BR, M
 };
 
 // ==============================================================================
@@ -391,7 +394,7 @@ const uint8_t panel0SegmentMap[7] = { 6, 5, 4, 3, 2, 1, 0 };
 
 void drawDigit(int digitIndex, int num, uint32_t color) {
   if (digitIndex < 0 || digitIndex >= NUM_DIGITS) return;
-  if (num < 0 || num > 15) num = 10;
+  if (num < 0 || num > 16) num = DIGIT_BLANK;
 
   int baseLed = getDigitBaseLed(digitIndex);
   for (int seg = 0; seg < 7; seg++) {
@@ -463,7 +466,7 @@ void drawGamesAndSets(int games1, int sets1, int games2, int sets2, bool swapped
   if (brightnessFactor <= 0.001f) return;
   int base = getGamesSetsBaseLed(); // LED index 56
   
-  uint32_t c1 = (customColor1 != 0) ? customColor1 : pixels.Color(0, 110, 160);
+  uint32_t c1 = (customColor1 != 0) ? customColor1 : pixels.Color(0, 0, 255);
   uint32_t c2 = (customColor2 != 0) ? customColor2 : pixels.Color(255, 0, 0);
 
   int leftGames   = !swapped ? games1 : games2;
@@ -502,26 +505,13 @@ void drawGamesAndSets(int games1, int sets1, int games2, int sets2, bool swapped
     pixels.setPixelColor(ledIdx, (g < rightGames) ? rightColor : 0);
   }
 
-  // --- Serve Indicator Overlay ---
-  if (!matchWon && !betweenSets) {
-    // Solid serve indicator in light orange / warm yellow (no blinking)
-    uint32_t serveColor = scaleColor(pixels.Color(255, 180, 0), brightnessFactor);
-
-    if (!inTiebreak) {
-      int activeServer = currentServer; // 1 or 2
-      bool isLeftServer = (!swapped && activeServer == 1) || (swapped && activeServer == 2);
-
-      if (isLeftServer) {
-        if (leftGames < 9) {
-          pixels.setPixelColor(base + leftGames, serveColor);
-        }
-      } else {
-        if (rightGames < 9) {
-          pixels.setPixelColor(base + 23 - rightGames, serveColor);
-        }
-      }
-    } else {
-      // Tiebreak serve tracking (1 dot for 1st serve, 2 dots for 2nd serve)
+  // --- Serve Indicator Overlay on Games Ladder ---
+  // Regular game serve indicator on games ladder is removed (now on 7-segment display).
+  // For tiebreaks, the ladder LED is used only when points reach double digits (>= 10).
+  if (!matchWon && !betweenSets && inTiebreak) {
+    bool tbDoubleDigits = (tiebreakPoints1 >= 10 || tiebreakPoints2 >= 10);
+    if (tbDoubleDigits) {
+      uint32_t serveColor = scaleColor(pixels.Color(255, 255, 0), brightnessFactor);
       int activeTbServer = getTiebreakCurrentServer();
       int serveCount = getTiebreakServeCount(); // 1 or 2
       bool isLeftTbServer = (!swapped && activeTbServer == 1) || (swapped && activeTbServer == 2);
@@ -597,11 +587,13 @@ static void initWs2813SpiDma() {
     for (int b = 0; b < 256; b++) {
       uint32_t pattern = 0;
       for (int bit = 7; bit >= 0; bit--) {
-        // MSB first on wire: 4 SPI bits per WS2813 bit at 3.333 MHz (300ns/bit)
-        // WS2813 Datasheet specifications:
-        //   T0H = 220ns ~ 380ns (typical 300ns) -> '0' = 1000 (300ns HIGH, 900ns LOW)
-        //   T1H = 580ns ~ 1600ns (typical 900ns) -> '1' = 1110 (900ns HIGH, 300ns LOW)
-        uint32_t nibble = (b & (1 << bit)) ? 0x0E : 0x08;
+        // MSB first on wire: 4 SPI bits per WS2813 bit at 3.200 MHz (312.5ns/bit, 1.25us total period = 800 kHz)
+        // WS2813 / WS2812B Specifications & Timings:
+        //   '0' = 1000 (0x08): 312.5ns HIGH, 937.5ns LOW (T0H in 220-380ns, T0L in 580-1600ns)
+        //   '1' = 1100 (0x0C): 625.0ns HIGH, 625.0ns LOW (T1H in 580-1600ns, T1L in 580-1000ns)
+        // Previous 0x0E (1110) had only 300ns LOW for '1' bits, which violated T1L min (580ns) and caused
+        // strip capacitance to round off the LOW pulse, losing Bit 7 across all color channels >= 128 (e.g. 50% brightness).
+        uint32_t nibble = (b & (1 << bit)) ? 0x0C : 0x08;
         pattern = (pattern << 4) | nibble;
       }
       uint8_t b0 = (pattern >> 24) & 0xFF;
@@ -620,7 +612,7 @@ static void initWs2813SpiDma() {
     gpio_set_drive_capability((gpio_num_t)LED_PIN, GPIO_DRIVE_CAP_3);
 
     // Each color byte expands to 4 SPI bytes (32 bits). Includes 1 dummy blank pixel.
-    // NO trailing zero-bytes: encoded '0' bits still have 300ns HIGH pulses which
+    // NO trailing zero-bytes: encoded '0' bits still have 312.5ns HIGH pulses which
     // violate the WS2813 >=280us continuous-LOW reset requirement.
     // Instead the reset is achieved by GPIO pulldown after the SPI transaction completes.
     ws2813_led_bytes = TOTAL_SPI_PIXELS * 3 * 4; // 137 * 12 = 1644 bytes
@@ -642,8 +634,8 @@ static void initWs2813SpiDma() {
     }
 
     spi_device_interface_config_t devcfg = {};
-    // 3.333 MHz -> 80 MHz / 24: even integer divider with exact 50% duty cycle & zero jitter
-    devcfg.clock_speed_hz = 3333333;
+    // 3.200 MHz -> 80 MHz / 25: exact 1.25us period (800 kHz nominal WS2812/WS2813 protocol)
+    devcfg.clock_speed_hz = 3200000;
     devcfg.mode = 0;
     devcfg.spics_io_num = -1;
     devcfg.queue_size = 1;
@@ -660,7 +652,7 @@ static void initWs2813SpiDma() {
       return;
     }
     memset(ws2813_dma_buf, 0, ws2813_dma_buf_size);
-    Serial.println("[SPI-DMA] Hardware SPI DMA WS2813 driver active on GPIO 2 (3.33MHz/300ns, pulldown reset)!");
+    Serial.println("[SPI-DMA] Hardware SPI DMA WS2813 driver active on GPIO 2 (3.2MHz, 0x0C/0x08 encoding, pulldown reset)!");
   }
 }
 
@@ -720,9 +712,10 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
     return;
   }
 
-  uint32_t colorBlue  = scaleColor(pixels.Color(0, 110, 160), brightnessFactor); // Current-balanced Cyan (sum=270, matches Red 255)
+  uint32_t colorBlue  = scaleColor(pixels.Color(0, 0, 255),   brightnessFactor);
   uint32_t colorRed   = scaleColor(pixels.Color(255, 0, 0),   brightnessFactor);
   uint32_t colorWhite = scaleColor(pixels.Color(255, 255, 255), brightnessFactor);
+  uint32_t colorGold  = scaleColor(pixels.Color(255, 255, 0), brightnessFactor);
 
   bool isSuperTb = (inTiebreak && cfgTiebreak && cfgSetsToWin == 2 && team1Sets == 1 && team2Sets == 1);
   // Show tb/Stb indicator only once at the start of a tiebreak (before the first point)
@@ -747,28 +740,62 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
     if (betweenGames) {
       int g1 = betweenSets ? completedSetGames1 : team1Games;
       int g2 = betweenSets ? completedSetGames2 : team2Games;
-      t1Tens = (g1 >= 10) ? (g1 / 10) : 10; // Blank leading zero
+      t1Tens = (g1 >= 10) ? (g1 / 10) : DIGIT_BLANK; // Blank leading zero
       t1Ones = g1 % 10;
-      t2Tens = (g2 >= 10) ? (g2 / 10) : 10;
+      t2Tens = (g2 >= 10) ? (g2 / 10) : DIGIT_BLANK;
       t2Ones = g2 % 10;
     } else {
       getTeamDigits(1, t1Tens, t1Ones);
       getTeamDigits(2, t2Tens, t2Ones);
     }
 
-    if (!swapped) {
-      // Normal: Team 1 (Blue) on Left (0, 1), Team 2 (Red) on Right (2, 3)
-      drawDigit(0, t1Tens, colorBlue);
-      drawDigit(1, t1Ones, colorBlue);
-      drawDigit(2, t2Tens, colorRed);
-      drawDigit(3, t2Ones, colorRed);
-    } else {
-      // Swapped: Team 2 (Red) on Left (0, 1), Team 1 (Blue) on Right (2, 3)
-      drawDigit(0, t2Tens, colorRed);
-      drawDigit(1, t2Ones, colorRed);
-      drawDigit(2, t1Tens, colorBlue);
-      drawDigit(3, t1Ones, colorBlue);
+    // Determine if serve indicator should be displayed on 1st 7-segment display
+    bool showServeOnDigits = false;
+    int activeServer = 1;
+    if (!matchWon) {
+      if (inTiebreak) {
+        // In tiebreak, use 7-segment display for serve until points reach double digits
+        if (tiebreakPoints1 < 10 && tiebreakPoints2 < 10) {
+          showServeOnDigits = true;
+          activeServer = getTiebreakCurrentServer();
+        }
+      } else if (betweenGames || isAtMatchStart()) {
+        showServeOnDigits = true;
+        activeServer = currentServer;
+      }
     }
+
+    bool isLeftServer = (!swapped && activeServer == 1) || (swapped && activeServer == 2);
+
+    int leftTensDigit   = !swapped ? t1Tens : t2Tens;
+    int leftOnesDigit   = !swapped ? t1Ones : t2Ones;
+    int rightTensDigit  = !swapped ? t2Tens : t1Tens;
+    int rightOnesDigit  = !swapped ? t2Ones : t1Ones;
+
+    uint32_t leftColor  = !swapped ? colorBlue : colorRed;
+    uint32_t rightColor = !swapped ? colorRed  : colorBlue;
+
+    uint32_t d0Color = leftColor;
+    int d0Num = leftTensDigit;
+    uint32_t d2Color = rightColor;
+    int d2Num = rightTensDigit;
+
+    if (showServeOnDigits) {
+      if (isLeftServer) {
+        d0Num = DIGIT_SERVE;
+        d0Color = colorGold;
+        d2Num = DIGIT_BLANK;
+      } else {
+        d2Num = DIGIT_SERVE;
+        d2Color = colorGold;
+        d0Num = DIGIT_BLANK;
+      }
+    }
+
+    drawDigit(0, d0Num, d0Color);
+    drawDigit(1, leftOnesDigit, leftColor);
+    drawDigit(2, d2Num, d2Color);
+    drawDigit(3, rightOnesDigit, rightColor);
   }
 
   // Draw Games & Sets module in the middle (LEDs 56..79)
@@ -787,9 +814,9 @@ void renderBoardWithState(bool swapped, float brightnessFactor) {
 
 void animateCourtSideSwap(bool toSwapped) {
   bool fromSwapped = !toSwapped;
-  uint32_t cBlue    = pixels.Color(0, 110, 160);
+  uint32_t cBlue    = pixels.Color(0, 0, 255);
   uint32_t cRed     = pixels.Color(255, 0, 0);
-  uint32_t cBlueDim = pixels.Color(0, 45, 65);
+  uint32_t cBlueDim = pixels.Color(0, 0, 90);
   uint32_t cRedDim  = pixels.Color(65, 0, 0);
   uint32_t cWhite   = pixels.Color(200, 200, 200);
 
@@ -1102,22 +1129,10 @@ void splashText(const char* text, uint32_t color) {
 // Used during MATCH_PHASE_SPEL so the won sets are visible while SPEL is displayed.
 void splashTextWithSets(const char* text, uint32_t color) {
   pixels.clear();
-  uint32_t cBlue = pixels.Color(0, 110, 160);
+  uint32_t cBlue = pixels.Color(0, 0, 255);
   uint32_t cRed  = pixels.Color(255, 0, 0);
   drawGamesAndSets(0, team1Sets, 0, team2Sets, false, 1.0f, cBlue, cRed);
   int len = strlen(text);
-
-  uint8_t r = (uint8_t)((color >> 16) & 0xFF);
-  uint8_t g = (uint8_t)((color >> 8)  & 0xFF);
-  uint8_t b = (uint8_t)(color & 0xFF);
-  int sum = r + g + b;
-  if (sum > 270) {
-    float scale = 270.0f / (float)sum;
-    r = (uint8_t)(r * scale);
-    g = (uint8_t)(g * scale);
-    b = (uint8_t)(b * scale);
-    color = pixels.Color(r, g, b);
-  }
 
   for (int i = 0; i < NUM_DIGITS; i++) {
     char c = (i < len) ? text[i] : ' ';
@@ -1139,9 +1154,9 @@ void drawMatchSettingsDisplay() {
   char r1 = cfgGoldenPoint ? 'G' : 'A';
   char r2 = cfgGoldenPoint ? 'P' : 'd';
 
-  // Format colors: Ice Blue for sets/games, Gold for GP, Amber/Orange for Ad
-  uint32_t cFormat = pixels.Color(0, 140, 210);
-  uint32_t cRule   = cfgGoldenPoint ? pixels.Color(240, 180, 0) : pixels.Color(255, 90, 0);
+  // Format colors: Blue for sets/games, Pure Yellow for GP, Amber/Orange for Ad
+  uint32_t cFormat = pixels.Color(0, 0, 255);
+  uint32_t cRule   = cfgGoldenPoint ? pixels.Color(255, 255, 0) : pixels.Color(255, 90, 0);
 
   drawChar(0, sChar, cFormat);
   drawChar(1, gChar, cFormat);
@@ -1151,15 +1166,15 @@ void drawMatchSettingsDisplay() {
   // If 24-LED Games & Sets module is present (layout 0), illuminate target thresholds
   if (cfgLedLayout == 0) {
     int base = getGamesSetsBaseLed();
-    uint32_t leftColColor  = !currentCourtSwapped ? pixels.Color(0, 80, 140) : pixels.Color(140, 0, 0);
-    uint32_t rightColColor = !currentCourtSwapped ? pixels.Color(140, 0, 0) : pixels.Color(0, 80, 140);
+    uint32_t leftColColor  = !currentCourtSwapped ? pixels.Color(0, 0, 140) : pixels.Color(140, 0, 0);
+    uint32_t rightColColor = !currentCourtSwapped ? pixels.Color(140, 0, 0) : pixels.Color(0, 0, 140);
     // Target games indicator on both sides
     for (int g = 0; g < cfgGamesPerSet && g < 9; g++) {
       pixels.setPixelColor(base + g, leftColColor);      // Left column
       pixels.setPixelColor(base + 23 - g, rightColColor); // Right column
     }
-    // Target sets indicator (Gold)
-    uint32_t cSet = pixels.Color(240, 180, 0);
+    // Target sets indicator (Yellow)
+    uint32_t cSet = pixels.Color(255, 255, 0);
     if (cfgSetsToWin >= 1) {
       pixels.setPixelColor(base + 10, cSet); // Left S1
       pixels.setPixelColor(base + 13, cSet); // Right S1
@@ -1182,7 +1197,7 @@ void showMatchSettingsSplash(uint32_t durationMs) {
 
 void renderMatchSetScores() {
   pixels.clear();
-  uint32_t cBlue = pixels.Color(0, 110, 160); // Current-balanced Cyan (sum=270, matches Red 255)
+  uint32_t cBlue = pixels.Color(0, 0, 255);
   uint32_t cRed  = pixels.Color(255, 0, 0);
 
   int leftS1, rightS1;
@@ -1233,7 +1248,7 @@ void renderPadelScoreboard() {
   }
   if (matchWon) {
     if (matchWonPhase == MATCH_PHASE_SPEL) {
-      uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
+      uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 0, 255) : pixels.Color(255, 0, 0);
       splashTextWithSets("SPEL", winColor); // Show SPEL on digits + sets on LEDs
       return;
     } else if (matchWonPhase == MATCH_PHASE_SET_SCORES) {
@@ -1857,7 +1872,8 @@ void addPadelPoint(int team) {
       tiebreakPoints2 = 0;
       tbFirstServer = (currentServer == 1) ? 2 : 1;
       currentServer = tbFirstServer;
-      triggerTiebreakIntroAnimation = true; // Show tb indicator once at start
+      triggerTiebreakIntroAnimation = true; // Show tb indicator briefly at start
+      tiebreakIntroStartTime = millis();
       betweenGames = true;
       betweenSets = false;
       triggerGameWonAnimation = true;
@@ -1918,7 +1934,9 @@ void addPadelPoint(int team) {
           inTiebreak = true;
           tiebreakPoints1 = 0;
           tiebreakPoints2 = 0;
-          triggerTiebreakIntroAnimation = true; // Show Stb indicator once at start
+          tbFirstServer = currentServer;
+          triggerTiebreakIntroAnimation = true; // Show Stb indicator briefly at start
+          tiebreakIntroStartTime = millis();
           Serial.println("[PADEL] 🔥 1-1 in sets reached -> ENTERING DECIDING SUPER TIEBREAK (10 pts)!");
         }
       }
@@ -1982,7 +2000,7 @@ void notifyWatchScore() {
   } else {
     snprintf(buf, sizeof(buf), "%c%c%c%c,1,%d,%d,%d,%d,%d,%d",
              t2T, t2O, t1T, t1O,
-             team2Games, team1Games, team2Sets, team1Sets, tbMode, (effectiveServer == 1 ? 2 : 1));
+             team2Games, team1Games, team2Sets, team1Sets, tbMode, effectiveServer);
   }
   pWatchCharacteristic->setValue((uint8_t*)buf, strlen(buf));
   pWatchCharacteristic->notify();
@@ -3074,7 +3092,8 @@ void setup() {
   cfgGamesPerSet   = cfgPrefs.getInt("games_per_set", 6);
   cfgSetsToWin     = cfgPrefs.getInt("sets_to_win", 2);
   cfgTiebreak      = cfgPrefs.getBool("tiebreak", true);
-  cfgBrightness    = cfgPrefs.getUChar("brightness", 180);
+  cfgBrightness    = cfgPrefs.getUChar("brightness", 88);
+  if (cfgBrightness > 125) cfgBrightness = 88;
   cfgIdleTimeoutMs = cfgPrefs.getULong("idle_timeout", 5 * 60 * 1000);
   cfgLedLayout     = cfgPrefs.getUChar("led_layout", 0);
   cfgClockR        = cfgPrefs.getUChar("clock_r", 0); // Default Pure Green (#00FF00)
@@ -3098,7 +3117,7 @@ void setup() {
   initClockRtc();
 
   // Brief startup splash (safe now that BLE stack is initialized)
-  splashText("CLOC", pixels.Color(0, 110, 160));
+  splashText("CLOC", pixels.Color(0, 0, 255));
   delay(500);
 
   courtSideInverted = false;
@@ -3303,7 +3322,7 @@ void loop() {
   if (triggerGameWonAnimation) {
     triggerGameWonAnimation = false;
     lastActivityTime = millis();
-    uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
+    uint32_t winColor = (winningTeam == 1) ? pixels.Color(0, 0, 255) : pixels.Color(255, 0, 0);
     Serial.printf("[PADEL] ★ GAME WON by Team %d! Current Games: %d - %d (Sets: %d - %d)\n",
                   winningTeam, team1Games, team2Games, team1Sets, team2Sets);
 
@@ -3350,7 +3369,7 @@ void loop() {
   if (triggerSetWonAnimation) {
     triggerSetWonAnimation = false;
     lastActivityTime = millis();
-    uint32_t setWinColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
+    uint32_t setWinColor = (winningTeam == 1) ? pixels.Color(0, 0, 255) : pixels.Color(255, 0, 0);
     Serial.printf("[PADEL] ★★★ SET WON by Team %d! Sets: %d - %d\n", winningTeam, team1Sets, team2Sets);
 
     bool flashLeftSide = (!currentCourtSwapped && winningTeam == 1) || (currentCourtSwapped && winningTeam == 2);
@@ -3394,7 +3413,7 @@ void loop() {
     lastActivityTime = millis();
     matchWonPhase = MATCH_PHASE_SPEL;
     matchWonStartTime = millis();
-    uint32_t champColor = (winningTeam == 1) ? pixels.Color(0, 110, 160) : pixels.Color(255, 0, 0);
+    uint32_t champColor = (winningTeam == 1) ? pixels.Color(0, 0, 255) : pixels.Color(255, 0, 0);
     Serial.printf("[PADEL] 🏆🏆🏆 MATCH WON by Team %d! Final Sets: %d - %d\n",
                   winningTeam, team1Sets, team2Sets);
     Serial.printf("[PADEL] Final Set 1: %d-%d | Set 2: %d-%d (Total Sets: %d)\n",
@@ -3433,6 +3452,12 @@ void loop() {
         }
       }
     }
+  }
+
+  // Auto-dismiss tiebreak splash intro after 1200ms so 0-0 score & serve indicator show up
+  if (triggerTiebreakIntroAnimation && (millis() - tiebreakIntroStartTime >= 1200)) {
+    triggerTiebreakIntroAnimation = false;
+    scoreNeedsUpdate = true;
   }
 
   if (scoreNeedsUpdate && currentMode == MODE_SCOREBOARD) {

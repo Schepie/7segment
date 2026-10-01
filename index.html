@@ -2946,16 +2946,16 @@
                     <div class="section-header">
                         <span>☀️ LED Brightness</span>
                         <span style="font-family: 'JetBrains Mono'; color: var(--accent-gold);"
-                            id="brightnessValBadge">70% (180)</span>
+                            id="brightnessValBadge">70%</span>
                     </div>
 
                     <div class="slider-wrap">
-                        <input type="range" id="sliderBrightness" min="20" max="255" value="180" step="5">
+                        <input type="range" id="sliderBrightness" min="10" max="100" value="70" step="5">
                         <div class="pills-row">
-                            <button type="button" class="pill-select" data-brt="255">☀️ 100%</button>
-                            <button type="button" class="pill-select active" data-brt="180">🏸 70%</button>
-                            <button type="button" class="pill-select" data-brt="75">🌙 30%</button>
-                            <button type="button" class="pill-select" data-brt="35">🔋 15%</button>
+                            <button type="button" class="pill-select" data-pct="100">☀️ 100%</button>
+                            <button type="button" class="pill-select active" data-pct="70">🏸 70%</button>
+                            <button type="button" class="pill-select" data-pct="30">🌙 30%</button>
+                            <button type="button" class="pill-select" data-pct="15">🔋 15%</button>
                         </div>
                     </div>
 
@@ -3237,7 +3237,7 @@
             sets: 2,
             games: 6,
             tb: 1,
-            brt: 180,
+            brt: 88,
             idle: 300000,
             layout: 0, // Fixed to 136 LEDs (Full padel scoreboard)
             clockColor: localStorage.getItem('padel_clock_color') || '#00FF00'
@@ -3403,9 +3403,18 @@
         updatePhoneClock();
 
         // -------------------------------------------------------------
-        // Bluetooth Connection Management
+        // Bluetooth Connection Management & Simulator Bridge
         // -------------------------------------------------------------
+        const isSimMode = new URLSearchParams(window.location.search).get('sim') === '1' || (window.parent && window.parent !== window);
+
         btnBleConnect.addEventListener('click', async () => {
+            if (isSimMode) {
+                log('Simulator linked to virtual display', 'suc');
+                onConnected();
+                try { window.parent.postMessage({ type: 'SIM_APP_READY' }, '*'); } catch (e) {}
+                return;
+            }
+
             if (bleDevice && bleDevice.gatt.connected) {
                 disconnectBle();
                 return;
@@ -3478,7 +3487,9 @@
             if (btnSwitchToScoreMode) btnSwitchToScoreMode.disabled = false;
 
             // Trigger config fetch
-            watchChar.readValue().catch(() => { });
+            if (watchChar && watchChar.readValue) {
+                watchChar.readValue().catch(() => { });
+            }
         }
 
         function onDisconnected() {
@@ -3561,10 +3572,13 @@
             }
 
             if (brtMatch) {
-                const brt = parseInt(brtMatch[1]);
-                appConfig.brt = brt;
-                sliderBrightness.value = brt;
-                updateBrightnessUI(brt);
+                let rawBrt = parseInt(brtMatch[1]);
+                if (rawBrt > 125) rawBrt = Math.round(rawBrt / 2);
+                rawBrt = Math.max(10, Math.min(125, rawBrt));
+                appConfig.brt = rawBrt;
+                const pct = Math.max(10, Math.min(100, Math.round((rawBrt / 125) * 100)));
+                sliderBrightness.value = pct;
+                updateBrightnessUI(pct, rawBrt);
             }
 
             if (colMatch) {
@@ -3705,15 +3719,30 @@
             if (sbServeBallR) sbServeBallR.style.display = !isLeftServing ? 'inline' : 'none';
             if (serveSideName) {
                 const srvName = isLeftServing ? (boardState.isSwapped ? 'Guests' : 'Home') : (boardState.isSwapped ? 'Home' : 'Guests');
-                serveSideName.textContent = srvName;
+                if (boardState.inTb) {
+                    const p1 = parseInt(boardState.t1Point.trim()) || 0;
+                    const p2 = parseInt(boardState.t2Point.trim()) || 0;
+                    const tot = p1 + p2;
+                    const courtSide = (tot % 2 === 0) ? 'Rechts' : 'Links';
+                    const serveCnt = (tot === 0) ? '1x' : `${(((tot - 1) % 2) + 1)}/2`;
+                    serveSideName.textContent = `${srvName} • ${serveCnt} ${courtSide}`;
+                } else {
+                    serveSideName.textContent = srvName;
+                }
             }
 
-            if (boardState.tbIntro) {
+            if (boardState.inTb || boardState.tbIntro) {
                 const isSuperTb = (boardState.tbMode === 2) || (appConfig.tb === 1 && appConfig.sets === 2 && boardState.t1Sets === 1 && boardState.t2Sets === 1);
                 tbBadge.textContent = isSuperTb ? 'Stb' : 'tb';
                 tbBadge.style.display = 'inline-flex';
                 if (sbTbIndicator) {
-                    sbTbIndicator.textContent = isSuperTb ? 'SUPER TIEBREAK' : 'TIEBREAK';
+                    const p1 = parseInt(boardState.t1Point.trim()) || 0;
+                    const p2 = parseInt(boardState.t2Point.trim()) || 0;
+                    const tot = p1 + p2;
+                    const courtSide = (tot % 2 === 0) ? 'Rechts' : 'Links';
+                    const serveCnt = (tot === 0) ? '1x' : `${(((tot - 1) % 2) + 1)}/2`;
+                    const srvName = isLeftServing ? (boardState.isSwapped ? 'Guests' : 'Home') : (boardState.isSwapped ? 'Home' : 'Guests');
+                    sbTbIndicator.textContent = `${isSuperTb ? 'SUPER TIEBREAK' : 'TIEBREAK'} • Opslag: ${srvName} (${serveCnt} ${courtSide})`;
                     sbTbIndicator.style.display = 'inline-flex';
                 }
             } else {
@@ -3736,6 +3765,13 @@
         }
 
         async function sendBleText(payload) {
+            if (isSimMode) {
+                log(`SIM TX: ${payload}`, 'pri');
+                try {
+                    window.parent.postMessage({ type: 'SCOREBOARD_CMD', cmd: payload }, '*');
+                } catch (e) { }
+                return true;
+            }
             if (!watchChar) {
                 log('Cannot send: not connected', 'err');
                 return false;
@@ -3774,6 +3810,42 @@
                     return false;
                 }
             });
+        }
+
+        // Simulator Message Bridge (When embedded in voordelen.html)
+        if (isSimMode) {
+            window.addEventListener('message', (event) => {
+                if (!event.data) return;
+                if (event.data.type === 'SCOREBOARD_RX' && typeof event.data.text === 'string') {
+                    log(`SIM RX: ${event.data.text}`);
+                    if (event.data.text.startsWith('CFG,')) {
+                        parseConfigString(event.data.text);
+                    } else if (event.data.text.startsWith('CTR,')) {
+                        parseCounterString(event.data.text);
+                    } else {
+                        parseScoreString(event.data.text);
+                    }
+                } else if (event.data.type === 'SET_THEME' && event.data.theme) {
+                    applyTheme(event.data.theme);
+                }
+            });
+
+            // Initialize simulated connection
+            setTimeout(() => {
+                watchChar = {
+                    service: { device: { gatt: { connected: true } } },
+                    writeValueWithResponse: async () => {},
+                    writeValue: async () => {},
+                    writeValueWithoutResponse: async () => {},
+                    readValue: async () => new DataView(new ArrayBuffer(0)),
+                    startNotifications: async () => {},
+                    addEventListener: () => {}
+                };
+                onConnected();
+                try {
+                    window.parent.postMessage({ type: 'SIM_APP_READY' }, '*');
+                } catch (e) { }
+            }, 300);
         }
 
         // -------------------------------------------------------------
@@ -3826,26 +3898,32 @@
         });
 
         // -------------------------------------------------------------
-        // Display Brightness Controls
+        // Display Brightness Controls (Rescaled to safe 0-50% hardware range <= 125)
         // -------------------------------------------------------------
-        function updateBrightnessUI(val) {
-            const pct = Math.round((val / 255) * 100);
-            brightnessValBadge.textContent = `${pct}% (${val})`;
+        const MAX_SAFE_HARDWARE_BRT = 125; // 0-50% hardware scale (<128) eliminates Bit 7 glitches
+
+        function updateBrightnessUI(pct, rawVal = null) {
+            pct = Math.max(10, Math.min(100, parseInt(pct) || 70));
+            if (rawVal === null) {
+                rawVal = Math.round((pct / 100) * MAX_SAFE_HARDWARE_BRT);
+            }
+            brightnessValBadge.textContent = `${pct}%`;
 
             document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
-                const b = parseInt(btn.dataset.brt);
-                if (!isNaN(b)) {
-                    btn.classList.toggle('active', Math.abs(b - val) < 15);
+                const p = parseInt(btn.dataset.pct || btn.dataset.brt);
+                if (!isNaN(p)) {
+                    btn.classList.toggle('active', Math.abs(p - pct) < 8);
                 }
             });
         }
 
         let brtDebounceTimer = null;
-        function setBrightness(val, immediate = false) {
-            val = Math.max(10, Math.min(255, parseInt(val) || 180));
-            appConfig.brt = val;
-            sliderBrightness.value = val;
-            updateBrightnessUI(val);
+        function setBrightnessPct(pct, immediate = false) {
+            pct = Math.max(10, Math.min(100, parseInt(pct) || 70));
+            const rawVal = Math.max(10, Math.min(MAX_SAFE_HARDWARE_BRT, Math.round((pct / 100) * MAX_SAFE_HARDWARE_BRT)));
+            appConfig.brt = rawVal;
+            sliderBrightness.value = pct;
+            updateBrightnessUI(pct, rawVal);
 
             if (brtDebounceTimer) {
                 clearTimeout(brtDebounceTimer);
@@ -3854,8 +3932,8 @@
 
             const transmit = () => {
                 if (!watchChar) return;
-                // Send CFG,BRT=... for immediate compatibility with both currently installed and new firmware
-                sendBleText(`CFG,BRT=${val}`);
+                // Transmit scaled hardware brightness value (0-125)
+                sendBleText(`CFG,BRT=${rawVal}`);
             };
 
             if (immediate) {
@@ -3865,19 +3943,27 @@
             }
         }
 
+        function setBrightness(val, immediate = false) {
+            let pct = parseInt(val) || 70;
+            if (pct > 100) {
+                pct = Math.round((pct / 255) * 100);
+            }
+            setBrightnessPct(pct, immediate);
+        }
+
         sliderBrightness.addEventListener('input', (e) => {
-            setBrightness(e.target.value, false);
+            setBrightnessPct(e.target.value, false);
         });
 
         sliderBrightness.addEventListener('change', (e) => {
-            setBrightness(e.target.value, true);
+            setBrightnessPct(e.target.value, true);
         });
 
         document.querySelectorAll('#paneDisplay .pill-select').forEach(btn => {
-            const brt = parseInt(btn.dataset.brt);
-            if (!isNaN(brt)) {
+            const pct = parseInt(btn.dataset.pct || btn.dataset.brt);
+            if (!isNaN(pct)) {
                 btn.addEventListener('click', () => {
-                    setBrightness(brt, true);
+                    setBrightnessPct(pct, true);
                 });
             }
         });
