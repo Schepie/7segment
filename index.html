@@ -4380,7 +4380,7 @@
         function autoSaveBleRules() {
             clearTimeout(autoSaveRulesTimer);
             autoSaveRulesTimer = setTimeout(async () => {
-                if (!watchChar) return;
+                if (!watchChar && !isSimMode) return;
                 const colStr = (appConfig.clockColor || '#00FF00').toUpperCase();
                 const rulesPayload = `CFG,GP=${appConfig.gp},SETS=${appConfig.sets},GAMES=${appConfig.games},TB=${appConfig.tb},BRT=${appConfig.brt},IDLE=${appConfig.idle},COL=${colStr},SRV_IND=${appConfig.srvInd}`;
                 const ok = await sendBleText(rulesPayload);

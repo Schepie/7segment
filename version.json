@@ -1,6 +1,5 @@
 {
-  "buildTime": "2026-10-01T14:31:00Z",
-  "notes": "Tiebreak weergave update (tb blijft op display tot knopdruk, toont 0/0 met opslagindicatie) en configureerbare opslagindicator modi (Standaard onder 0, Speler onder/boven 0, Speler R/L, Uit).",
-  "version": "1.8.3"
+  "buildTime": "2026-10-01T15:02:00Z",
+  "notes": "Volledige wedstrijdregels simulator in voordelen.html: interactieve configuratie en simulatie van Golden Point (Punto de Oro), Tiebreak, Super Tiebreak (3e set), aantal sets (1 of 2), games per set (6 of 9) en tweewegs-synchronisatie met de mobiele app.",
+  "version": "1.8.4"
 }
-
