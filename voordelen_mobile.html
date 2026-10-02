@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="nl" data-theme="dark">
+<html lang="nl" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -7,7 +7,7 @@
     <meta name="description" content="Mobiele app variant van de voordelen en interactieve simulator voor het 7-Segment Padel Scorebord.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#080c14">
+    <meta name="theme-color" content="#f2f2f7">
 
     <!-- Favicon & Icons -->
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
@@ -22,7 +22,7 @@
         (function() {
             try {
                 const p = new URLSearchParams(window.location.search).get('theme');
-                const t = p || localStorage.getItem('padelTheme') || localStorage.getItem('appTheme') || 'dark';
+                const t = p || localStorage.getItem('padelTheme') || localStorage.getItem('appTheme') || 'light';
                 document.documentElement.setAttribute('data-theme', t);
                 const meta = document.querySelector('meta[name="theme-color"]');
                 if (meta) meta.setAttribute('content', t === 'dark' ? '#080c14' : '#f2f2f7');
@@ -1152,8 +1152,8 @@
                 <div class="nav-logo-badge">7</div>
                 <div class="nav-title-text">PadelScore Voordelen</div>
             </div>
-            <button type="button" class="btn-icon" id="btnThemeToggle" title="Thema wisselen">
-                <span id="themeIcon">☀️</span>
+            <button type="button" class="btn-icon" id="btnThemeToggle" title="Thema wisselen" aria-label="Thema wisselen">
+                <span id="themeIcon">🌙</span>
             </button>
         </div>
     </header>
@@ -2586,22 +2586,26 @@
 
         function applyTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
-            try { localStorage.setItem('padelTheme', theme); } catch(e) {}
+            try { 
+                localStorage.setItem('padelTheme', theme); 
+                localStorage.setItem('appTheme', theme);
+            } catch(e) {}
             if (themeIcon) themeIcon.textContent = (theme === 'dark') ? '☀️' : '🌙';
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.setAttribute('content', theme === 'dark' ? '#080c14' : '#f2f2f7');
+            if (btnThemeToggle) btnThemeToggle.setAttribute('title', theme === 'dark' ? 'Schakel naar licht thema' : 'Schakel naar donker thema');
         }
 
         if (btnThemeToggle) {
             btnThemeToggle.addEventListener('click', () => {
-                const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
                 applyTheme(current === 'dark' ? 'light' : 'dark');
             });
         }
 
         // Init
-        const initTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-        if (themeIcon) themeIcon.textContent = (initTheme === 'dark') ? '☀️' : '🌙';
+        const initTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        applyTheme(initTheme);
         resetMatch();
     </script>
 </body>

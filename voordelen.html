@@ -24,7 +24,9 @@
     <script>
         (function() {
             try {
-                const savedTheme = localStorage.getItem('padelTheme') || 'light';
+                const urlParams = new URLSearchParams(window.location.search);
+                const themeParam = urlParams.get('theme');
+                const savedTheme = themeParam || localStorage.getItem('padelTheme') || localStorage.getItem('appTheme') || 'light';
                 document.documentElement.setAttribute('data-theme', savedTheme);
             } catch(e) {}
         })();
@@ -2146,10 +2148,23 @@
         /* ── RESPONSIVE TWEAKS ── */
         @media (max-width: 768px) {
             .site-nav {
-                padding: 12px 16px;
+                padding: 10px 16px;
             }
             .nav-links {
                 display: none;
+            }
+            .nav-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .btn-theme-toggle {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            .btn-nav-primary {
+                padding: 6px 12px;
+                font-size: 12px;
             }
             .board-display-grid {
                 grid-template-columns: 1fr;
@@ -2172,6 +2187,23 @@
             .sim-phone-chassis,
             .sim-remote-widget-card {
                 max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .brand-tag {
+                display: none;
+            }
+            #themeLabel {
+                display: none;
+            }
+            .btn-theme-toggle {
+                padding: 6px 9px;
+                font-size: 15px;
+            }
+            .btn-nav-primary {
+                padding: 6px 10px;
+                font-size: 11px;
             }
         }
     </style>
@@ -2237,6 +2269,16 @@
 
             <a href="#vergelijking"><span>📊</span> Vergelijking</a>
         </nav>
+
+        <div class="nav-actions">
+            <button type="button" class="btn-theme-toggle" id="btnThemeToggle" title="Thema wisselen" aria-label="Thema wisselen">
+                <span id="themeIcon">🌙</span>
+                <span id="themeLabel">Donker</span>
+            </button>
+            <a href="index.html" class="btn-nav-primary" title="Naar Scorebord Controller">
+                <span>📱</span> Naar App
+            </a>
+        </div>
     </header>
 
     <!-- HERO SECTION -->
@@ -4576,7 +4618,7 @@
             if (event.data.type === 'SIM_APP_READY') {
                 sendConfigToApp();
                 sendScoreToApp();
-                const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
                 const iframe = document.getElementById('simAppFrame');
                 if (iframe && iframe.contentWindow) {
                     try {
@@ -4676,14 +4718,19 @@
 
         function applyTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
-            try { localStorage.setItem('padelTheme', theme); } catch(e) {}
+            try { 
+                localStorage.setItem('padelTheme', theme); 
+                localStorage.setItem('appTheme', theme);
+            } catch(e) {}
             if (themeIcon && themeLabel) {
                 if (theme === 'light') {
                     themeIcon.textContent = '🌙';
                     themeLabel.textContent = 'Donker';
+                    if (btnThemeToggle) btnThemeToggle.setAttribute('title', 'Schakel naar donker thema');
                 } else {
                     themeIcon.textContent = '☀️';
                     themeLabel.textContent = 'Licht';
+                    if (btnThemeToggle) btnThemeToggle.setAttribute('title', 'Schakel naar licht thema');
                 }
             }
             const iframe = document.getElementById('simAppFrame');
@@ -4696,13 +4743,13 @@
 
         if (btnThemeToggle) {
             btnThemeToggle.addEventListener('click', () => {
-                const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
                 const next = current === 'light' ? 'dark' : 'light';
                 applyTheme(next);
             });
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-            applyTheme(currentTheme);
         }
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        applyTheme(currentTheme);
 
         // -------------------------------------------------------------
         // Dropdown Menu: Voordelen
