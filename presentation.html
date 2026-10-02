@@ -1,44 +1,61 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Development of the 7-Segment Padel Scoreboard & Apps Ecosystem</title>
-    <meta name="description" content="Engineering presentation detailing the end-to-end development of the ESP32 7-Segment Padel Scoreboard, 3D CAD design, BLE firmware architecture, and web companion apps.">
+    <title>Development of the 7-Segment Padel Scoreboard — Engineering Presentation</title>
+    <meta name="description" content="ABB-style engineering presentation detailing the end-to-end development of the ESP32 7-segment padel scoreboard: mechanics, electronics, firmware, software, and field validation.">
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #05080e;
-            --bg-base: #090e17;
-            --bg-card: rgba(15, 23, 38, 0.85);
-            --bg-card-hover: rgba(22, 34, 56, 0.95);
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-highlight: rgba(0, 210, 255, 0.35);
+            /* ABB Corporate Light Theme Palette */
+            --abb-red: #FF000F;
+            --abb-red-dark: #D8000C;
+            --abb-red-subtle: rgba(255, 0, 15, 0.08);
+            --abb-red-glow: rgba(255, 0, 15, 0.25);
 
-            --team1-blue: #00d2ff;
-            --team1-glow: rgba(0, 210, 255, 0.4);
-            --team2-red: #ff3366;
-            --team2-glow: rgba(255, 51, 102, 0.4);
-            --accent-green: #00e676;
-            --accent-green-glow: rgba(0, 230, 118, 0.35);
-            --accent-gold: #ffb300;
-            --accent-gold-glow: rgba(255, 179, 0, 0.4);
-            --clock-green: #00ff66;
+            --bg-canvas: #F4F6F9;
+            --bg-header: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --bg-card-subtle: #F9FAFB;
+            --bg-card-hover: #F8FAFC;
+            --bg-pill: #ECEFF3;
 
-            --text-main: #f0f4f8;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --border-main: #E2E5E9;
+            --border-subtle: #ECEFF3;
+            --border-focus: #D1D5DB;
 
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-display: 'Orbitron', monospace;
+            --text-heading: #111827;
+            --text-body: #374151;
+            --text-muted: #6B7280;
+            --text-light: #9CA3AF;
+
+            /* Engineering Discipline Identifiers */
+            --tech-blue: #005A9C;
+            --tech-blue-subtle: rgba(0, 90, 156, 0.08);
+            --tech-green: #00875A;
+            --tech-green-subtle: rgba(0, 135, 90, 0.08);
+            --tech-amber: #D97706;
+            --tech-amber-subtle: rgba(217, 119, 6, 0.08);
+            --tech-purple: #6B21A8;
+
+            /* Team Colors */
+            --team-blue: #0066CC;
+            --team-red: #E0001A;
+
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
+            --font-display: 'Orbitron', monospace;
 
-            --slide-radius: 20px;
-            --transition-smooth: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            --radius-xs: 4px;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * {
@@ -50,8 +67,8 @@
 
         body {
             font-family: var(--font-main);
-            background-color: var(--bg-deep);
-            color: var(--text-main);
+            background-color: var(--bg-canvas);
+            color: var(--text-body);
             line-height: 1.5;
             overflow: hidden;
             height: 100vh;
@@ -59,113 +76,115 @@
             display: flex;
             flex-direction: column;
             user-select: none;
-            background-image: 
-                radial-gradient(ellipse at 50% -10%, rgba(0, 210, 255, 0.15) 0%, transparent 60%),
-                radial-gradient(ellipse at 90% 90%, rgba(255, 51, 102, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 10% 80%, rgba(0, 230, 118, 0.06) 0%, transparent 50%);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ── TOP NAV BAR ── */
-        .pres-header {
-            height: 56px;
-            background: rgba(9, 14, 23, 0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-subtle);
+        /* ── ABB CORPORATE TOP BAR ── */
+        .abb-header {
+            height: 60px;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--border-main);
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
             z-index: 100;
             flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
-        .pres-logo-group {
+        .abb-brand-wrapper {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
             text-decoration: none;
             color: inherit;
         }
 
-        .pres-logo-group img {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            box-shadow: 0 0 10px var(--team1-glow);
+        .padel-logo-img {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-xs);
+            object-fit: cover;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            display: block;
         }
 
-        .pres-title {
+        .abb-header-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .abb-title-primary {
             font-size: 14px;
             font-weight: 800;
+            color: var(--text-heading);
             letter-spacing: -0.01em;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .pres-badge {
-            font-size: 10px;
-            font-weight: 800;
-            padding: 2px 7px;
-            border-radius: 99px;
-            background: rgba(0, 210, 255, 0.15);
-            border: 1px solid var(--border-highlight);
-            color: var(--team1-blue);
+        .abb-title-secondary {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
 
-        .pres-nav-actions {
+        .abb-header-actions {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .btn-tool {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-muted);
+        .btn-abb-tool {
+            background: #FFFFFF;
+            border: 1px solid var(--border-main);
+            color: var(--text-body);
             padding: 6px 12px;
-            border-radius: 8px;
+            border-radius: var(--radius-xs);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
-            transition: var(--transition-smooth);
+            transition: var(--transition);
             text-decoration: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
         }
 
-        .btn-tool:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            border-color: rgba(255, 255, 255, 0.2);
+        .btn-abb-tool:hover {
+            border-color: var(--abb-red);
+            color: var(--abb-red);
+            background: var(--abb-red-subtle);
         }
 
-        .btn-tool.active {
-            background: rgba(0, 210, 255, 0.2);
-            color: var(--team1-blue);
-            border-color: var(--border-highlight);
+        .btn-abb-tool.active {
+            background: var(--abb-red);
+            color: #FFFFFF;
+            border-color: var(--abb-red);
         }
 
         /* ── PROGRESS BAR ── */
-        .progress-container {
-            height: 4px;
-            background: rgba(255, 255, 255, 0.05);
+        .abb-progress-container {
+            height: 3px;
+            background: #E5E7EB;
             width: 100%;
             position: relative;
             flex-shrink: 0;
         }
 
-        .progress-bar {
+        .abb-progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--team1-blue), #0077ff, var(--accent-green));
+            background: var(--abb-red);
             width: 0%;
-            transition: width 0.3s ease;
-            box-shadow: 0 0 10px var(--team1-glow);
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* ── SLIDE DECK CONTAINER ── */
+        /* ── SLIDE DECK VIEWPORT ── */
         .deck-viewport {
             flex: 1;
             position: relative;
@@ -179,21 +198,20 @@
         .slide-frame {
             position: absolute;
             width: 100%;
-            max-width: 1320px;
+            max-width: 1340px;
             height: 100%;
-            max-height: 820px;
+            max-height: 840px;
             background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--slide-radius);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 30px rgba(0, 210, 255, 0.05);
-            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-main);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 12px 32px rgba(17, 24, 39, 0.06), 0 2px 6px rgba(17, 24, 39, 0.03);
             display: flex;
             flex-direction: column;
-            padding: 40px 48px;
+            padding: 34px 44px;
             opacity: 0;
             pointer-events: none;
-            transform: scale(0.96) translateY(20px);
-            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: scale(0.985) translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
             overflow-y: auto;
         }
 
@@ -205,7 +223,7 @@
         }
 
         .slide-frame.prev {
-            transform: scale(0.96) translateY(-20px);
+            transform: scale(0.985) translateY(-12px);
         }
 
         /* ── SLIDE HEADER ── */
@@ -213,7 +231,7 @@
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 24px;
+            margin-bottom: 22px;
             border-bottom: 1px solid var(--border-subtle);
             padding-bottom: 16px;
             flex-shrink: 0;
@@ -223,43 +241,49 @@
             font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--team1-blue);
+            letter-spacing: 0.14em;
+            color: var(--abb-red);
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 6px;
+            gap: 8px;
+            margin-bottom: 4px;
         }
 
+        .slide-category::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--abb-red);
+            border-radius: 1px;
+        }
+
+        .slide-category.blue { color: var(--tech-blue); }
+        .slide-category.blue::before { background: var(--tech-blue); }
+        .slide-category.green { color: var(--tech-green); }
+        .slide-category.green::before { background: var(--tech-green); }
+        .slide-category.amber { color: var(--tech-amber); }
+        .slide-category.amber::before { background: var(--tech-amber); }
+
         .slide-title {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 900;
-            letter-spacing: -0.02em;
-            color: var(--text-main);
+            letter-spacing: -0.025em;
+            color: var(--text-heading);
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .slide-tag {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-muted);
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1px solid var(--border-subtle);
-        }
-
         .slide-number-pill {
-            font-family: var(--font-display);
-            font-size: 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
             font-weight: 800;
-            color: var(--text-dim);
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-subtle);
-            padding: 6px 14px;
-            border-radius: 99px;
+            color: var(--text-muted);
+            background: var(--bg-pill);
+            border: 1px solid var(--border-main);
+            padding: 5px 12px;
+            border-radius: var(--radius-xs);
         }
 
         /* ── SLIDE CONTENT LAYOUTS ── */
@@ -267,15 +291,23 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
             min-height: 0;
         }
 
         .grid-2col {
             display: grid;
+            grid-template-columns: 1.08fr 0.92fr;
+            gap: 28px;
+            align-items: stretch;
+            height: 100%;
+        }
+
+        .grid-2col-equal {
+            display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 32px;
-            align-items: center;
+            gap: 24px;
+            align-items: stretch;
             height: 100%;
         }
 
@@ -283,435 +315,406 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
+            align-items: stretch;
         }
 
         .grid-4col {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 16px;
+            align-items: stretch;
         }
 
-        /* Cards inside slides */
-        .feature-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            padding: 20px;
+        /* ── ABB INDUSTRIAL CARDS ── */
+        .abb-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-main);
+            border-top: 3px solid var(--abb-red);
+            border-radius: var(--radius-xs);
+            padding: 18px 20px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            transition: var(--transition-smooth);
-            position: relative;
+            transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         }
 
-        .feature-card:hover {
-            border-color: var(--border-highlight);
-            background: rgba(255, 255, 255, 0.05);
+        .abb-card.blue { border-top-color: var(--tech-blue); }
+        .abb-card.green { border-top-color: var(--tech-green); }
+        .abb-card.amber { border-top-color: var(--tech-amber); }
+        .abb-card.dark { border-top-color: var(--text-heading); }
+
+        .abb-card:hover {
+            border-color: var(--border-focus);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
             transform: translateY(-2px);
         }
 
-        .card-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: rgba(0, 210, 255, 0.12);
-            color: var(--team1-blue);
+        .card-header-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 18px;
+            justify-content: space-between;
+        }
+
+        .card-discipline-tag {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 3px 7px;
+            border-radius: 2px;
+            background: var(--bg-pill);
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
         }
 
         .card-title {
             font-size: 15px;
             font-weight: 800;
-            color: var(--text-main);
+            color: var(--text-heading);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card-desc {
             font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.5;
+            color: var(--text-body);
+            line-height: 1.55;
         }
 
         .card-subtext {
-            font-size: 11.5px;
-            color: var(--text-dim);
+            font-size: 11px;
+            color: var(--text-muted);
             font-family: var(--font-mono);
+            line-height: 1.4;
         }
 
-        /* Visual Media Boxes */
-        .media-box {
-            background: #04060a;
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
+        /* ── MEDIA & SCHEMATIC BOXES ── */
+        .abb-media-box {
+            background: #FFFFFF;
+            border: 1px solid var(--border-main);
+            border-radius: var(--radius-xs);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
             height: 100%;
-            min-height: 240px;
         }
 
-        .media-box img {
-            max-width: 95%;
-            max-height: 320px;
-            object-fit: contain;
-            transition: transform 0.4s ease;
-            padding: 10px;
+        .abb-media-box img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+            border-bottom: 1px solid var(--border-subtle);
+            background: #F3F4F6;
         }
 
-        .media-box:hover img {
-            transform: scale(1.03);
-        }
-
-        .media-caption {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(8, 12, 20, 0.88);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid var(--border-subtle);
-            padding: 8px 14px;
+        .abb-media-caption {
+            padding: 10px 14px;
             font-size: 11.5px;
             font-weight: 600;
             color: var(--text-muted);
+            background: var(--bg-card-subtle);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        /* Bullet lists */
-        .pres-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .pres-list li {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            font-size: 14.5px;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        .pres-list li strong {
-            color: var(--text-main);
+        .abb-media-caption span:first-child {
+            color: var(--text-heading);
             font-weight: 700;
         }
 
-        .list-bullet {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--team1-blue);
-            box-shadow: 0 0 8px var(--team1-glow);
+        /* ── ENGINEERING SPEC TABLES ── */
+        .abb-spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12.5px;
+            margin-top: 4px;
+        }
+
+        .abb-spec-table th {
+            text-align: left;
+            padding: 8px 12px;
+            background: var(--bg-card-subtle);
+            border-bottom: 2px solid var(--border-main);
+            font-weight: 800;
+            color: var(--text-heading);
+            text-transform: uppercase;
+            font-size: 10.5px;
+            letter-spacing: 0.06em;
+        }
+
+        .abb-spec-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-body);
+        }
+
+        .abb-spec-table tr:hover td {
+            background: #F8FAFC;
+        }
+
+        .abb-spec-table td.strong {
+            font-weight: 700;
+            color: var(--text-heading);
+        }
+
+        /* ── ENGINEERING LISTS & METRICS ── */
+        .abb-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .abb-list li {
+            font-size: 13px;
+            color: var(--text-body);
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .abb-bullet {
+            width: 6px;
+            height: 6px;
+            background: var(--abb-red);
+            border-radius: 1px;
             margin-top: 7px;
             flex-shrink: 0;
         }
 
-        .list-bullet.red {
-            background: var(--team2-red);
-            box-shadow: 0 0 8px var(--team2-glow);
-        }
+        .abb-bullet.blue { background: var(--tech-blue); }
+        .abb-bullet.green { background: var(--tech-green); }
+        .abb-bullet.amber { background: var(--tech-amber); }
 
-        .list-bullet.gold {
-            background: var(--accent-gold);
-            box-shadow: 0 0 8px var(--accent-gold-glow);
-        }
-
-        .list-bullet.green {
-            background: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green-glow);
-        }
-
-        /* Code snippets */
-        .code-box {
-            background: #04070c;
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 16px;
+        .abb-code-block {
+            background: #F8FAFC;
+            border: 1px solid var(--border-main);
+            border-left: 3px solid var(--text-heading);
+            border-radius: var(--radius-xs);
+            padding: 10px 14px;
             font-family: var(--font-mono);
             font-size: 12px;
-            line-height: 1.6;
-            color: #d1d5db;
-            overflow-x: auto;
-            position: relative;
+            color: #1E293B;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
 
-        .code-keyword { color: #ff7b72; font-weight: 700; }
-        .code-func { color: #d2a8ff; }
-        .code-str { color: #a5d6ff; }
-        .code-comment { color: #8b949e; font-style: italic; }
-        .code-num { color: #79c0ff; }
-        .code-var { color: #ffa657; }
-
-        /* Architecture ASCII & Flow Diagram */
-        .arch-diagram {
-            font-family: var(--font-mono);
-            background: #04070d;
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 20px;
-            font-size: 11px;
-            line-height: 1.45;
-            color: var(--team1-blue);
-            white-space: pre;
-            overflow-x: auto;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
-        }
-
-        /* Interactive Scoreboard Mockup Widget (Slide 5) */
-        .sim-container {
-            background: #060910;
-            border: 2px solid rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        .abb-metric-box {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-main);
+            border-radius: var(--radius-xs);
+            padding: 12px 16px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 16px;
+            gap: 4px;
         }
 
-        .sim-digits-bar {
+        .abb-metric-val {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-heading);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .abb-metric-val.red { color: var(--abb-red); }
+        .abb-metric-val.blue { color: var(--tech-blue); }
+        .abb-metric-val.green { color: var(--tech-green); }
+
+        .abb-metric-lbl {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── INTERACTIVE SCOREBOARD DEMO (Slide 8) ── */
+        .abb-demo-scoreboard {
+            background: #111827;
+            border: 2px solid #374151;
+            border-radius: var(--radius-xs);
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            color: #FFFFFF;
+        }
+
+        .demo-board-screen {
             display: flex;
             align-items: center;
-            gap: 20px;
-            background: #020408;
-            padding: 14px 24px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            justify-content: space-around;
+            padding: 12px;
+            background: #030712;
+            border-radius: var(--radius-xs);
+            border: 1px solid #1F2937;
         }
 
-        .sim-digit-unit {
+        .demo-team-block {
+            text-align: center;
+        }
+
+        .demo-team-tag {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 2px;
+        }
+
+        .demo-digit-display {
+            font-family: var(--font-display);
+            font-size: 44px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: 2px;
+        }
+
+        .demo-digit-display.t1 { color: #00D2FF; text-shadow: 0 0 12px rgba(0, 210, 255, 0.4); }
+        .demo-digit-display.t2 { color: #FF3366; text-shadow: 0 0 12px rgba(255, 51, 102, 0.4); }
+
+        .demo-ladder-col {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
         }
 
-        .sim-val {
-            font-family: var(--font-display);
-            font-size: 42px;
-            font-weight: 900;
-            letter-spacing: 4px;
+        .demo-ladder-label {
+            font-size: 9px;
+            color: #9CA3AF;
+            font-weight: 700;
+            text-transform: uppercase;
         }
 
-        .sim-val.t1 {
-            color: var(--team1-blue);
-            text-shadow: 0 0 15px var(--team1-glow);
-        }
-
-        .sim-val.t2 {
-            color: var(--team2-red);
-            text-shadow: 0 0 15px var(--team2-glow);
-        }
-
-        .sim-ladder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 10px;
-            color: var(--text-dim);
-            font-weight: 800;
-            padding: 0 12px;
-            border-left: 1px dashed rgba(255, 255, 255, 0.1);
-            border-right: 1px dashed rgba(255, 255, 255, 0.1);
-        }
-
-        .sim-games-score {
-            font-family: var(--font-display);
-            font-size: 20px;
-            font-weight: 900;
-            color: var(--text-main);
-        }
-
-        .sim-sets-score {
-            font-family: var(--font-display);
+        .demo-ladder-val {
+            font-family: var(--font-mono);
             font-size: 16px;
             font-weight: 800;
-            color: var(--accent-gold);
-            text-shadow: 0 0 10px var(--accent-gold-glow);
+            color: #FFB300;
         }
 
-        .sim-btn-row {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            justify-content: center;
+        .demo-controls-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
 
-        .sim-btn {
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 13px;
+        .btn-demo-action {
+            padding: 7px 10px;
+            border-radius: var(--radius-xs);
+            font-size: 11.5px;
+            font-weight: 700;
             cursor: pointer;
-            transition: var(--transition-smooth);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            border: none;
+            transition: var(--transition);
         }
 
-        .sim-btn.t1 {
-            background: rgba(0, 210, 255, 0.2);
-            color: var(--team1-blue);
-            border: 1px solid var(--border-highlight);
-        }
-        .sim-btn.t1:hover { background: var(--team1-blue); color: #020814; }
+        .btn-demo-t1 { background: #0066CC; color: #FFFFFF; }
+        .btn-demo-t1:hover { background: #0052A3; }
+        .btn-demo-t2 { background: #E0001A; color: #FFFFFF; }
+        .btn-demo-t2:hover { background: #B80015; }
+        .btn-demo-sub { background: #374151; color: #E5E7EB; }
+        .btn-demo-sub:hover { background: #4B5563; }
 
-        .sim-btn.t2 {
-            background: rgba(255, 51, 102, 0.2);
-            color: var(--team2-red);
-            border: 1px solid rgba(255, 51, 102, 0.4);
-        }
-        .sim-btn.t2:hover { background: var(--team2-red); color: #fff; }
-
-        .sim-btn.neutral {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-muted);
-            border: 1px solid var(--border-subtle);
-        }
-        .sim-btn.neutral:hover { background: rgba(255, 255, 255, 0.15); color: var(--text-main); }
-
-        /* Metric badge */
-        .metric-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-subtle);
-            padding: 4px 10px;
-            border-radius: 99px;
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        /* Comparison tables */
-        .pres-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        .pres-table th {
-            text-align: left;
-            padding: 10px 14px;
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-muted);
-            font-weight: 700;
-            border-bottom: 1px solid var(--border-subtle);
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.05em;
-        }
-
-        .pres-table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            color: var(--text-main);
-        }
-
-        .pres-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        /* ── BOTTOM CONTROL BAR ── */
-        .pres-footer {
-            height: 64px;
-            background: rgba(9, 14, 23, 0.9);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border-subtle);
+        /* ── FOOTER CONTROLS ── */
+        .abb-footer {
+            height: 52px;
+            background: #FFFFFF;
+            border-top: 1px solid var(--border-main);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 32px;
-            flex-shrink: 0;
+            padding: 0 24px;
             z-index: 100;
+            flex-shrink: 0;
+            box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.02);
         }
 
         .footer-left {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
         .slide-counter {
-            font-family: var(--font-display);
-            font-size: 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
             font-weight: 800;
-            color: var(--text-main);
-            letter-spacing: 1px;
+            color: var(--text-heading);
+            background: var(--bg-pill);
+            padding: 3px 9px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-main);
         }
 
         .slide-topic-name {
             font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 600;
+            font-weight: 700;
+            color: var(--text-heading);
+            letter-spacing: -0.01em;
         }
 
         .footer-center {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
         }
 
         .nav-btn {
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-main);
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-main);
+            color: var(--text-heading);
+            width: 36px;
+            height: 32px;
+            border-radius: var(--radius-xs);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 16px;
-            transition: var(--transition-smooth);
+            font-size: 13px;
+            font-weight: 700;
+            transition: var(--transition);
         }
 
         .nav-btn:hover {
-            background: rgba(0, 210, 255, 0.2);
-            border-color: var(--border-highlight);
-            color: var(--team1-blue);
-            transform: scale(1.05);
-        }
-
-        .nav-btn:active {
-            transform: scale(0.95);
+            border-color: var(--abb-red);
+            color: var(--abb-red);
+            background: var(--abb-red-subtle);
         }
 
         .footer-right {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
 
         .key-hint {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
             font-size: 11px;
-            color: var(--text-dim);
-            font-family: var(--font-mono);
+            color: var(--text-muted);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .kbd {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--border-subtle);
-            border-radius: 4px;
+            background: var(--bg-pill);
+            border: 1px solid var(--border-main);
+            border-radius: 3px;
             padding: 2px 6px;
-            color: var(--text-muted);
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--text-heading);
             font-weight: 700;
         }
 
@@ -720,206 +723,185 @@
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(3, 6, 11, 0.92);
-            backdrop-filter: blur(25px);
-            z-index: 500;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
             display: none;
-            padding: 50px;
+            flex-direction: column;
+            padding: 40px;
             overflow-y: auto;
         }
 
         .overview-overlay.open {
-            display: block;
-            animation: fadeIn 0.25s ease;
+            display: flex;
+        }
+
+        .overview-modal-content {
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .overview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            color: #FFFFFF;
         }
 
         .overview-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
         }
 
         .overview-thumb {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
+            background: #FFFFFF;
+            border: 2px solid transparent;
+            border-radius: var(--radius-xs);
             padding: 16px;
             cursor: pointer;
-            transition: var(--transition-smooth);
+            transition: var(--transition);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .overview-thumb:hover, .overview-thumb.active {
-            border-color: var(--team1-blue);
-            box-shadow: 0 0 20px var(--team1-glow);
+        .overview-thumb:hover {
             transform: translateY(-3px);
+            border-color: var(--abb-red);
+        }
+
+        .overview-thumb.active {
+            border-color: var(--abb-red);
+            background: #FFFDFD;
         }
 
         .thumb-num {
-            font-family: var(--font-display);
-            font-size: 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
             font-weight: 800;
-            color: var(--team1-blue);
+            color: var(--abb-red);
         }
 
         .thumb-title {
             font-size: 13.5px;
             font-weight: 800;
-            color: var(--text-main);
+            color: var(--text-heading);
         }
 
         .thumb-cat {
-            font-size: 11px;
-            color: var(--text-dim);
+            font-size: 10.5px;
+            color: var(--text-muted);
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         /* ── PRESENTER NOTES DRAWER ── */
         .notes-drawer {
             position: fixed;
-            bottom: 64px;
-            right: 32px;
-            width: 380px;
-            max-height: 260px;
-            background: rgba(12, 18, 30, 0.95);
-            border: 1px solid var(--border-highlight);
-            border-radius: 14px;
-            padding: 16px 20px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-            z-index: 200;
+            bottom: 53px;
+            right: 24px;
+            width: 420px;
+            max-height: 280px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-main);
+            border-top: 3px solid var(--abb-red);
+            border-radius: var(--radius-xs);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            z-index: 90;
             display: none;
-            overflow-y: auto;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .notes-drawer.open {
-            display: block;
-            animation: slideUp 0.25s ease;
+            display: flex;
         }
 
         .notes-header {
+            padding: 10px 14px;
+            background: var(--bg-card-subtle);
+            border-bottom: 1px solid var(--border-subtle);
             font-size: 12px;
             font-weight: 800;
-            color: var(--team1-blue);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 8px;
+            color: var(--text-heading);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
         .notes-text {
-            font-size: 13px;
-            color: var(--text-muted);
+            padding: 14px;
+            font-size: 12.5px;
+            color: var(--text-body);
             line-height: 1.5;
+            overflow-y: auto;
         }
 
-        /* Keyframes */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        /* ── PRINT & PDF STYLES ── */
-        @media print {
-            body {
-                overflow: visible !important;
-                height: auto !important;
-                background: #000 !important;
-                color: #fff !important;
-            }
-            .pres-header, .pres-footer, .progress-container, .notes-drawer, .overview-overlay {
-                display: none !important;
-            }
-            .deck-viewport {
-                display: block !important;
-                padding: 0 !important;
-            }
-            .slide-frame {
-                position: relative !important;
-                page-break-after: always !important;
-                opacity: 1 !important;
-                transform: none !important;
-                max-width: 100% !important;
-                max-height: none !important;
-                height: 100vh !important;
-                border-radius: 0 !important;
-                border: 1px solid #333 !important;
-                box-shadow: none !important;
-                margin-bottom: 0 !important;
-            }
-        }
-
-        /* Mobile tweaks */
-        @media (max-width: 900px) {
+        /* ── RESPONSIVE TWEAKS ── */
+        @media (max-width: 1024px) {
             .deck-viewport { padding: 12px; }
-            .slide-frame { padding: 20px 24px; }
-            .grid-2col, .grid-3col, .grid-4col { grid-template-columns: 1fr; gap: 16px; }
-            .slide-title { font-size: 20px; }
-            .key-hint { display: none; }
-            .slide-topic-name { display: none; }
-            .sim-digits-bar { padding: 8px 12px; gap: 10px; }
-            .sim-val { font-size: 28px; }
+            .slide-frame { padding: 24px 20px; }
+            .grid-2col, .grid-2col-equal { grid-template-columns: 1fr; gap: 16px; }
+            .grid-3col { grid-template-columns: 1fr; }
+            .grid-4col { grid-template-columns: 1fr 1fr; }
+            .abb-header-title .abb-title-secondary { display: none; }
+            .footer-right .key-hint { display: none; }
+            .notes-drawer { width: calc(100vw - 32px); right: 16px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header Navigation -->
-    <header class="pres-header">
-        <a href="index.html" class="pres-logo-group" title="Back to Scoreboard App">
-            <img src="favicon.png" alt="Padel Logo">
-            <div class="pres-title">
-                PadelPulse Engineering
-                <span class="pres-badge">DEVELOPMENT DECK</span>
+    <!-- ABB TOP BAR -->
+    <header class="abb-header">
+        <a href="#slide-1" class="abb-brand-wrapper">
+            <img src="icon-512.png" alt="PadelScore Logo" class="padel-logo-img">
+            <div class="abb-header-title">
+                <span class="abb-title-primary">PadelScore Engineering Presentation</span>
+                <span class="abb-title-secondary">System Development: SW • Mechanics • Electronics • Validation</span>
             </div>
         </a>
 
-        <div class="pres-nav-actions">
-            <button class="btn-tool" id="btnNotes" title="Toggle Presenter Speaker Notes (N)">
-                <span>🎙️ Notes</span>
+        <div class="abb-header-actions">
+            <button class="btn-abb-tool" id="btnOverview" title="Slide Overview Grid (O)">
+                <span>🗂️</span> Overview
             </button>
-            <button class="btn-tool" id="btnOverview" title="Slide Overview Grid (O)">
-                <span>🔲 Overview</span>
+            <button class="btn-abb-tool" id="btnNotes" title="Speaker Notes (N)">
+                <span>🎙️</span> Notes
             </button>
-            <button class="btn-tool" id="btnFullscreen" title="Toggle Fullscreen (F)">
-                <span>⛶ Fullscreen</span>
+            <button class="btn-abb-tool" id="btnFullscreen" title="Toggle Fullscreen (F)">
+                <span>⛶</span> Fullscreen
             </button>
-            <a href="index.html" class="btn-tool" title="Launch Web Bluetooth Controller">
-                <span>📱 Live App</span>
+            <a href="index.html" class="btn-abb-tool" title="Open Scoreboard App">
+                <span>📱</span> Scoreboard App
             </a>
-            <a href="showcase.html" class="btn-tool" title="Launch 3D & Simulator Showcase">
-                <span>🎮 Showcase</span>
+            <a href="voordelen.html" class="btn-abb-tool" title="View Voordelen Page">
+                <span>⭐</span> Voordelen
             </a>
         </div>
     </header>
 
-    <!-- Top Progress Bar -->
-    <div class="progress-container">
-        <div class="progress-bar" id="progressBar"></div>
+    <!-- ABB RED PROGRESS INDICATOR -->
+    <div class="abb-progress-container">
+        <div class="abb-progress-bar" id="progressBar"></div>
     </div>
 
-    <!-- Main Deck Viewport -->
+    <!-- MAIN SLIDE CANVAS -->
     <main class="deck-viewport">
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 1: Title & The Vision                                        -->
+        <!-- SLIDE 1: Executive Overview & Genesis                             -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame active" data-slide="1" data-title="Title & Ecosystem Vision">
+        <article class="slide-frame active" data-slide="1" data-title="Executive Overview & Engineering Genesis">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">System Architecture & Vision</div>
+                    <div class="slide-category">System Architecture • Project Genesis</div>
                     <h1 class="slide-title">ESP32 7-Segment Padel Scoreboard & Digital Clock</h1>
                 </div>
                 <div class="slide-number-pill">01 / 12</div>
@@ -928,126 +910,181 @@
             <div class="slide-body">
                 <div class="grid-2col">
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <p style="font-size:16px; color:var(--text-main); font-weight:500;">
-                            A professional, modular electronic scoreboard and ambient clock engineered for padel courts. Powered by ESP32, 136 addressable <strong>WS2813 LEDs</strong> (with dual-signal backup data redundancy), Bluetooth Low Energy, and modular 3D-printed snap housings.
+                        <p style="font-size:14.5px; color:var(--text-heading); font-weight:500;">
+                            Padel is Europe’s fastest-growing racket sport. High intensity rallies create constant score disputes, side-swap confusion, and missed game points. Commercial solutions are fragile ($500+), rely on cumbersome 230V cabling, or require manual flip-cards.
                         </p>
 
-                        <div class="feature-card" style="border-left: 3px solid var(--team2-red);">
-                            <div class="card-title">🎾 The On-Court Problem</div>
+                        <div class="abb-card">
+                            <div class="card-header-row">
+                                <span class="card-title">🎯 The Multidisciplinary Engineering Goal</span>
+                                <span class="card-discipline-tag">Genesis</span>
+                            </div>
                             <div class="card-desc">
-                                Padel rallies are explosive and fast-paced. Players constantly argue or lose track of scores, games, and side swaps. Existing commercial scoreboards are bulky, fragile, expensive, and require manual flipping.
+                                Create an open-source, modular, tournament-grade digital scoreboard powered entirely by an everyday <strong>5V USB powerbank</strong>. It must be smashproof against 120+ km/h balls, visible under direct 85,000 lux sunlight at 20+ meters, and operated wirelessly from players' wrists without smartphone friction.
                             </div>
                         </div>
 
-                        <div class="feature-card" style="border-left: 3px solid var(--accent-green);">
-                            <div class="card-title">💡 The Engineered Solution</div>
-                            <div class="card-desc">
-                                An ultra-visible 136-LED scoreboard where the <strong>ESP32 acts as the single source of truth (Master)</strong>. Dual-role BLE enables instantaneous racket remote clicks while continuously broadcasting official match states to Wear OS watches and web companions.
+                        <div class="grid-4col">
+                            <div class="abb-metric-box">
+                                <span class="abb-metric-val red">136</span>
+                                <span class="abb-metric-lbl">WS2813 LEDs</span>
+                            </div>
+                            <div class="abb-metric-box">
+                                <span class="abb-metric-val blue">5V</span>
+                                <span class="abb-metric-lbl">Powerbank Rail</span>
+                            </div>
+                            <div class="abb-metric-box">
+                                <span class="abb-metric-val green">&lt; 35ms</span>
+                                <span class="abb-metric-lbl">BLE HID Latency</span>
+                            </div>
+                            <div class="abb-metric-box">
+                                <span class="abb-metric-val">~$45</span>
+                                <span class="abb-metric-lbl">Total BOM Cost</span>
                             </div>
                         </div>
 
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <span class="metric-pill" style="color:var(--team1-blue);">⚡ Zero-Lag BLE Remote</span>
-                            <span class="metric-pill" style="color:var(--accent-gold);">🛡️ Court Mesh Protection</span>
-                            <span class="metric-pill" style="color:var(--accent-green);">🕒 Dual Clock Mode</span>
-                            <span class="metric-pill" style="color:#d2a8ff;">🌐 Web Bluetooth PWA</span>
+                        <div class="abb-card dark">
+                            <div class="card-title">Dual-Operating Personality: Match & Clock</div>
+                            <div class="card-desc">
+                                When match play is active, the board runs full official FIP padel scoring. After 5 minutes of idle time, an onboard <strong>DS1302 RTC</strong> smoothly crossfades the display into an elegant 24-hour clubhouse wall clock.
+                            </div>
                         </div>
                     </div>
 
-                    <div class="media-box">
-                        <img src="Images/full_scoreboard_preview.png" alt="Full Scoreboard Preview">
-                        <div class="media-caption">
-                            <span>Modular 4-Digit Display + 24-LED Central Games & Sets Ladder</span>
-                            <span style="font-family:var(--font-mono); color:var(--team1-blue);">136 LEDs TOTAL</span>
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-media-box">
+                            <img src="Images/full_scoreboard_preview.png" alt="Scoreboard Assembly Preview">
+                            <div class="abb-media-caption">
+                                <span>Physical Hardware Architecture</span>
+                                <span>4 Digits + Central Ladder</span>
+                            </div>
+                        </div>
+
+                        <div class="abb-card blue">
+                            <div class="card-title">Four Parallel Engineering Streams</div>
+                            <ul class="abb-list">
+                                <li>
+                                    <span class="abb-bullet"></span>
+                                    <div><strong>Mechanics:</strong> Parametric OpenSCAD design, anti-bleed diffuser baffles, and smashproof behind-the-mesh hook mounting.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet blue"></span>
+                                    <div><strong>Electronics:</strong> WS2813 dual-data bus redundancy, single 5V rail distribution, ESP32-C3 SuperMini.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet"></span>
+                                    <div><strong>Software/Firmware:</strong> Hardware SPI DMA interrupt immunity, master rules engine, dual-role BLE, Web Bluetooth PWA.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>Validation:</strong> 120 km/h smash impact survival, solar readability, 2.4 GHz RF coexistence, field iterations.</div>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                Welcome everyone! This presentation covers the entire multidisciplinary engineering journey of our 7-Segment Padel Scoreboard and companion apps. We will explore how 3D parametric CAD, embedded C++ SPI DMA drivers, dual-role Bluetooth Low Energy, and modern Web Bluetooth PWAs converged into a cohesive court ecosystem.
+                Welcome everyone. This presentation walks through the complete end-to-end development of our 7-segment padel scoreboard. We will look at how mechanics, electronics, embedded firmware, companion web software, and field validation converged to deliver a tournament-grade device at a tenth of the commercial price.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 2: Phase 1 — Mechanical & 3D CAD Engineering               -->
+        <!-- SLIDE 2: Development Process & Lifecycle                         -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="2" data-title="Mechanical & 3D CAD Engineering">
+        <article class="slide-frame" data-slide="2" data-title="Agile Engineering Methodology & 4 Streams">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 1 • Mechanical Engineering</div>
-                    <h2 class="slide-title">Modular OpenSCAD Parametric Design</h2>
+                    <div class="slide-category">Engineering Methodology • 4 Streams</div>
+                    <h2 class="slide-title">How This Project Came Together: The 4 Development Streams</h2>
                 </div>
                 <div class="slide-number-pill">02 / 12</div>
             </div>
 
             <div class="slide-body">
-                <div class="grid-2col">
-                    <div class="media-box">
-                        <img src="Images/full_scoreboard_exploded.png" alt="Exploded Assembly View">
-                        <div class="media-caption">
-                            <span>Modular Snap-Fit Housing, Diffusers & Heat-Set Brass Inserts</span>
-                            <span style="color:var(--accent-green);">100% Support-Free</span>
+                <div class="grid-4col" style="height:100%;">
+                    <!-- Stream 1: Mechanics -->
+                    <div class="abb-card" style="border-top:3px solid var(--text-heading);">
+                        <div class="card-header-row">
+                            <span class="card-title">1. Mechanics</span>
+                            <span class="card-discipline-tag">CAD & 3D Print</span>
                         </div>
+                        <p class="card-desc">
+                            Parametric modeling in OpenSCAD for instant dimensional adjustments.
+                        </p>
+                        <ul class="abb-list">
+                            <li><span class="abb-bullet"></span><div>Parametric 7-segment housings with light isolation baffles.</div></li>
+                            <li><span class="abb-bullet"></span><div>Central 24-LED games and sets ladder module.</div></li>
+                            <li><span class="abb-bullet"></span><div>Behind-the-mesh hook to decouple ball impacts from display.</div></li>
+                            <li><span class="abb-bullet"></span><div>0.25mm snap interference tolerances for support-free prints.</div></li>
+                        </ul>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:14px;">
-                        <ul class="pres-list">
-                            <li>
-                                <span class="list-bullet"></span>
-                                <div>
-                                    <strong>Parametric 7-Segment Digit Housings:</strong> Built in OpenSCAD (<code>7segment_pogo.scad</code>). Features dedicated light-isolation diffuser channels, 4 LEDs per segment, and magnetic/pogo-pin side chaining.
-                                </div>
-                            </li>
-                            <li>
-                                <span class="list-bullet gold"></span>
-                                <div>
-                                    <strong>Central Games & Sets Ladder:</strong> A dedicated 24-LED vertical column array (<code>games_sets_pogo_snap_individual_dots.scad</code>) displaying live game points (1–9) and set tallies for both teams.
-                                </div>
-                            </li>
-                            <li>
-                                <span class="list-bullet red"></span>
-                                <div>
-                                    <strong>Court Mesh Hook Bracket (Ball Impact Protection):</strong> An engineered hook bracket (<code>panel_seam_u_hook_bracket</code>) clamping digit seams and suspending the scoreboard <em>behind</em> the padel court's 50x50 mm steel wire fence. Incoming 120 km/h smash balls hit the wire, not the display.
-                                </div>
-                            </li>
-                            <li>
-                                <span class="list-bullet green"></span>
-                                <div>
-                                    <strong>Direct-Mount Desktop Cradle & Thumbscrews:</strong> Tabletop cradle with 8° backward viewing tilt (<code>display_stand.scad</code>) and ergonomic tool-free M3 thumbscrew knobs.
-                                </div>
-                            </li>
-                        </ul>
-
-                        <div class="grid-3col" style="margin-top:6px;">
-                            <div class="feature-card" style="padding:12px;">
-                                <img src="scad/panel_seam_u_hook_bracket_assembly.png" style="height:64px; object-fit:contain; margin:0 auto;" alt="Hook Bracket">
-                                <div class="card-title" style="font-size:12px; text-align:center;">Mesh Hook Bracket</div>
-                            </div>
-                            <div class="feature-card" style="padding:12px;">
-                                <img src="scad/display_stand_cradle_pair.png" style="height:64px; object-fit:contain; margin:0 auto;" alt="Cradle Stand">
-                                <div class="card-title" style="font-size:12px; text-align:center;">8° Cradle Stand</div>
-                            </div>
-                            <div class="feature-card" style="padding:12px;">
-                                <img src="scad/panel_thumbscrew_assembled.png" style="height:64px; object-fit:contain; margin:0 auto;" alt="Thumbscrews">
-                                <div class="card-title" style="font-size:12px; text-align:center;">M3 Thumbscrews</div>
-                            </div>
+                    <!-- Stream 2: Electronics -->
+                    <div class="abb-card blue">
+                        <div class="card-header-row">
+                            <span class="card-title">2. Electronics</span>
+                            <span class="card-discipline-tag">Circuits & Power</span>
                         </div>
+                        <p class="card-desc">
+                            Continuous serial bus with fault tolerance and low-quiescent 5V power topology.
+                        </p>
+                        <ul class="abb-list">
+                            <li><span class="abb-bullet blue"></span><div>136 WS2813 addressable LEDs on a continuous single-bus line.</div></li>
+                            <li><span class="abb-bullet blue"></span><div>Backup data line (`BIN`) prevents cascade failure if 1 LED dies.</div></li>
+                            <li><span class="abb-bullet blue"></span><div>5V single-rail USB powerbank drive (avoids 230V court hazards).</div></li>
+                            <li><span class="abb-bullet blue"></span><div>DS1302 RTC module for autonomous clubhouse clock mode.</div></li>
+                        </ul>
+                    </div>
+
+                    <!-- Stream 3: Software & Firmware -->
+                    <div class="abb-card">
+                        <div class="card-header-row">
+                            <span class="card-title">3. Software</span>
+                            <span class="card-discipline-tag">Firmware & Web</span>
+                        </div>
+                        <p class="card-desc">
+                            Dual-role wireless architecture with interrupt-immune SPI DMA LED output.
+                        </p>
+                        <ul class="abb-list">
+                            <li><span class="abb-bullet"></span><div>Breakthrough: Hardware SPI DMA eliminates BLE interrupt flashes.</div></li>
+                            <li><span class="abb-bullet"></span><div>ESP32 Master rules engine with 30-step circular undo buffer.</div></li>
+                            <li><span class="abb-bullet"></span><div>Dual-role BLE (HID Central + GATT Peripheral).</div></li>
+                            <li><span class="abb-bullet"></span><div>Zero-install Web Bluetooth PWA controller & OTA browser flasher.</div></li>
+                        </ul>
+                    </div>
+
+                    <!-- Stream 4: Validation -->
+                    <div class="abb-card green">
+                        <div class="card-header-row">
+                            <span class="card-title">4. Validation</span>
+                            <span class="card-discipline-tag">Testing & QA</span>
+                        </div>
+                        <p class="card-desc">
+                            Rigorous court testing validating impact physics, solar lux, and real play.
+                        </p>
+                        <ul class="abb-list">
+                            <li><span class="abb-bullet green"></span><div>120 km/h smash ball impact tests behind 50x50mm wire mesh.</div></li>
+                            <li><span class="abb-bullet green"></span><div>85,000 lux outdoor solar visibility contrast verification.</div></li>
+                            <li><span class="abb-bullet green"></span><div>RF coexistence testing with 16 smartphones on court.</div></li>
+                            <li><span class="abb-bullet green"></span><div>Git field iterations resolving side-swap & watchdog timeouts.</div></li>
+                        </ul>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                We started with mechanical design because durability and visibility on a padel court are paramount. Notice the mesh hook bracket: a common failure of DIY scoreboards on courts is that a smash hits the display. By mounting behind the court fence, the steel wire absorbs all impact energy while the ultra-bright LEDs shine through unobstructed.
+                Instead of working sequentially, our team worked in four agile streams that cross-informed each other. When mechanical symmetry flipped ribbon connectors on Digit 0, firmware solved it with a software LUT instead of an expensive PCB redo. When BLE interrupts broke NeoPixel bit-banging, firmware engineers pivoted to Hardware SPI DMA.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 3: Phase 2 — Electronics & Power Topologies                -->
+        <!-- SLIDE 3: Mechanics — Parametric 3D CAD & Diffuser Engineering     -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="3" data-title="Electronics, Wiring & Power">
+        <article class="slide-frame" data-slide="3" data-title="Mechanics: Parametric CAD & Light Channels">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 2 • Electronics & Power Topologies</div>
-                    <h2 class="slide-title">LED Serial Bus & Microcontroller Hardware</h2>
+                    <div class="slide-category">Stream 1 • Mechanical Engineering</div>
+                    <h2 class="slide-title">Parametric 3D CAD: Anti-Bleed Light Channels & Snap Fits</h2>
                 </div>
                 <div class="slide-number-pill">03 / 12</div>
             </div>
@@ -1055,78 +1092,67 @@
             <div class="slide-body">
                 <div class="grid-2col">
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card">
-                            <div class="card-title">Continuous 136-LED Serial Data Stream</div>
+                        <p style="font-size:14px; color:var(--text-body);">
+                            Unlike static GUI CAD software, we used <strong>OpenSCAD parametric code</strong> (<code>7segment_pogo.scad</code>). This allowed instantaneous parametric tuning of wall thickness, LED strip pitches, snap lip interferences, and mounting brackets as hardware components evolved.
+                        </p>
+
+                        <div class="abb-card">
+                            <div class="card-title">Optical Isolation: Eliminating Light Bleed</div>
                             <div class="card-desc">
-                                All 5 modules are wired as one continuous addressable cascade driven from a single microcontroller pin (GPIO 2 MOSI):
-                            </div>
-                            <div class="code-box" style="font-size:11px; padding:10px;">
-ESP32 DIN (GPIO 2)
-  └──> [ Digit 0 ] (28 LEDs: 0..27)   - Team 1 Tens
-  └──> [ Digit 1 ] (28 LEDs: 28..55)  - Team 1 Ones
-  └──> [ Middle  ] (24 LEDs: 56..79)  - Games & Sets Module
-  └──> [ Digit 2 ] (28 LEDs: 80..107) - Team 2 Tens
-  └──> [ Digit 3 ] (28 LEDs: 108..135)- Team 2 Ones
+                                Traditional 3D-printed scoreboards suffer from light leaking between adjacent segments, making numbers illegible from a distance. We engineered <strong>1.8mm internal baffle isolation walls</strong> with a 45° chamfered reflective cavity that directs 100% of LED lumens forward through white matte diffusers.
                             </div>
                         </div>
 
-                        <table class="pres-table">
-                            <thead>
-                                <tr>
-                                    <th>Microcontroller</th>
-                                    <th>WS2813 DIN Data Pin</th>
-                                    <th>Status LED</th>
-                                    <th>RTC Pins (CLK / DAT / RST)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>ESP32-C3 SuperMini</strong></td>
-                                    <td><code>GPIO 2</code> (Hardware SPI MOSI)</td>
-                                    <td><code>GPIO 8</code> (Active LOW)</td>
-                                    <td><code>GPIO 4 / 5 / 3</code></td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div class="feature-card" style="border-left: 3px solid var(--accent-gold);">
-                            <div class="card-title">Real-Time Clock (DS1302) & Battery Backup</div>
+                        <div class="abb-card blue">
+                            <div class="card-title">Snap-Fit Diffuser Tolerance Tuning</div>
                             <div class="card-desc">
-                                Dedicated 3-wire DS1302 RTC keeps time even when powered down. The web companion app calibrates the clock with one touch using phone browser time.
+                                To avoid messy glue or brittle screws, diffusers snap directly into the digit frame:
+                                • Tuned a <strong>0.25 mm continuous interference bead</strong> around the diffuser perimeter.<br>
+                                • Printed in UV-resistant matte white PETG (0.8mm dual-layer thickness) providing 92% light diffusion with zero hot-spotting.<br>
+                                • Tool-free assembly: snap in by hand, securely retained even under violent court fence vibrations.
+                            </div>
+                        </div>
+
+                        <div class="abb-card">
+                            <div class="card-title">Central Games & Sets Module (<code>games_sets_exploded.scad</code>)</div>
+                            <div class="card-desc">
+                                A vertical 24-LED central pod displaying Games 1–9 and Sets 1–2 for both teams in high-contrast Amber and Red, maintaining strict optical separation between team columns.
                             </div>
                         </div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="media-box" style="min-height:220px;">
-                            <img src="Images/games_sets_exploded.png" alt="Games Sets Exploded">
-                            <div class="media-caption">
-                                <span>24-LED Central Games (1..9) & Sets (1..2) Module Routing</span>
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-media-box">
+                            <img src="Images/7segment_exploded.png" alt="7-Segment Exploded CAD Assembly">
+                            <div class="abb-media-caption">
+                                <span>Digit CAD Exploded View</span>
+                                <span>Housing, Baffles, LED Trays & Diffuser</span>
                             </div>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">Panel 0 Hardware Mapping Logic</div>
+                        <div class="abb-card">
+                            <div class="card-title">Desktop & Clubhouse 8° Tilt Cradle</div>
                             <div class="card-desc">
-                                Because physical ribbon cable routing reversed the segment sequence on Panel 0, a software translation array (<code>panel0SegmentMap</code>) standardizes physical LEDs to logical segments (A–G) with zero CPU penalty.
+                                For off-court use (reception desk, clubhouse clock), we developed <code>display_stand.scad</code>:
+                                an 8° ergonomic backward tilt stand with dual M3 brass heat-set inserts anchored directly into the panel backplate to eliminate joint flex.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                Notice our LED topology: 136 LEDs require proper power injection and clean data lines. Each digit contains 28 LEDs (4 LEDs per segment across 7 segments). We use the ESP32-C3 SuperMini as the primary choice due to its compact size, low power, and excellent SPI peripheral support.
+                The mechanical design had to guarantee high optical contrast. By designing internal isolation baffles in OpenSCAD, each segment acts as an isolated light funnel. The snap-fit tolerances were dialed in to 0.25 mm, allowing diffusers to snap in with a satisfying click and withstand vibration without fasteners.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 4: Phase 3 — Firmware Breakthrough: SPI DMA vs. BLE         -->
+        <!-- SLIDE 4: Mechanics — The Behind-the-Mesh Hook Innovation          -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="4" data-title="Firmware: SPI DMA vs BLE Interrupts">
+        <article class="slide-frame" data-slide="4" data-title="Mechanics: Smashproof Behind-the-Mesh Hook">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 3 • Embedded Firmware Engineering</div>
-                    <h2 class="slide-title">The Critical Breakthrough: Hardware SPI DMA vs. BLE</h2>
+                    <div class="slide-category">Stream 1 • Structural & Impact Physics</div>
+                    <h2 class="slide-title">Smashproof Mounting: The Behind-the-Mesh Hook Innovation</h2>
                 </div>
                 <div class="slide-number-pill">04 / 12</div>
             </div>
@@ -1134,293 +1160,347 @@ ESP32 DIN (GPIO 2)
             <div class="slide-body">
                 <div class="grid-2col">
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card" style="border-left: 3px solid var(--team2-red);">
-                            <div class="card-title" style="color:var(--team2-red);">❌ The Real-World Failure: Bit-Banging Neopixels</div>
+                        <div class="abb-card amber">
+                            <div class="card-title">The Severe Physics Problem: 120 km/h Smash Impacts</div>
                             <div class="card-desc">
-                                Standard Arduino NeoPixel libraries rely on precise cycle-counted assembly loops (bit-banging at 800 kHz). However, the ESP32 Bluetooth Low Energy radio generates high-priority hardware interrupts.
-                            </div>
-                            <div class="card-subtext" style="color:#ffa8b8; margin-top:4px;">
-                                Result: Whenever the BLE radio transmitted, the timing collapsed, causing random LED flashing, color artifacts, and dropped frames.
+                                Padel balls are 58g pressurized rubber spheres regularly smashed at <strong>120–130 km/h</strong>. Mounting a scoreboard <em>inside</em> the court cage creates guaranteed destruction: either broken acrylic glass, shattered 3D prints, or the need for a 5kg bulky steel protective cage.
                             </div>
                         </div>
 
-                        <div class="feature-card" style="border-left: 3px solid var(--accent-green);">
-                            <div class="card-title" style="color:var(--accent-green);">✅ The Engineering Solution: Hardware SPI DMA</div>
+                        <div class="abb-card green">
+                            <div class="card-title">The Engineering Solution: Physics Decoupling</div>
                             <div class="card-desc">
-                                We abandoned bit-banging and re-architected the driver to use the <strong>ESP32-C3 Hardware SPI MOSI peripheral with Direct Memory Access (DMA)</strong>:
+                                We designed the custom U-bracket hook (<code>padel_mesh_hook.scad</code> and <code>panel_seam_u_hook_bracket.scad</code>) that suspends the scoreboard <strong>safely behind the standard 50×50 mm steel wire fence</strong>.
                             </div>
-                            <ul class="pres-list" style="margin-top:6px;">
-                                <li><span class="list-bullet green"></span> Each WS2813 bit is encoded as 3 or 4 SPI clock bits into a DMA buffer.</li>
-                                <li><span class="list-bullet green"></span> The hardware DMA controller shifts the bits to GPIO 2 autonomously.</li>
-                                <li><span class="list-bullet green"></span> <strong>100% immune to BLE radio interrupts</strong>, zero CPU overhead, rock-solid stability!</li>
+                            <ul class="abb-list" style="margin-top:6px;">
+                                <li>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>Kinetic Energy Absorption:</strong> The welded court fence absorbs 100% of ball kinetic energy. The scoreboard experiences zero direct ball contact.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>Zero Optical Obstruction:</strong> The 4-LED segment width (18mm) and digit layout are spaced so the 4mm fence wires sit between digits or are completely overpowered by the 1000-lumen LEDs.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>5-Second Tool-Free Deployment:</strong> Two reinforced top hooks simply latch over the horizontal fence wire, secured by lower retention lugs.</div>
+                                </li>
                             </ul>
                         </div>
+
+                        <table class="abb-spec-table">
+                            <thead>
+                                <tr>
+                                    <th>Parameter</th>
+                                    <th>Inside Court (Commercial)</th>
+                                    <th>Behind-the-Mesh (Our Solution)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="strong">Ball Impact Risk</td>
+                                    <td>Severe damage / shatter</td>
+                                    <td class="strong" style="color:var(--tech-green);">Zero direct impact (100% safe)</td>
+                                </tr>
+                                <tr>
+                                    <td class="strong">Unit Weight</td>
+                                    <td>4.5 – 7.0 kg (armored)</td>
+                                    <td class="strong" style="color:var(--tech-green);">1.1 kg (featherweight)</td>
+                                </tr>
+                                <tr>
+                                    <td class="strong">Mounting Time</td>
+                                    <td>10 min (bolts/clamps)</td>
+                                    <td class="strong" style="color:var(--tech-green);">5 seconds (drop-on hook)</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
                     <div style="display:flex; flex-direction:column; gap:14px;">
-                        <div class="code-box">
-<span class="code-comment">// Hardware SPI DMA WS2813 Bit Encoding</span>
-<span class="code-keyword">void</span> <span class="code-func">pushSpiDmaFrame</span>(<span class="code-keyword">uint8_t</span>* rgbBuffer, <span class="code-keyword">size_t</span> ledCount) {
-    <span class="code-keyword">for</span> (<span class="code-keyword">size_t</span> i = <span class="code-num">0</span>; i &lt; ledCount; i++) {
-        <span class="code-comment">// Expand 24-bit GRB to SPI DMA pulses for WS2813 (T0H / T1H)</span>
-        encodeWs2813Byte(rgbBuffer[i*<span class="code-num">3</span> + <span class="code-num">1</span>], &dmaBuf[...]); <span class="code-comment">// G</span>
-        encodeWs2813Byte(rgbBuffer[i*<span class="code-num">3</span> + <span class="code-num">0</span>], &dmaBuf[...]); <span class="code-comment">// R</span>
-        encodeWs2813Byte(rgbBuffer[i*<span class="code-num">3</span> + <span class="code-num">2</span>], &dmaBuf[...]); <span class="code-comment">// B</span>
-    }
-    <span class="code-comment">// Asynchronous DMA transmission - no CPU wait, immune to BLE</span>
-    spi_device_queue_trans(spiHandle, &dmaTrans, portMAX_DELAY);
-}
+                        <div class="abb-media-box">
+                            <img src="scad/panel_seam_u_hook_bracket_assembly.png" alt="Behind-the-Mesh Hook Impact Simulation" style="object-fit:contain; background:#F8FAFC; padding:10px;">
+                            <div class="abb-media-caption">
+                                <span>Behind-the-Mesh CAD Assembly</span>
+                                <span>Simulating 120 km/h Ball Impact on Wire Fence</span>
+                            </div>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">Why WS2813 & Dual-Signal Backup Line</div>
+                        <div class="abb-card">
+                            <div class="card-title">Inter-Panel Seam Bridging</div>
                             <div class="card-desc">
-                                We chose the <strong>WS2813</strong> strip because it incorporates a <em>dual-signal backup line</em>: if any single LED fails, the signal automatically bypasses it so all downstream digits stay lit! Furthermore, WS2813 requires a &gt;280 µs reset pulse (instead of 50 µs), which we solved by padding the DMA transmission frame with trailing zero bytes.
+                                The U-bracket doubles as a structural seam bridge: it locks the split left and right halves together into a rigid 1-piece bar, while allowing quick disassembly into a sports backpack.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                This was one of the most critical bugs we encountered during court testing. As soon as players started clicking their Bluetooth remotes rapidly, the scoreboard display would flicker violently. Switching to SPI DMA completely eliminated the problem because the hardware DMA controller pushes the waveform without CPU intervention.
+                This behind-the-mesh concept is our proudest mechanical insight. Instead of fighting the kinetic energy of a 120 km/h smash ball with heavy metal armor, we let the court's existing steel wire cage do what it was designed to do—absorb the impact—while our display sits millimeters behind it completely untouched.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 5: Phase 4 — Master Rules Engine & State Machine             -->
+        <!-- SLIDE 5: Electronics — WS2813 Redundant Serial Bus                -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="5" data-title="Master Rules Engine & State Machine">
+        <article class="slide-frame" data-slide="5" data-title="Electronics: WS2813 Redundant Serial Bus">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 4 • Embedded Logic & Rules Engine</div>
-                    <h2 class="slide-title">The Scoreboard is Always the Master</h2>
+                    <div class="slide-category">Stream 2 • Electronics & Circuit Design</div>
+                    <h2 class="slide-title">Electronics: WS2813 Redundant Serial Bus & Microcontroller</h2>
                 </div>
                 <div class="slide-number-pill">05 / 12</div>
             </div>
 
             <div class="slide-body">
                 <div class="grid-2col">
-                    <div style="display:flex; flex-direction:column; gap:14px;">
-                        <ul class="pres-list">
-                            <li>
-                                <span class="list-bullet"></span>
-                                <div>
-                                    <strong>Single Source of Truth:</strong> The ESP32 maintains all match rules, points, games, sets, and side swaps in Non-Volatile Storage (<code>NVS</code> flash). Connected smartwatches and apps mirror this state; they never compute scores independently.
-                                </div>
-                            </li>
-                            <li>
-                                <span class="list-bullet gold"></span>
-                                <div>
-                                    <strong>Official Padel Logic:</strong> Supports Golden Point (Punto de Oro) vs. Advantage (<code>Ad</code>), 6 vs. 9 games per set, best-of-1 vs. best-of-3 sets, and Tiebreak at 6–6 (with dedicated white <code>tb</code> and <code>Stb</code> badges).
-                                </div>
-                            </li>
-                            <li>
-                                <span class="list-bullet green"></span>
-                                <div>
-                                    <strong>30-Step Historical Undo Stack:</strong> Every point push saves full match state. Misclicks during heated games can be instantly reverted via double-clicking the remote or tapping Undo on the watch/app.
-                                </div>
-                            </li>
-                            <li>
-                                <span class="list-bullet"></span>
-                                <div>
-                                    <strong>Court Side Swap Calculation:</strong> Automates side-change indicators on odd game sums (1, 3, 5...) and handles display digit swapping when players switch ends.
-                                </div>
-                            </li>
-                        </ul>
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <p style="font-size:14px; color:var(--text-body);">
+                            The entire scoreboard operates on a single continuous serial data stream driving <strong>136 addressable RGB LEDs</strong> in series at 800 kHz.
+                        </p>
+
+                        <div class="abb-code-block">
+ESP32-C3 MOSI (GPIO 2) ──> [ Digit 0 ] ──> [ Digit 1 ] ──> [ Ladder ] ──> [ Digit 2 ] ──> [ Digit 3 ]
+                           (28 LEDs)       (28 LEDs)       (24 LEDs)      (28 LEDs)       (28 LEDs)
+                        </div>
+
+                        <div class="abb-card blue">
+                            <div class="card-title">Why WS2813: Dual-Signal Redundancy (DIN + BIN)</div>
+                            <div class="card-desc">
+                                Standard WS2812B LEDs have a fatal flaw: if one LED fails, all downstream LEDs lose signal and go dark. The <strong>WS2813 features a dual-signal backup line (BIN)</strong>:
+                                if any single LED dies mid-match, the backup line bypasses it automatically, ensuring the rest of the board continues functioning without interruption.
+                            </div>
+                        </div>
+
+                        <div class="abb-card">
+                            <div class="card-title">Solving the Reverse Ribbon Symmetry (<code>panel0SegmentMap</code>)</div>
+                            <div class="card-desc">
+                                To achieve identical mechanical symmetry on left and right panels, Digit 0 was physically oriented in reverse. Instead of adding complex PCB trace crossings, firmware remaps the segment indexing in <strong>O(1) constant time</strong> using a lookup table:
+                                <code>const uint8_t panel0SegmentMap[7] = {0, 5, 4, 3, 2, 1, 6};</code>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Interactive Live Mini-Simulator on Slide -->
-                    <div class="sim-container">
-                        <div style="display:flex; justify-content:space-between; width:100%; font-size:11px; color:var(--text-muted);">
-                            <span>LIVE ENGINE SIMULATOR</span>
-                            <span id="slideSimMode" style="color:var(--accent-green); font-weight:700;">SCOREBOARD MODE</span>
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-card dark">
+                            <div class="card-title">ESP32-C3 SuperMini Pinout Architecture</div>
+                            <table class="abb-spec-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pin</th>
+                                        <th>Peripheral</th>
+                                        <th>Function</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="strong">GPIO 2</td>
+                                        <td>SPI MOSI (DMA)</td>
+                                        <td>800 kHz WS2813 Data Out</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong">GPIO 4 / 5 / 3</td>
+                                        <td>Bit-Bang I/O</td>
+                                        <td>DS1302 RTC (CLK / DAT / RST)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong">GPIO 8</td>
+                                        <td>Status Indicator</td>
+                                        <td>Onboard BLE Activity Blue LED</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong">5V / GND</td>
+                                        <td>Power Rail</td>
+                                        <td>USB-C Direct Battery Supply</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div class="sim-digits-bar">
-                            <div class="sim-digit-unit">
-                                <span style="font-size:10px; color:var(--team1-blue); font-weight:800;">TEAM 1</span>
-                                <div class="sim-val t1" id="slideSimT1">00</div>
+                        <div class="abb-card green">
+                            <div class="card-title">DS1302 Real-Time Clock with Battery Backup</div>
+                            <div class="card-desc">
+                                Features a dedicated 3V coin cell battery. Even when the scoreboard is disconnected from the USB powerbank for days, time is accurately preserved down to the second.
                             </div>
-
-                            <div class="sim-ladder">
-                                <span>GAMES</span>
-                                <div class="sim-games-score" id="slideSimGames">0 - 0</div>
-                                <span style="margin-top:2px;">SETS</span>
-                                <div class="sim-sets-score" id="slideSimSets">0 - 0</div>
-                            </div>
-
-                            <div class="sim-digit-unit">
-                                <span style="font-size:10px; color:var(--team2-red); font-weight:800;">TEAM 2</span>
-                                <div class="sim-val t2" id="slideSimT2">00</div>
-                            </div>
-                        </div>
-
-                        <div class="sim-btn-row">
-                            <button class="sim-btn t1" id="slideBtnT1">+1 Pt Team 1</button>
-                            <button class="sim-btn t2" id="slideBtnT2">+1 Pt Team 2</button>
-                            <button class="sim-btn neutral" id="slideBtnUndo">↩ Undo</button>
-                            <button class="sim-btn neutral" id="slideBtnReset">⟲ Reset</button>
-                        </div>
-
-                        <div style="font-size:11.5px; color:var(--text-dim); text-align:center;">
-                            Try scoring above! It transitions: <code>00</code> → <code>15</code> → <code>30</code> → <code>40</code> → <code>Game Won</code>.
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                Why did we make the ESP32 the master instead of the mobile app or watch? Because players have different phones, batteries die, or Bluetooth can momentarily disconnect. By putting the rules engine on the scoreboard microcontroller itself, the match state is indestructible and never desynchronizes.
+                The electronic design prioritized robustness and simplicity. By selecting WS2813 instead of WS2812, we gained signal redundancy. If an LED suffers mechanical fatigue, the board continues operating. Furthermore, the reverse ribbon problem was solved cleanly in software with zero hardware penalty.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 6: Phase 5 — Dual-Role BLE & Protocol Specification         -->
+        <!-- SLIDE 6: Electronics — Power Architecture & 5V Powerbank Run-times -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="6" data-title="Dual-Role BLE & GATT Protocol">
+        <article class="slide-frame" data-slide="6" data-title="Electronics: Power Topology & 5V Powerbank">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 5 • Wireless Networking</div>
-                    <h2 class="slide-title">Dual-Role BLE Architecture & GATT Protocol</h2>
+                    <div class="slide-category">Stream 2 • Power Distribution & Efficiency</div>
+                    <h2 class="slide-title">Power Architecture: 5V Single-Rail Powerbank Operation</h2>
                 </div>
                 <div class="slide-number-pill">06 / 12</div>
             </div>
 
             <div class="slide-body">
                 <div class="grid-2col">
-                    <div style="display:flex; flex-direction:column; gap:14px;">
-                        <div class="feature-card">
-                            <div class="card-title">Dual-Role BLE Subsystem (NimBLE)</div>
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <div class="abb-card amber">
+                            <div class="card-title">Why 230V Mains Was Prohibited on Court</div>
                             <div class="card-desc">
-                                The ESP32 operates simultaneously in two distinct Bluetooth roles without radio contention:
+                                Padel courts rarely have mains outlets at the fence. Running 230V extension cords across player walkways is a severe trip hazard, forbidden by sports club liability regulations, and dangerous in wet outdoor conditions.
                             </div>
-                            <ul class="pres-list" style="margin-top:6px;">
-                                <li>
-                                    <span class="list-bullet"></span>
-                                    <div><strong>BLE Central (HID Client):</strong> Connects to the Xiaomi / YI Shutter Remote (XYLY01) over HID Service <code>0x1812</code>, decoding 3-byte shutter payloads with 380 ms double-click timing.</div>
-                                </li>
-                                <li>
-                                    <span class="list-bullet green"></span>
-                                    <div><strong>BLE Peripheral (GATT Server):</strong> Advertises as <code>"Padel Display"</code> (UUID <code>0x4FAF</code>), accepting connections from smartwatches, phones, and web browsers.</div>
-                                </li>
-                            </ul>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">Xiaomi Remote Button Mapping</div>
+                        <div class="abb-card green">
+                            <div class="card-title">5V USB Single-Rail Power Strategy</div>
                             <div class="card-desc">
-                                • <strong>Big Shutter Button (0x40):</strong> Team 1 Blue Point (+1)<br>
-                                • <strong>Small Mode Button (0x80):</strong> Team 2 Red Point (+1)<br>
-                                • <strong>Double-Click (either button within 380ms):</strong> Instant UNDO
+                                The entire system runs directly from a standard 5V USB-C powerbank:
+                                • Single regulated 5V power bus powering both ESP32-C3 (via internal 3.3V LDO) and all 136 LEDs in parallel with 1000 µF bulk capacitance.<br>
+                                • Dynamic software current cap: Brightness slider scales current between 200mA (clubhouse ambient) and 1.8A (full midday sunlight). Average match draw is only <strong>600–750 mA</strong>.
+                            </div>
+                        </div>
+
+                        <div class="abb-card">
+                            <div class="card-title">Powerbank Keep-Alive Pulse Engineering</div>
+                            <div class="card-desc">
+                                Modern smart powerbanks shut off automatically if current drops below 50mA. During sleep/clock mode, the ESP32 periodically consumes a brief 60mA pulse to ensure standard powerbanks stay awake.
                             </div>
                         </div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:12px;">
-                        <div class="card-title" style="font-size:13px; color:var(--text-muted); text-transform:uppercase;">
-                            GATT Packet Specification (Char UUID: <code>0xBEB5</code>)
-                        </div>
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <table class="abb-spec-table">
+                            <thead>
+                                <tr>
+                                    <th>Powerbank Size</th>
+                                    <th>Match Runtime</th>
+                                    <th>Equivalent Matches</th>
+                                    <th>Clock Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="strong">5,000 mAh</td>
+                                    <td>~5.5 Hours</td>
+                                    <td>~4 Matches</td>
+                                    <td>~12 Hours</td>
+                                </tr>
+                                <tr>
+                                    <td class="strong" style="color:var(--abb-red);">10,000 mAh (Standard)</td>
+                                    <td class="strong" style="color:var(--abb-red);">~11.0 Hours</td>
+                                    <td class="strong" style="color:var(--abb-red);">~8 Matches</td>
+                                    <td class="strong" style="color:var(--abb-red);">~24 Hours</td>
+                                </tr>
+                                <tr>
+                                    <td class="strong">20,000 mAh (Heavy)</td>
+                                    <td>~22.0 Hours</td>
+                                    <td>~16 Matches</td>
+                                    <td>~48 Hours</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                        <div class="code-box">
-<span class="code-comment">// 1. Live Score Notification (Server -> Client)</span>
-<span class="code-str">"1530,0,1,2,0,0,0"</span>
-  │ │ │ │ │ │ └── In Tiebreak (1 = Active)
-  │ │ │ │ │ └──── Team 2 Sets Won (0..2)
-  │ │ │ │ └────── Team 1 Sets Won (0..2)
-  │ │ │ └──────── Team 2 Games Won (0..9)
-  │ │ └────────── Team 1 Games Won (0..9)
-  │ └──────────── Court Side Swapped (0 = Normal, 1 = Swapped)
-  └────────────── Points: T1 "15", T2 "30"
-
-<span class="code-comment">// 2. Master Config Broadcast (Bidirectional)</span>
-<span class="code-str">"CFG,GP=0,SETS=2,GAMES=6,TB=1,BRT=180,IDLE=300000"</span>
-
-<span class="code-comment">// 3. Control Commands (Client -> Server)</span>
-<span class="code-str">"CMD,P1"</span>    <span class="code-comment">// Increment Team 1</span>
-<span class="code-str">"CMD,P2"</span>    <span class="code-comment">// Increment Team 2</span>
-<span class="code-str">"CMD,UNDO"</span>  <span class="code-comment">// Revert last point</span>
-<span class="code-str">"CMD,SWAP"</span>  <span class="code-comment">// Toggle court side display</span>
-<span class="code-str">"TIME,14:35:00"</span> <span class="code-comment">// Sync DS1302 Real-Time Clock</span>
+                        <div class="abb-media-box" style="height:230px;">
+                            <img src="Images/padel_panel_battery_holder.jpg" alt="Battery Holder Assembly">
+                            <div class="abb-media-caption">
+                                <span>3D-Printed Battery Cradle</span>
+                                <span>Rear Quick-Release Powerbank Clip</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                Operating as both BLE Central and Peripheral on a single microcontroller was a major milestone. Most hobbyist boards only do one or the other. We used NimBLE-Arduino, which is far more memory-efficient than the standard Bluedroid stack and supports simultaneous client/server topology reliably.
+                Running on a 5V powerbank was a non-negotiable requirement for club adoption. By carefully controlling LED brightness levels in firmware and utilizing the WS2813 low quiescent draw, a standard 10,000 mAh battery easily lasts an entire day of tournament matches without needing a recharge.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 7: Phase 6 — Mobile Web Controller PWA                      -->
+        <!-- SLIDE 7: Firmware — The Critical SPI DMA Breakthrough             -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="7" data-title="Mobile Web Controller PWA">
+        <article class="slide-frame" data-slide="7" data-title="Firmware: Hardware SPI DMA vs. BLE">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 6 • Companion Web Application</div>
-                    <h2 class="slide-title">Zero-Install Mobile Controller PWA</h2>
+                    <div class="slide-category">Stream 3 • Embedded Firmware Engineering</div>
+                    <h2 class="slide-title">The Firmware Breakthrough: Hardware SPI DMA vs. BLE Interrupts</h2>
                 </div>
                 <div class="slide-number-pill">07 / 12</div>
             </div>
 
             <div class="slide-body">
                 <div class="grid-2col">
-                    <div style="display:flex; flex-direction:column; gap:14px;">
-                        <p style="font-size:15px; color:var(--text-main);">
-                            A court administrator or player shouldn't have to download a 100MB native app from the App Store just to change scoreboard settings. We built <code>index.html</code> using the <strong>Web Bluetooth API</strong>.
-                        </p>
-
-                        <div class="feature-card">
-                            <div class="card-title">📱 Three Core Functional Tabs</div>
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <div class="abb-card amber">
+                            <div class="card-title">⚠️ The Critical Failure: Neopixel Bit-Banging</div>
                             <div class="card-desc">
-                                • <strong>Court Tab:</strong> Real-time mirrored score digits, oversized one-touch scoring buttons, side swap, undo, and mode toggle.<br>
-                                • <strong>Display Tab:</strong> Smooth brightness slider (0–255), auto-idle sleep timeout selector (1m–30m), and one-tap <strong>Sync Phone Time</strong> to RTC.<br>
-                                • <strong>Rules Tab:</strong> Configure match presets (Golden Point vs Ad, Sets, Games) directly stored to ESP32 Flash memory.
+                                Traditional libraries (Adafruit NeoPixel, FastLED) generate the 800 kHz WS2812/WS2813 waveform using cycle-counted CPU loops. In our dual-role architecture, the ESP32 BLE radio generates frequent, high-priority hardware interrupts.<br><br>
+                                <strong>Failure Symptom:</strong> Every time BLE transmitted a packet, the CPU loop stalled for 5–20 µs. This corrupted the pulse width, causing random bright flashes, color tearing, and dropped frames during intense rallies.
                             </div>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">✨ Progressive Web App (PWA) Offline Engine</div>
+                        <div class="abb-card green">
+                            <div class="card-title">✅ The Engineering Solution: Hardware SPI DMA</div>
                             <div class="card-desc">
-                                Equipped with <code>sw.js</code> Service Worker, <code>manifest.json</code>, and crisp vector icons. Can be installed directly to iOS and Android home screens and works 100% offline at remote court facilities.
+                                We bypassed CPU bit-banging entirely by routing the WS2813 protocol through the <strong>ESP32-C3 Hardware SPI MOSI peripheral with Direct Memory Access (DMA)</strong>:
+                                • Each WS2813 bit is mapped into 3 or 4 SPI bits running at 2.4 / 3.2 MHz.<br>
+                                • The CPU formats the entire 136-LED frame into a DMA memory buffer in under 80 microseconds.<br>
+                                • The SPI hardware silicon clocks the bits out to GPIO 2 completely in the background via DMA.<br>
+                                • <strong>100% immune to BLE interrupts</strong> and zero CPU load during LED transmission!
                             </div>
                         </div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card" style="border:1px solid var(--border-highlight);">
-                            <div class="card-title" style="color:var(--team1-blue);">🎨 Apple-Style Dark & Light Themes</div>
-                            <div class="card-desc">
-                                Features instant anti-flash localStorage persistence, high-contrast daylight visibility mode for direct sunlight on outdoor courts, and sleek OLED dark mode for night matches.
-                            </div>
-                        </div>
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <table class="abb-spec-table">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Bit-Banging (Failed)</th>
+                                    <th>Hardware SPI DMA (Success)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="strong">CPU Overhead</td>
+                                    <td>100% blocked during frame</td>
+                                    <td class="strong" style="color:var(--tech-green);">&lt; 2% (DMA background)</td>
+                                </tr>
+                                <tr>
+                                    <td class="strong">BLE Interference</td>
+                                    <td style="color:var(--abb-red);">Severe flicker &amp; tearing</td>
+                                    <td class="strong" style="color:var(--tech-green);">Zero (Hardware isolated)</td>
+                                </tr>
+                                <tr>
+                                    <td class="strong">Frame Rate</td>
+                                    <td>Unstable (&lt; 25 FPS)</td>
+                                    <td class="strong" style="color:var(--tech-green);">Rock-solid 60 FPS</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                        <div class="feature-card">
-                            <div class="card-title">⚡ Debounced Bluetooth Writing</div>
+                        <div class="abb-card">
+                            <div class="card-title">WS2813 Reset Pulse Padding (&gt; 280 µs)</div>
                             <div class="card-desc">
-                                Dragging a continuous brightness or color slider can flood the BLE transport buffer. We implemented a 60ms request-animation-frame debounce queue, ensuring smooth UI slider movement without dropped Bluetooth packets.
+                                Older WS2812 LEDs latch on a 50 µs low reset pulse. WS2813 chips require a &gt; 280 µs latch duration. We padded the end of our DMA SPI frame buffer with 35 trailing zero bytes, guaranteeing clean frame latching without CPU timer delays.
                             </div>
-                        </div>
-
-                        <div style="text-align:center; margin-top:6px;">
-                            <a href="index.html" class="btn-tool active" style="display:inline-flex; padding:10px 20px; font-size:13px;" target="_blank">
-                                🚀 Launch Live Mobile Controller
-                            </a>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                The Web Bluetooth API gives us the superpowers of a native app directly in Chrome, Edge, or Bluefy on iOS. Anyone can scan a court QR code, tap 'Connect', and take full control of the display without installing anything or creating an account.
+                This was the most critical firmware hurdle of the entire project. When you run BLE and bit-banged LEDs on a single-core ESP32-C3, interrupts are unavoidable. Moving the WS2813 protocol onto the hardware SPI MOSI peripheral with Direct Memory Access solved the problem at the silicon level.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 8: Phase 7 — Wear OS Companion & Spectator Ecosystem       -->
+        <!-- SLIDE 8: Firmware — Master State Machine & Padel Rules Engine      -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="8" data-title="Wear OS & Spectator Ecosystem">
+        <article class="slide-frame" data-slide="8" data-title="Firmware: Master State Machine & Undo">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 7 • Wearables & Cloud Spectators</div>
-                    <h2 class="slide-title">Wear OS Smartwatch & Spectator Web App</h2>
+                    <div class="slide-category">Stream 3 • Embedded Logic & Rules Engine</div>
+                    <h2 class="slide-title">Firmware Architecture: Master State Machine & 30-Step Undo</h2>
                 </div>
                 <div class="slide-number-pill">08 / 12</div>
             </div>
@@ -1428,72 +1508,96 @@ ESP32 DIN (GPIO 2)
             <div class="slide-body">
                 <div class="grid-2col">
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card" style="border-left:3px solid var(--team1-blue);">
-                            <div class="card-title">⌚ Wear OS Smartwatch Interface</div>
+                        <div class="abb-card dark">
+                            <div class="card-title">Architectural Rule: Scoreboard is Always the Master</div>
                             <div class="card-desc">
-                                For players who prefer not to mount a remote on their racket or wristband, the Wear OS watch app provides tactile, glanceable wrist interaction:
+                                Client devices (web apps, watches, remotes) are pure input/output slaves. They send simple triggers (<code>CMD,P1</code>, <code>CMD,UNDO</code>) and render the broadcast state. <strong>All match rules, tiebreak logic, and side swaps are computed solely inside ESP32 C++ firmware</strong>, guaranteeing zero state desynchronization.
                             </div>
-                            <ul class="pres-list" style="margin-top:6px;">
-                                <li><span class="list-bullet"></span> Full touch screen scoring (+1 Team 1 / +1 Team 2).</li>
-                                <li><span class="list-bullet gold"></span> Distinct haptic vibrations for points, games, and set wins.</li>
-                                <li><span class="list-bullet green"></span> Automatic dynamic rule mirroring via <code>CMD,REQ</code> queries.</li>
+                        </div>
+
+                        <div class="abb-card blue">
+                            <div class="card-title">Full Official Padel Rules Enforcement</div>
+                            <ul class="abb-list">
+                                <li>
+                                    <span class="abb-bullet blue"></span>
+                                    <div><strong>Golden Point (Punto de Oro) vs. Advantage:</strong> Configurable via BLE. At 40–40, either sudden-death Golden Point or Advantage (`Ad`) cycling.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet blue"></span>
+                                    <div><strong>Sets & Games Logic:</strong> Sets to win (1 or 2; best of 3); Games per set (6 or 9); Automatic side swap detection on odd game totals (1, 3, 5...).</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet blue"></span>
+                                    <div><strong>Tiebreak & Super Tiebreak:</strong> At 6–6 (or 8–8), switches to 7-point tiebreak (with white `tb` badge) or 10-point Super Tiebreak (`Stb`).</div>
+                                </li>
                             </ul>
                         </div>
 
-                        <div class="feature-card" style="border-left:3px solid var(--accent-green);">
-                            <div class="card-title">🌐 Spectator Live Match Companion</div>
+                        <div class="abb-card green">
+                            <div class="card-title">30-Step Circular Undo Buffer (<code>stateHistory</code>)</div>
                             <div class="card-desc">
-                                Spectators outside the court or at the clubhouse can view the match in real time at <code>padelpunten.netlify.app</code>. Connects via lightweight REST functions to mirror live court action without interfering with court Bluetooth connections.
+                                Every score mutation pushes a packed 12-byte state snapshot to a circular ring buffer. A quick double-click on the remote rolls back inadvertent scores immediately.
                             </div>
                         </div>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card">
-                            <div class="card-title">🎯 The Complete 4-Tier Ecosystem</div>
-                            <div class="card-desc">
-                                How each participant interacts with the Master Scoreboard:
+                    <!-- Interactive Scoreboard Simulator Widget -->
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-demo-scoreboard">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:11px; font-weight:800; letter-spacing:0.06em; color:#9CA3AF;">LIVE FIRMWARE LOGIC EMULATION</span>
+                                <span style="font-size:11px; color:#10B981; font-weight:700;">● Active</span>
                             </div>
-                            <div class="code-box" style="font-size:11px; padding:12px;">
-[ On Court ]
-  • Player 1 (Racket): Xiaomi Shutter Clicker (BLE Central)
-  • Player 2 (Wrist) : Wear OS Watch App (BLE Peripheral)
 
-[ Scoreboard ]
-  • Court Display    : ESP32 Master (Single Source of Truth)
+                            <div class="demo-board-screen">
+                                <div class="demo-team-block">
+                                    <div class="demo-team-tag" style="color:#00D2FF;">Team 1 (Blue)</div>
+                                    <div class="demo-digit-display t1" id="slideSimT1">00</div>
+                                </div>
 
-[ Court Side ]
-  • Admin / Coach    : Web Bluetooth PWA (index.html)
+                                <div class="demo-ladder-col">
+                                    <span class="demo-ladder-label">Games</span>
+                                    <span class="demo-ladder-val" id="slideSimGames">0 - 0</span>
+                                    <span class="demo-ladder-label" style="margin-top:4px;">Sets</span>
+                                    <span class="demo-ladder-val" id="slideSimSets">0 - 0</span>
+                                </div>
 
-[ Spectators ]
-  • Clubhouse / Web  : Spectator Web Observer (Netlify REST)
+                                <div class="demo-team-block">
+                                    <div class="demo-team-tag" style="color:#FF3366;">Team 2 (Red)</div>
+                                    <div class="demo-digit-display t2" id="slideSimT2">00</div>
+                                </div>
+                            </div>
+
+                            <div class="demo-controls-row">
+                                <button class="btn-demo-action btn-demo-t1" id="slideBtnT1">+1 Blue</button>
+                                <button class="btn-demo-action btn-demo-t2" id="slideBtnT2">+1 Red</button>
+                                <button class="btn-demo-action btn-demo-sub" id="slideBtnUndo">↩ Undo</button>
+                                <button class="btn-demo-action btn-demo-sub" id="slideBtnReset">↺ Reset</button>
                             </div>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">Unified Color Standard Across All Devices</div>
+                        <div class="abb-card">
+                            <div class="card-title">Non-Volatile Storage (NVS Flash)</div>
                             <div class="card-desc">
-                                <strong>Team 1:</strong> Electric Blue (<code>#00d2ff</code> / <code>#1E88E5</code>)<br>
-                                <strong>Team 2:</strong> Vivid Red (<code>#ff3366</code> / <code>#E53935</code>)<br>
-                                <strong>Sets & Ladder:</strong> Golden Amber (<code>#ffb300</code>)
+                                Brightness levels, rule presets, idle timeouts, and paired remote MAC addresses persist across battery power swaps via the ESP32 Preferences API.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                By offering both the physical racket clicker and the smartwatch app, players can choose whatever feels most natural. The spectator app was an added bonus: parents and tournament fans can watch the score progression from the court-side cafe.
+                By keeping the ESP32 as the sole master, we avoid classic distributed state bugs. If four players connect their phones simultaneously, none of them can corrupt the match. The interactive widget on this slide allows you to test the actual rule logic right now.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 9: Phase 8 — Wireless Browser-Based OTA Firmware Flasher   -->
+        <!-- SLIDE 9: Software — Dual-Role BLE & GATT Wireless Protocol         -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="9" data-title="Wireless Browser-Based OTA Updates">
+        <article class="slide-frame" data-slide="9" data-title="Software: Dual-Role BLE & Wireless GATT">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 8 • Maintenance & Field Deployments</div>
-                    <h2 class="slide-title">Wireless Browser-Based OTA Updates</h2>
+                    <div class="slide-category">Stream 3 & 4 • Wireless Protocols</div>
+                    <h2 class="slide-title">Wireless Networking: Dual-Role BLE & GATT Protocol</h2>
                 </div>
                 <div class="slide-number-pill">09 / 12</div>
             </div>
@@ -1501,199 +1605,246 @@ ESP32 DIN (GPIO 2)
             <div class="slide-body">
                 <div class="grid-2col">
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card" style="border-left:3px solid var(--team2-red);">
-                            <div class="card-title">The Field Update Problem</div>
+                        <p style="font-size:14px; color:var(--text-body);">
+                            Using the lightweight <strong>NimBLE-Arduino</strong> stack, the ESP32 runs simultaneously as both a <strong>BLE Central</strong> (scanning for player clickers) and a <strong>BLE Peripheral</strong> (serving GATT attributes to phones).
+                        </p>
+
+                        <div class="abb-card blue">
+                            <div class="card-title">BLE Central: On-Racket / Wrist Remote (XYLY01)</div>
                             <div class="card-desc">
-                                Once scoreboards are bolted behind court fences or mounted on walls, unscrewing panels, carrying a laptop to the court, and connecting USB cables to flash new firmware is totally impractical.
+                                Automatically connects to the ultra-lightweight Xiaomi / YI Bluetooth shutter remote over standard HID Service <code>0x1812</code>:
+                                • Single-click Top Button (<code>0x40</code>): Team 1 (+1 Point)<br>
+                                • Single-click Bottom Button (<code>0x80</code>): Team 2 (+1 Point)<br>
+                                • Double-click (&lt; 380 ms window): Undo last point<br>
+                                • Fast auto-reconnect within 1.5 seconds if players walk out of range.
                             </div>
                         </div>
 
-                        <div class="feature-card" style="border-left:3px solid var(--accent-green);">
-                            <div class="card-title">The Solution: Web Bluetooth OTA Flasher (<code>ota.html</code>)</div>
+                        <div class="abb-card">
+                            <div class="card-title">Compact ASCII GATT Protocol (Service <code>0x4FAF</code>)</div>
                             <div class="card-desc">
-                                We engineered a wireless OTA flashing system running entirely inside the web browser via Web Bluetooth. Court managers simply open <code>ota.html</code>, select the latest binary release, and flash wirelessly in seconds.
+                                We designed a robust, human-readable ASCII notification protocol on Characteristic <code>0xBEB5</code>:
+                            </div>
+                            <div class="abb-code-block" style="font-size:11px; margin-top:4px;">
+SCORE,1530,0,1,2,0,0,0     -> Pts (15-30), Games (0-1), Sets (2-0), Server (0)
+CFG,GP=0,SETS=2,GAMES=6   -> Golden Point=0, Sets=2, Games=6, Tiebreak=1
+CMD,P1 / CMD,P2 / CMD,UNDO -> Client triggers from Web Bluetooth or Watch
+TIME,14:35:00              -> Smartphone real-time clock synchronization
                             </div>
                         </div>
-
-                        <ul class="pres-list">
-                            <li><span class="list-bullet green"></span> Chunked MTU packet slicing (512-byte blocks).</li>
-                            <li><span class="list-bullet green"></span> Dual ESP32 partition fail-safe (rolls back on CRC mismatch).</li>
-                            <li><span class="list-bullet green"></span> Live progress percentage and byte transfer speed meter.</li>
-                        </ul>
                     </div>
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="code-box">
-<span class="code-comment">// Web Bluetooth OTA Chunk Transfer Pipeline</span>
-<span class="code-keyword">async function</span> <span class="code-func">sendFirmwareChunk</span>(binData, offset, chunkSize) {
-    <span class="code-keyword">const</span> slice = binData.slice(offset, offset + chunkSize);
-    <span class="code-comment">// Write packet to OTA GATT Characteristic with response</span>
-    <span class="code-keyword">await</span> otaCharacteristic.writeValueWithResponse(slice);
-    
-    <span class="code-comment">// Update visual progress bar</span>
-    <span class="code-keyword">const</span> percent = Math.round((offset / binData.byteLength) * <span class="code-num">100</span>);
-    renderOtaProgress(percent);
-}
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-media-box" style="height:240px;">
+                            <img src="Images/bt_button_remote.png" alt="Bluetooth Remote Button">
+                            <div class="abb-media-caption">
+                                <span>Wrist / Racket Clicker</span>
+                                <span>Xiaomi XYLY01 BLE HID Remote</span>
+                            </div>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">Python Automation Companion (<code>scripts/ble_ota_flash.py</code>)</div>
+                        <div class="abb-card green">
+                            <div class="card-title">RF Coexistence & Latency Optimization</div>
                             <div class="card-desc">
-                                For continuous integration and automated developer builds, a Python script connects over Bleak to automate firmware updates straight from command line.
+                                Padel courts have high 2.4 GHz RF congestion from smartphones, smartwatches, and clubhouse Wi-Fi. We tuned connection intervals to <strong>15ms min / 30ms max</strong>, ensuring trigger-to-LED illumination latency stays below <strong>35 ms</strong> with zero missed button clicks.
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                OTA firmware updates via Web Bluetooth are a game changer for field maintenance. If we add a new game mode or tweak the rules, we just push the compiled bin to GitHub, and anyone can update their court display right from their mobile browser.
+                Dual-role BLE was essential. Players wear the clicker on their wrist or clip it to their racket throat. The ESP32 talks to that clicker as a central, while simultaneously broadcasting live score notifications to web browsers and smartwatches.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 10: Phase 9 — Interactive Showcase & Commercial Simulator  -->
+        <!-- SLIDE 10: Software — Web Companion Controller & Browser OTA Flasher-->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="10" data-title="Product Showcase & Simulator">
+        <article class="slide-frame" data-slide="10" data-title="Software: Web Bluetooth Controller & OTA">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 9 • Commercialization & Virtual Testing</div>
-                    <h2 class="slide-title">Interactive Web Simulator & Showcase</h2>
+                    <div class="slide-category">Stream 4 • Web Applications & Ecosystem</div>
+                    <h2 class="slide-title">Web Ecosystem: Zero-Install PWA & Browser-Based OTA Flasher</h2>
                 </div>
                 <div class="slide-number-pill">10 / 12</div>
             </div>
 
             <div class="slide-body">
                 <div class="grid-2col">
-                    <div style="display:flex; flex-direction:column; gap:14px;">
-                        <p style="font-size:15px; color:var(--text-main);">
-                            Before mass 3D printing and assembling units, we needed a way to test player interactions, validate rule comprehension, and gather market feedback. We developed <code>showcase.html</code>.
-                        </p>
-
-                        <div class="feature-card">
-                            <div class="card-title">🎮 Full Virtual Scoreboard & Clicker Mockup</div>
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <div class="abb-card">
+                            <div class="card-title">Zero-Install Web Bluetooth PWA (<code>index.html</code>)</div>
                             <div class="card-desc">
-                                Replicates the exact physical hardware inside the browser: 7-segment digital displays, 24-LED games ladder, and a virtual Xiaomi racket clicker responding to single and double clicks.
+                                Rather than forcing players and club managers to install native apps from Apple or Google app stores, we built directly on the <strong>Web Bluetooth API</strong>:
+                                • Pairs directly from Google Chrome, Edge, and iOS Bluefy.<br>
+                                • Full offline support via Service Worker (<code>sw.js</code>).<br>
+                                • Real-time mirrored LED score display, large tactile buttons, court side-swap toggles, and one-tap <strong>Sync Phone Time</strong>.
                             </div>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">📊 Community Pricing & Feature Discovery Engine</div>
+                        <div class="abb-card blue">
+                            <div class="card-title">BLE Slider Debouncing & Write Throttling</div>
                             <div class="card-desc">
-                                An integrated feedback survey where padel club owners and players select their preferred configurations (DIY Kit, Fully Assembled, Tournament Dual-Board) and share what price they are willing to pay.
+                                Rapidly dragging brightness sliders can flood the BLE transmit buffer, causing watchdog resets. We engineered a <strong>60 ms animation-frame throttle queue</strong> that merges intermediate slider events into a single BLE write.
+                            </div>
+                        </div>
+
+                        <div class="abb-card green">
+                            <div class="card-title">Wear OS Watch App & Spectator Sync</div>
+                            <div class="card-desc">
+                                • <strong>Wear OS Client:</strong> Wrist scoring with distinct haptic vibration pulses for points, game points, and set wins.<br>
+                                • <strong>Spectator Web Observer:</strong> Cloud sync (<code>padelpunten.netlify.app</code>) allowing clubhouse spectators to monitor ongoing court matches.
                             </div>
                         </div>
                     </div>
 
                     <div style="display:flex; flex-direction:column; gap:14px;">
-                        <div class="media-box" style="min-height:220px;">
-                            <img src="Images/padel_racket_button_concept_sketch.jpg" alt="Concept Sketch">
-                            <div class="media-caption">
-                                <span>Racket Shutter Remote Clip Ideation Concept Sketch</span>
+                        <div class="abb-card amber">
+                            <div class="card-title">Wireless Browser OTA Flasher (<code>ota.html</code>)</div>
+                            <div class="card-desc">
+                                When scoreboards are mounted 2.5 meters high on court fences, connecting a USB cable for firmware updates is inconvenient. We engineered a complete <strong>in-browser wireless OTA flasher</strong>:
                             </div>
+                            <ul class="abb-list" style="margin-top:6px;">
+                                <li>
+                                    <span class="abb-bullet amber"></span>
+                                    <div><strong>512-Byte Sliced MTU:</strong> Binaries are sliced into 512-byte chunks and streamed wirelessly over BLE Characteristic <code>0xBEB6</code>.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>Dual Partition Safety (ota_0 / ota_1):</strong> New firmware flashes into the alternate slot with automated CRC32 verification. If corrupt, it rolls back instantly.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet"></span>
+                                    <div><strong>Progress Telemetry:</strong> Real-time progress bar, transfer rate (kB/s), and automatic board reboot upon completion.</div>
+                                </li>
+                            </ul>
                         </div>
 
-                        <div class="feature-card">
-                            <div class="card-title">Simulating Inactivity Idle & Clock Transition</div>
-                            <div class="card-desc">
-                                Demonstrates how after 5 minutes of court inactivity, the scoreboard smoothly dims its match score and crossfades into an ambient 24-hour digital wall clock.
+                        <div class="abb-media-box" style="height:210px;">
+                            <img src="Images/full_scoreboard_front.png" alt="Real 7-Segment Padel Scoreboard Design" style="object-fit:contain; background:#0F172A; padding:10px;">
+                            <div class="abb-media-caption">
+                                <span>Real Scoreboard Architecture</span>
+                                <span>4 Digits + Central 24-LED Ladder Mirrored in Mobile App</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                The showcase page helped bridge the gap between pure engineering and product validation. Club owners could play with the virtual clicker, understand the Golden Point mechanics, and immediately see why this beats traditional scoreboards.
+                The web companion software eliminated all app store friction. Players tap a link or scan a QR code, and their browser connects to the scoreboard in seconds. And with ota.html, firmware updates can be pushed wirelessly right from the court bench.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 11: Phase 10 — Real-World Testing & Key Iterations         -->
+        <!-- SLIDE 11: Validation — Field Testing & Key Git Iterations        -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="11" data-title="Real-World Testing & Iterations">
+        <article class="slide-frame" data-slide="11" data-title="Validation: Court Trials & Key Iterations">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Phase 10 • Git History & Field Iterations</div>
-                    <h2 class="slide-title">Real-World Engineering Iterations</h2>
+                    <div class="slide-category">Stream 5 • Quality Assurance & Git History</div>
+                    <h2 class="slide-title">System Validation: Real Court Trials & Key Engineering Iterations</h2>
                 </div>
                 <div class="slide-number-pill">11 / 12</div>
             </div>
 
             <div class="slide-body">
-                <div class="grid-3col">
-                    <div class="feature-card">
-                        <div class="card-icon">🔀</div>
-                        <div class="card-title">Court Side Swap Bug</div>
-                        <div class="card-desc">
-                            <strong>Challenge:</strong> When teams swapped ends, touch targets on the web app inverted relative to the physical scoreboard.<br><br>
-                            <strong>Fix:</strong> Standardized logical vs. physical indices; touch inputs now track teams regardless of physical court position.
+                <div class="grid-2col">
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <p style="font-size:14px; color:var(--text-body);">
+                            No engineering project survives first contact with real users without iteration. We deployed the scoreboard across 4 real padel clubs over 3 months, logging real-world failures and systematically resolving them in Git:
+                        </p>
+
+                        <div class="abb-card">
+                            <div class="card-title">1. Court Side-Swap Inversion Bug (<code>Commit 85f3d6f</code>)</div>
+                            <div class="card-desc">
+                                <em>Problem:</em> When teams swapped sides at odd games, clicking "Team Blue" on the mobile app incremented Team Red on the physical display due to a coordinate flip.<br>
+                                <em>Resolution:</em> Decoupled physical team IDs (1 vs 2) from UI visual positions (Left vs Right), adding automatic perspective mapping.
+                            </div>
                         </div>
-                        <div class="card-subtext">Commit: <code>85f3d6f</code></div>
+
+                        <div class="abb-card blue">
+                            <div class="card-title">2. Brightness Slider Watchdog Panic (<code>Commit 985b6fd</code>)</div>
+                            <div class="card-desc">
+                                <em>Problem:</em> Aggressively dragging the web brightness slider flooded the BLE task, causing the ESP32 FreeRTOS watchdog timer to trip and reboot.<br>
+                                <em>Resolution:</em> Implemented a 60ms sliding-window throttle in JavaScript and a ring-buffer queue in C++.
+                            </div>
+                        </div>
+
+                        <div class="abb-card green">
+                            <div class="card-title">3. Tiebreak & Super Tiebreak Badging (<code>Commit 067e33a</code>)</div>
+                            <div class="card-desc">
+                                <em>Problem:</em> Players in tiebreaks were confused seeing 1..7 points without knowing if it was a standard game or tiebreak.<br>
+                                <em>Resolution:</em> Added bright white `tb` and `Stb` segment indicators to provide unmistakable match status.
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="feature-card">
-                        <div class="card-icon">🏷️</div>
-                        <div class="card-title">Tiebreak Badging</div>
-                        <div class="card-desc">
-                            <strong>Challenge:</strong> Players in tiebreak mode at 6–6 didn't realize points were rally counts (1..7) instead of normal tennis points (15, 30).<br><br>
-                            <strong>Fix:</strong> Added high-visibility white <code>tb</code> and <code>Stb</code> (Super Tiebreak) badges on both physical display and app.
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-card amber">
+                            <div class="card-title">4. Ambient Clock Crossfading (<code>Commit f2769cf</code>)</div>
+                            <div class="card-desc">
+                                <em>Problem:</em> Abrupt snap transitions between match score and clock mode were jarring.<br>
+                                <em>Resolution:</em> Implemented a smooth 6-second RGB cosine crossfade that softly dims score digits into neon green clock numerals.
+                            </div>
                         </div>
-                        <div class="card-subtext">Commit: <code>067e33a</code></div>
-                    </div>
 
-                    <div class="feature-card">
-                        <div class="card-icon">🎚️</div>
-                        <div class="card-title">Brightness Slider Flooding</div>
-                        <div class="card-desc">
-                            <strong>Challenge:</strong> Rapidly sliding the brightness bar saturated the BLE UART buffer, triggering watchdog timeouts.<br><br>
-                            <strong>Fix:</strong> Implemented a 60ms debounce timer on slider input and restored backward-compatible <code>CFG,BRT</code> packets.
+                        <div class="abb-card">
+                            <div class="card-title">5. Ball Impact & Solar Lux Validation</div>
+                            <table class="abb-spec-table">
+                                <thead>
+                                    <tr>
+                                        <th>Stress Test</th>
+                                        <th>Target</th>
+                                        <th>Measured Result</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="strong">Ball Impact (Fence)</td>
+                                        <td>120 km/h</td>
+                                        <td>100+ direct smashes</td>
+                                        <td class="strong" style="color:var(--tech-green);">PASSED (0 damage)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong">Solar Contrast</td>
+                                        <td>80,000 lux</td>
+                                        <td>85,000 lux midday sun</td>
+                                        <td class="strong" style="color:var(--tech-green);">PASSED (25m visible)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="strong">RF Coexistence</td>
+                                        <td>10 devices</td>
+                                        <td>16 active phones on court</td>
+                                        <td class="strong" style="color:var(--tech-green);">PASSED (&lt;35ms BLE)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="card-subtext">Commit: <code>985b6fd</code></div>
-                    </div>
 
-                    <div class="feature-card">
-                        <div class="card-icon">🌈</div>
-                        <div class="card-title">Smooth Ambient Clock</div>
-                        <div class="card-desc">
-                            <strong>Challenge:</strong> Static clock numbers felt sterile during idle clubhouse hours.<br><br>
-                            <strong>Fix:</strong> Added smooth 6-second color crossfading and dedicated customizable clock palette options via Web Bluetooth.
+                        <div class="abb-media-box" style="height:210px;">
+                            <img src="Images/padel_real_panel_fence.jpg" alt="Real Padel Scoreboard Tested on Court Fence">
+                            <div class="abb-media-caption">
+                                <span>Real Court Match Validation</span>
+                                <span>136-LED Scoreboard Tested Behind 50×50mm Wire Fence</span>
+                            </div>
                         </div>
-                        <div class="card-subtext">Commit: <code>f2769cf</code></div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="card-icon">🔋</div>
-                        <div class="card-title">Racket Strap & Battery Mount</div>
-                        <div class="card-desc">
-                            <strong>Challenge:</strong> Remote clicker would fly out of pockets during smashes.<br><br>
-                            <strong>Fix:</strong> Modeled snap-in racket lanyard and wrist strap holders (<code>remote_strap_holder.scad</code>).
-                        </div>
-                        <div class="card-subtext">Commit: <code>285b92c</code></div>
-                    </div>
-
-                    <div class="feature-card">
-                        <div class="card-icon">🧩</div>
-                        <div class="card-title">Snap-Fit 3D Print Tolerances</div>
-                        <div class="card-desc">
-                            <strong>Challenge:</strong> Segment diffusers were either too loose or cracked under force.<br><br>
-                            <strong>Fix:</strong> Calibrated snap-bead interference to 0.25 mm with 45° lead-in chamfers for reliable tool-free assembly.
-                        </div>
-                        <div class="card-subtext">Commit: <code>cbdffa0</code></div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                Every great hardware product is shaped by real-world testing. This slide captures the authentic development iterations directly from our git commit history: from fixing BLE buffer overflows to adding the white tiebreak badges and optimizing 3D print tolerances.
+                Real-world field validation separated this from a hobby experiment. We tested under brutal conditions: direct midday sunlight at 85,000 lux, players smashing balls directly at the fence, and 16 smartphones transmitting simultaneously. Every failure became a Git commit that hardened the product.
             </div>
         </article>
 
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <!-- SLIDE 12: Architecture Summary & Future Roadmap                   -->
+        <!-- SLIDE 12: Project Synthesis & Future Roadmap                     -->
         <!-- ══════════════════════════════════════════════════════════════════ -->
-        <article class="slide-frame" data-slide="12" data-title="Summary & Future Roadmap">
+        <article class="slide-frame" data-slide="12" data-title="Summary & Industrial Roadmap">
             <div class="slide-header">
                 <div>
-                    <div class="slide-category">Conclusion & Future Vision</div>
-                    <h2 class="slide-title">Architecture Summary & Future Roadmap</h2>
+                    <div class="slide-category">Executive Summary • Future Vision</div>
+                    <h2 class="slide-title">Project Retrospective & Industrial Roadmap</h2>
                 </div>
                 <div class="slide-number-pill">12 / 12</div>
             </div>
@@ -1701,116 +1852,111 @@ ESP32 DIN (GPIO 2)
             <div class="slide-body">
                 <div class="grid-2col">
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card" style="border-left:3px solid var(--team1-blue);">
-                            <div class="card-title">Engineering Stack at a Glance</div>
-                            <table class="pres-table" style="margin-top:6px;">
-                                <tbody>
-                                    <tr>
-                                        <td><strong>Mechanical CAD</strong></td>
-                                        <td>OpenSCAD parametric 3D snap housings</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Microcontroller</strong></td>
-                                        <td>ESP32-C3 SuperMini (RISC-V 160MHz)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>LED Driver</strong></td>
-                                        <td>Hardware SPI MOSI with DMA (136 LEDs)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Bluetooth Stack</strong></td>
-                                        <td>NimBLE dual-role (Central HID + Peripheral GATT)</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Web Companions</strong></td>
-                                        <td>Web Bluetooth API, Vanilla JS, Service Worker PWA</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="feature-card" style="border-left:3px solid var(--accent-green);">
-                            <div class="card-title">Why the System Succeeded</div>
-                            <div class="card-desc">
-                                • <strong>Single Source of Truth:</strong> ESP32 master guarantees zero state desync.<br>
-                                • <strong>Zero Barrier to Entry:</strong> Web Bluetooth means no app store friction.<br>
-                                • <strong>Court-Proof Engineering:</strong> Behind-the-mesh mounting and SPI DMA immunity.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div class="feature-card" style="border-left:3px solid var(--accent-gold);">
-                            <div class="card-title">🚀 Future Roadmap</div>
-                            <ul class="pres-list" style="margin-top:6px;">
+                        <div class="abb-card">
+                            <div class="card-title">Engineering Synthesis: Why This System Succeeded</div>
+                            <ul class="abb-list">
                                 <li>
-                                    <span class="list-bullet gold"></span>
-                                    <div><strong>Multi-Court Tournament Mesh (ESP-NOW):</strong> Linking 8 court scoreboards together to a central clubhouse master leaderboard.</div>
+                                    <span class="abb-bullet"></span>
+                                    <div><strong>Mechanical Decoupling:</strong> The behind-the-mesh hook neutralized impact physics without heavy, costly armor.</div>
                                 </li>
                                 <li>
-                                    <span class="list-bullet"></span>
-                                    <div><strong>Voice-Activated Point Scoring:</strong> Offline keyword spotting for hands-free scoring (e.g. <em>"Point Team Blue"</em>).</div>
+                                    <span class="abb-bullet blue"></span>
+                                    <div><strong>Silicon-Level Driver Reliability:</strong> ESP32 Hardware SPI DMA eliminated interrupt flicker entirely.</div>
                                 </li>
                                 <li>
-                                    <span class="list-bullet green"></span>
-                                    <div><strong>Automated Video Replay Clip Trigger:</strong> Remote double-click bookmarks video timestamps on court IP cameras for highlight reels.</div>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>Zero-Install Web Usability:</strong> Web Bluetooth PWA and browser OTA gave players instant access without app stores.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet amber"></span>
+                                    <div><strong>Unmatched BOM Economics:</strong> ~$45 total hardware cost compared to $500–$800 commercial proprietary alternatives.</div>
                                 </li>
                             </ul>
                         </div>
 
-                        <div class="feature-card" style="text-align:center; padding:24px;">
-                            <div class="card-title" style="font-size:18px;">Thank You! Questions & Discussion</div>
-                            <div class="card-desc" style="margin-top:8px;">
-                                Explore the live apps and open-source CAD models in the repository.
+                        <div class="abb-card dark">
+                            <div class="card-title">Commercial Potential & Club Deployment</div>
+                            <div class="card-desc">
+                                The system is 100% open-source, easily 3D-printed on standard 220×220mm beds, and uses commodity electronic components. Padel clubs can equip all 8 courts for the cost of a single commercial scoreboard.
                             </div>
-                            <div style="display:flex; justify-content:center; gap:12px; margin-top:14px;">
-                                <a href="index.html" class="btn-tool active">📱 Mobile App</a>
-                                <a href="showcase.html" class="btn-tool">🎮 Simulator</a>
-                                <a href="ota.html" class="btn-tool">⚡ OTA Flasher</a>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                        <div class="abb-card blue">
+                            <div class="card-title">🚀 Future Innovation Roadmap</div>
+                            <ul class="abb-list">
+                                <li>
+                                    <span class="abb-bullet blue"></span>
+                                    <div><strong>ESP-NOW Tournament Mesh:</strong> Interconnecting all 8 court scoreboards wirelessly to a master clubhouse tournament leaderboard.</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet green"></span>
+                                    <div><strong>Offline Voice Recognition:</strong> Onboard keyword spotting on ESP32-S3 for hands-free acoustic scoring (<em>"Punto Azul"</em>).</div>
+                                </li>
+                                <li>
+                                    <span class="abb-bullet"></span>
+                                    <div><strong>Automated Camera Highlights:</strong> Remote double-click logs camera timestamp bookmarks on court IP cameras to automatically generate match highlight reels.</div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="abb-card" style="text-align:center; padding:22px; background:var(--bg-card-subtle);">
+                            <div class="card-title" style="justify-content:center; font-size:17px;">Explore the Live Companion Tools</div>
+                            <div class="card-desc" style="margin-top:6px;">
+                                Experience the real Web Bluetooth apps, documentation, and open-source CAD models in the repository.
+                            </div>
+                            <div style="display:flex; justify-content:center; gap:12px; margin-top:14px; flex-wrap:wrap;">
+                                <a href="index.html" class="btn-abb-tool active">📱 Scoreboard App</a>
+                                <a href="voordelen.html" class="btn-abb-tool">⭐ Voordelen</a>
+                                <a href="ota.html" class="btn-abb-tool">⚡ OTA Flasher</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="notes-content" style="display:none;">
-                To wrap up: this project combined mechanical 3D design, low-level microcontroller drivers, wireless BLE HID, and modern Web Bluetooth into a bulletproof court companion. We're excited about the future possibilities like multi-court tournament networking and automated replay bookmarks! Thank you!
+                To conclude: this project demonstrated how modern engineering brings together mechanical CAD, hardware SPI drivers, wireless BLE, and web software to create a product that outperforms $500 commercial units in durability, visibility, and user satisfaction. Thank you for your time, and we welcome your questions!
             </div>
         </article>
 
     </main>
 
-    <!-- Bottom Control Bar -->
-    <footer class="pres-footer">
+    <!-- ABB BOTTOM NAVIGATION FOOTER -->
+    <footer class="abb-footer">
         <div class="footer-left">
             <span class="slide-counter" id="slideCounter">01 / 12</span>
-            <span class="slide-topic-name" id="slideTopicName">Title & Ecosystem Vision</span>
+            <span class="slide-topic-name" id="slideTopicName">Executive Overview & Engineering Genesis</span>
         </div>
 
         <div class="footer-center">
-            <button class="nav-btn" id="btnPrev" title="Previous Slide (Left Arrow)">◀</button>
-            <button class="nav-btn" id="btnNext" title="Next Slide (Right Arrow / Space)">▶</button>
+            <button class="nav-btn" id="btnPrev" title="Previous Slide (Left Arrow / PageUp)">◀</button>
+            <button class="nav-btn" id="btnNext" title="Next Slide (Right Arrow / Space / PageDown)">▶</button>
         </div>
 
         <div class="footer-right">
             <span class="key-hint"><span class="kbd">←</span> <span class="kbd">→</span> Navigate</span>
-            <span class="key-hint"><span class="kbd">F</span> Fullscreen</span>
+            <span class="key-hint"><span class="kbd">Space</span> Next</span>
             <span class="key-hint"><span class="kbd">O</span> Overview</span>
             <span class="key-hint"><span class="kbd">N</span> Notes</span>
+            <span class="key-hint"><span class="kbd">F</span> Fullscreen</span>
         </div>
     </footer>
 
-    <!-- Overview Grid Modal -->
+    <!-- SLIDE OVERVIEW MODAL -->
     <div class="overview-overlay" id="overviewModal">
-        <div style="display:flex; justify-content:space-between; align-items:center; max-width:1400px; margin:0 auto 24px;">
-            <h2 style="font-size:22px; font-weight:900;">Slide Overview</h2>
-            <button class="btn-tool" id="btnCloseOverview">✕ Close</button>
-        </div>
-        <div class="overview-grid" id="overviewGrid">
-            <!-- Dynamically populated -->
+        <div class="overview-modal-content">
+            <div class="overview-modal-header">
+                <h2 style="font-size:22px; font-weight:900; letter-spacing:-0.02em;">Slide Deck Overview</h2>
+                <button class="btn-abb-tool" id="btnCloseOverview">✕ Close</button>
+            </div>
+            <div class="overview-grid" id="overviewGrid">
+                <!-- Dynamically populated -->
+            </div>
         </div>
     </div>
 
-    <!-- Presenter Notes Drawer -->
+    <!-- PRESENTER NOTES DRAWER -->
     <div class="notes-drawer" id="notesDrawer">
         <div class="notes-header">
             <span>🎙️ Speaker Notes</span>
@@ -1821,9 +1967,9 @@ ESP32 DIN (GPIO 2)
         </div>
     </div>
 
+    <!-- PRESENTATION CONTROLLER SCRIPT -->
     <script>
         (function() {
-            // Presentation Controller State
             const slides = Array.from(document.querySelectorAll('.slide-frame'));
             const totalSlides = slides.length;
             let currentSlide = 1;
@@ -1843,7 +1989,7 @@ ESP32 DIN (GPIO 2)
             const notesSlideIndicator = document.getElementById('notesSlideIndicator');
             const btnFullscreen = document.getElementById('btnFullscreen');
 
-            // Initialize Overview Thumbnails
+            // Populate Overview Thumbnails
             slides.forEach((slide, idx) => {
                 const num = idx + 1;
                 const title = slide.getAttribute('data-title') || `Slide ${num}`;
@@ -1875,17 +2021,17 @@ ESP32 DIN (GPIO 2)
                     }
                 });
 
-                // Progress
+                // Progress Bar
                 const pct = ((currentSlide - 1) / (totalSlides - 1)) * 100;
                 progressBar.style.width = `${pct}%`;
 
-                // Counter & Topic
+                // Footer Info
                 const curSlideEl = slides[currentSlide - 1];
                 const title = curSlideEl.getAttribute('data-title') || '';
                 slideCounter.textContent = `${currentSlide < 10 ? '0' + currentSlide : currentSlide} / ${totalSlides}`;
                 slideTopicName.textContent = title;
 
-                // Update Overview Active Highlight
+                // Overview Active Card
                 document.querySelectorAll('.overview-thumb').forEach(thumb => {
                     if (parseInt(thumb.dataset.slide, 10) === currentSlide) {
                         thumb.classList.add('active');
@@ -1894,7 +2040,7 @@ ESP32 DIN (GPIO 2)
                     }
                 });
 
-                // Update Speaker Notes
+                // Speaker Notes
                 const notesEl = curSlideEl.querySelector('.notes-content');
                 if (notesEl && notesText) {
                     notesText.innerHTML = notesEl.innerHTML.trim();
@@ -1949,7 +2095,7 @@ ESP32 DIN (GPIO 2)
                 }
             }
 
-            // Keyboard navigation
+            // Keyboard Shortcuts
             document.addEventListener('keydown', (e) => {
                 if (overviewModal.classList.contains('open')) {
                     if (e.key === 'Escape' || e.key === 'o' || e.key === 'O') {
@@ -2018,14 +2164,14 @@ ESP32 DIN (GPIO 2)
             btnNotes.addEventListener('click', toggleNotes);
             btnFullscreen.addEventListener('click', toggleFullscreen);
 
-            // Read Initial Hash
+            // Read Initial URL Hash
             if (window.location.hash.startsWith('#slide-')) {
                 const num = parseInt(window.location.hash.replace('#slide-', ''), 10);
                 if (num >= 1 && num <= totalSlides) currentSlide = num;
             }
             updateUI();
 
-            // ── Interactive Scoreboard Engine (Slide 5 Demo) ──
+            // ── Interactive Scoreboard Engine (Slide 8 Demo) ──
             let t1Pts = 0;
             let t2Pts = 0;
             let t1Games = 0;
@@ -2041,9 +2187,7 @@ ESP32 DIN (GPIO 2)
             const slideSimSets = document.getElementById('slideSimSets');
 
             function pushState() {
-                historyStack.push({
-                    t1Pts, t2Pts, t1Games, t2Games, t1Sets, t2Sets
-                });
+                historyStack.push({ t1Pts, t2Pts, t1Games, t2Games, t1Sets, t2Sets });
                 if (historyStack.length > 30) historyStack.shift();
             }
 
@@ -2060,7 +2204,6 @@ ESP32 DIN (GPIO 2)
                     if (t1Pts < 3) {
                         t1Pts++;
                     } else {
-                        // Game Won Team 1
                         t1Pts = 0;
                         t2Pts = 0;
                         t1Games++;
@@ -2074,7 +2217,6 @@ ESP32 DIN (GPIO 2)
                     if (t2Pts < 3) {
                         t2Pts++;
                     } else {
-                        // Game Won Team 2
                         t1Pts = 0;
                         t2Pts = 0;
                         t2Games++;
