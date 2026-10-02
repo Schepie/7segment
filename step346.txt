@@ -1,0 +1,26 @@
+I found the exact cause in the scoreboard's live connection logs!
+
+### What Actually Happened:
+
+When your scoreboard booted up and showed the green **`CONN`**, **it did not connect to the ring — it connected to your old Xiaomi remote (`XiaoYi_RC`)!**
+
+Here is the exact line from the board's serial log:
+```text
+[SCAN] 04:e6:76:b2:8a:b6 | RSSI: -68 | 'XiaoYi_RC' | Services: [0x1812 ... ]
+[SCAN] ★ RECOGNIZED PAIRED REMOTE (04:e6:76:b2:8a:b6)! Stopping scan to connect...
+[BLE] Connecting to 04:e6:76:b2:8a:b6...
+[BLE] Successfully connected to remote!
+```
+
+Because the old Xiaomi remote is powered on nearby, the scoreboard recognized its saved MAC address (`04:e6:76:b2:8a:b6`), immediately re-connected to it, and **stopped scanning**.
+
+When you saw **`CONN`** on the scoreboard and pressed the buttons on the ring, the scoreboard was actively listening to the old Xiaomi remote, not the ring.
+
+---
+
+### To Connect to the Ring:
+
+1. **Remove the battery or turn off the old Xiaomi remote** (or move it far away).
+2. If you want, I can also clear the stored `04:e6:76:b2:8a:b6` pairing memory from the scoreboard right now so it never auto-connects to the old remote again.
+3. Turn on the **WXLJ-02 ring** (ensure its LED is flashing).
+4. Restart the scoreboard.

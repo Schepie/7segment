@@ -40,8 +40,11 @@ lib_deps =
 ## 3. BLE HID Communication & Protocol (NimBLE)
 
 ### A. Discovery & Identification
-- **Advertised Device Names:** `XiaoYi_RC`, `XYLY01`, or standard HID devices advertising Service `0x1812`.
-- **Target Remote MAC Address:** e.g. `04:e6:76:b2:8a:b6`.
+- **Supported Remotes:**
+  - **Xiaomi / YI Remote (XYLY01):** Advertised Name `XiaoYi_RC`, `XYLY01`
+  - **WXLJ-02 & Bluetooth Ring Remotes:** Advertised Names `WXLJ-02`, `WXLJ`, `D01`, `D02`, `Ring`, `Turner`, `Scroller`, `Beauty`
+  - **Generic BLE HID Peripherals:** Any BLE peripheral advertising Service UUID `0x1812` or HID Appearance (`0x03C0..0x03C4`).
+- **Target Remote MAC Address:** Stored in persistent flash (`padel_remote/remote_mac`) after first pairing for instant auto-reconnect.
 
 ### B. Security & Connection Parameters
 - The remote operates with **Just Works / Auto-confirm** bonding:
@@ -69,6 +72,20 @@ The remote transmits **3-byte notification payloads** to Characteristic `0x2A4D`
 | **Big Button (Top / Shutter)** | `0x40 0x00 0x00` | Pressed | **Count UP (+1)** |
 | **Small Button (Bottom / Mode)** | `0x80 0x00 0x00` | Pressed | **Count DOWN (-1)** |
 | **Button Release** | `0x00 0x00 0x00` | Released | Evaluates click count & timing |
+
+---
+
+## 4.B WXLJ-02 & Ring Remote Button Mapping
+
+The WXLJ-02 Bluetooth ring remote features a 3-button layout (Up / Center / Down):
+
+| Button | Supported HID Codes | Scoreboard Function |
+| :--- | :--- | :--- |
+| **▲ Up Button** | Up Arrow (`0x52`), Page Up (`0x4B`), Volume Up (`0xE9`), Next Track (`0xB5`) | **+1 Point Team 1 (Left / Blue)** |
+| **▼ Down Button** | Down Arrow (`0x51`), Page Down (`0x4E`), Volume Down (`0xEA`), Prev Track (`0xB6`) | **+1 Point Team 2 (Right / Red)** |
+| **● Center Button** | Return/Enter (`0x28`), Space (`0x2C`), Play/Pause (`0xCD`), Mute (`0xE2`) | **Instant UNDO** (during match)<br>• **Toggle 1st Server** (at 0–0)<br>• **Wake up** (from Clock Mode) |
+| **Double Click (▲/▼)** | Within 380ms | **Instant UNDO / Toggle Server** |
+| **Long Press (≥1.5s)** | Hold either directional button | **Swap Court Sides** / Toggle Clock |
 
 ---
 
